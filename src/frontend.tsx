@@ -1,20 +1,31 @@
-/**
- * This file is the entry point for the React app, it sets up the root
- * element and renders the App component to the DOM.
- *
- * It is included in `src/index.html`.
- */
-
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { App } from "./App";
+import { LanguageProvider } from "@/lib/i18n";
+import RootLayout from "./pages/layout";
+import DashboardPage from "./pages/dashboard/page";
+import ErrorPage from "./pages/error/page";
+import "./index.css";
 
-const elem = document.getElementById("root")!;
+const router = createBrowserRouter([
+  {
+    element: <RootLayout />,
+    children: [
+      { index: true, element: <DashboardPage /> },
+      { path: "*", element: <ErrorPage /> },
+    ],
+  },
+]);
+
+const element = document.getElementById("root");
+if (!element) throw new Error("Root element #root not found");
+
 const app = (
   <StrictMode>
-    <App />
+    <LanguageProvider>
+      <RouterProvider router={router} />
+    </LanguageProvider>
   </StrictMode>
 );
 
-// https://bun.com/docs/bundler/hot-reloading#import-meta-hot-data
-(import.meta.hot.data.root ??= createRoot(elem)).render(app);
+(import.meta.hot.data.root ??= createRoot(element)).render(app);

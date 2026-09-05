@@ -1,9 +1,27 @@
 import { serve } from "bun";
 import index from "./index.html";
 
+const IMAGES_DIR = "public/images";
+
+async function serveStaticFile(req: Request, dir: string, prefix: string): Promise<Response> {
+  const pathname = new URL(req.url).pathname;
+  const relative = decodeURIComponent(pathname.slice(prefix.length));
+
+  if (!relative || relative.includes("..")) {
+    return new Response("Not found", { status: 404 });
+  }
+
+  const file = Bun.file(`./${dir}/${relative}`);
+  if (await file.exists()) {
+    return new Response(file);
+  }
+
+  return new Response("Not found", { status: 404 });
+}
+
 const server = serve({
   routes: {
-    // Serve index.html for all unmatched routes.
+    "/images/*": (req) => serveStaticFile(req, IMAGES_DIR, "/images/"),
     "/*": index,
 
     "/api/hello": {
@@ -30,10 +48,7 @@ const server = serve({
   },
 
   development: process.env.NODE_ENV !== "production" && {
-    // Enable browser hot reloading in development
     hmr: true,
-
-    // Echo console logs from the browser to the server
     console: true,
   },
 });
