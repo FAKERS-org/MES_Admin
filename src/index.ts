@@ -20,6 +20,7 @@ async function serveStaticFile(req: Request, dir: string, prefix: string): Promi
 }
 
 const server = serve({
+  port: Number(process.env.PORT) || 3001,
   routes: {
     "/images/*": (req) => serveStaticFile(req, IMAGES_DIR, "/images/"),
     "/*": index,
