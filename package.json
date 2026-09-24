@@ -7,9 +7,11 @@
     "dev": "next dev --port 3001",
     "build": "next build",
     "start": "next start --port 3001",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "generate-api": "openapi-typescript http://localhost:8000/api/v1/openapi.json -o src/lib/api/schema.d.ts"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.103.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.46.0",
@@ -23,6 +25,8 @@
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "openapi-fetch": "^0.17.0",
+    "openapi-typescript": "^7.13.0",
     "postcss": "^8.4.49",
     "tailwindcss": "^4.1.11",
     "typescript": "^5"
