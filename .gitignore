@@ -1,59 +1,51 @@
-# dependencies (bun install)
+# dependencies
 node_modules
-.bun
+.pnp
+.pnp.*
 
-# output
-out
+# next.js
+.next/
+out/
+*.tsbuildinfo
+
+# production
+build
 dist
 *.tgz
 
-# code coverage
+# environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# testing / coverage
 coverage
 *.lcov
 
 # logs
 logs
 *.log
-report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
-
-# dotenv environment variable files
-.env
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
+npm-debug.log*
 
 # caches
 .eslintcache
 .cache
-*.tsbuildinfo
+.tsxcache
 
-# IDEs
+# editors
 .idea
 .vscode
-
-# Editor swap and temp files
-*~
 *.swp
 *.swo
-*.swn
-*.tmp
+*~
 
-# OS files
+# os
 .DS_Store
-.DS_Store?
-.AppleDouble
-.LSOverride
-Icon?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
 Thumbs.db
-Desktop.ini
-desktop.ini
 
-# Agents
+# agents
 .kilo
 .claude
 .gemini
