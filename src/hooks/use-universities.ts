@@ -10,5 +10,5 @@ export function useUniversities() {
             const response = await apiClient.get("/public/universities");
             return response.data;
         },
-    });
+    });// src/hooks/useUniversities.ts
 }
