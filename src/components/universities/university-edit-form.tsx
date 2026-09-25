@@ -177,6 +177,8 @@ export default function UniversityEditForm({ university }: { university: Univers
                                         label="Upload logo"
                                         value={logoUrl}
                                         onChange={setLogoUrl}
+                                        abbreviation={university.abbreviation ?? ""}
+                                        purpose="logo"
                                         previewClassName="max-w-[120px]"
                                     />
                                 </Field>
@@ -187,6 +189,8 @@ export default function UniversityEditForm({ university }: { university: Univers
                                         label="Upload cover"
                                         value={coverImageUrl}
                                         onChange={setCoverImageUrl}
+                                        abbreviation={university.abbreviation ?? ""}
+                                        purpose="cover"
                                         previewClassName="w-full"
                                     />
                                 </Field>

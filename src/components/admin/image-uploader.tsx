@@ -10,12 +10,16 @@ export function ImageUploader({
   label = "Upload image",
   hint = "PNG, JPG, or WebP",
   previewClassName,
+  abbreviation,
+  purpose
 }: {
   value: string;
   onChange: (url: string) => void;
   label?: string;
   hint?: string;
   previewClassName?: string;
+  abbreviation: string;
+  purpose: "logo" | "cover" | "other";
 }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +27,7 @@ export function ImageUploader({
 
   const id = `uploader-${label.toLowerCase().replace(/\s+/g, "-")}`;
 
-  async function upload(file: File) {
+  async function upload(file: File, options: { abbreviation: string; purpose: "logo" | "cover" | "other" }) {
     if (!file.type.startsWith("image/")) {
       setError("Please choose an image file.");
       return;
@@ -32,7 +36,7 @@ export function ImageUploader({
     setUploading(true);
     setError(null);
     try {
-      const publicUrl = await uploadImageToR2(file);
+      const publicUrl = await uploadImageToR2(file, options);
       onChange(publicUrl);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Failed to upload image.");
@@ -44,7 +48,7 @@ export function ImageUploader({
   async function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    await upload(file);
+    await upload(file, { abbreviation, purpose });
     e.target.value = "";
   }
 
@@ -65,7 +69,7 @@ export function ImageUploader({
     e.stopPropagation();
     setDragging(false);
     const file = e.dataTransfer.files?.[0];
-    if (file) await upload(file);
+    if (file) await upload(file, { abbreviation, purpose });
   }
 
   function clear() {
