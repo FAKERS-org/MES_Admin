@@ -11,6 +11,9 @@ export const metadata: Metadata = {
   },
   description:
     "Back-office for the MES University Info API: manage universities and their study programs.",
+  icons: {
+    icon: "/static/MES-logo-horizontal-M.svg",
+  },
 };
 
 export const viewport: Viewport = {

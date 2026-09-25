@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { ShieldCheck } from "lucide-react";
 
 import LoginForm from "./login-form";
@@ -16,9 +17,7 @@ export default async function LoginPage({
     <div className="flex min-h-screen items-center justify-center bg-muted/50 p-4">
       <div className="w-full max-w-sm space-y-6">
         <div className="flex flex-col items-center gap-2 text-center">
-          <span className="grid size-10 place-items-center rounded-xl bg-primary text-base font-bold text-primary-foreground">
-            M
-          </span>
+          <Image src="/static/MES-logo-horizontal.svg" alt="MES" width={120} height={35} />
           <div>
             <h1 className="text-lg font-semibold tracking-tight">MES Admin</h1>
             <p className="text-sm text-muted-foreground">

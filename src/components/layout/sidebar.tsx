@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Building2, LayoutDashboard, LogOut, X } from "lucide-react";
 
@@ -35,9 +36,7 @@ export default function Sidebar({ open, onClose }: { open: boolean; onClose: () 
     >
       <div className="flex h-14 items-center justify-between border-b px-4">
         <Link href="/" className="flex items-center gap-2" onClick={onClose}>
-          <span className="grid size-7 place-items-center rounded-md bg-primary text-xs font-bold text-primary-foreground">
-            M
-          </span>
+          <Image src="/static/MES-logo-horizontal-M.svg" alt="MES" width={28} height={28} className="rounded-md" />
           <span className="text-sm font-semibold tracking-tight">{APP_NAME}</span>
           <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
             v{APP_VERSION}
