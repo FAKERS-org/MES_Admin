@@ -91,7 +91,7 @@ export default async function DashboardPage() {
         </CardHeader>
         <CardContent>
           {recent.length === 0 ? (
-            <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-10 text-center">
+            <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-6 text-center">
               <Building2 className="size-5 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">
                 No universities yet. Create the first one to get started.
