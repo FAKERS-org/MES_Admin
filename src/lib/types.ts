@@ -5,8 +5,8 @@
  *
  * - Admin schemas do not expose `status`, so draft/published state is derived
  *   from `GET /api/v1/public/universities/` (published only) - see `publishedIds()`.
- * - `ProgramSummary` exposes `tuition_fee`, but the model only stores
- *   `tuition_per_year` / `tuition_per_credit`, so `tuition_fee` is always null.
+ * - `ProgramSummary` returns the stored fee fields
+ *   `tuition_per_year` / `tuition_per_credit`.
  *   Program forms send tuition fields only when the user actually types one,
  *   so an edit never wipes values it cannot see.
  */
@@ -15,6 +15,8 @@ export type UniversityType = "PUBLIC" | "PRIVATE";
 export type Status = "DRAFT" | "PUBLISHED";
 export type DegreeLevel = "DIPLOMA" | "ASSOCIATE" | "BACHELOR" | "MASTER" | "PHD";
 export type Currency = "USD" | "KHR";
+
+export type UnitKind = "FACULTY" | "DEPARTMENT" | "SUB_DEPARTMENT" | "FOUNDATION";
 
 export const UNIVERSITY_TYPES: UniversityType[] = ["PUBLIC", "PRIVATE"];
 export const STATUSES: Status[] = ["DRAFT", "PUBLISHED"];
@@ -116,8 +118,23 @@ export interface ProgramSummary {
   faculty: string | null;
   degree_level: DegreeLevel;
   duration_years: number | null;
-  tuition_fee: number | null;
+  tuition_per_year: number | null;
+  tuition_per_credit: number | null;
   fee_currency: Currency;
+}
+
+/** `UnitSummary` item, from `GET /api/v1/public/universities/{university_id}/units`. */
+export interface UnitSummary {
+  id: string;
+  slug: string;
+  parent_id?: string | null;
+  kind: UnitKind;
+  name_en: string;
+  name_kh?: string | null;
+  category_en: string;
+  category_kh?: string | null;
+  logo?: string | null;
+  position: number;
 }
 
 /** `POST /api/v1/admin/universities/{id}/programs/` body. */
