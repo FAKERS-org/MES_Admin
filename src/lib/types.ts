@@ -123,7 +123,7 @@ export interface ProgramSummary {
   fee_currency: Currency;
 }
 
-/** `UnitSummary` item, from `GET /api/v1/public/universities/{university_id}/units`. */
+/** `UnitSummary` item, from `GET /api/v1/admin/universities/{university_id}/units`. */
 export interface UnitSummary {
   id: string;
   slug: string;
@@ -135,6 +135,89 @@ export interface UnitSummary {
   category_kh?: string | null;
   logo?: string | null;
   position: number;
+}
+
+export const UNIT_KINDS: UnitKind[] = ["FACULTY", "DEPARTMENT", "SUB_DEPARTMENT", "FOUNDATION"];
+
+/** `POST /api/v1/admin/universities/{university_id}/units/` body. */
+export interface UnitCreatePayload {
+  name_en: string;
+  name_kh?: string | null;
+  kind: UnitKind;
+  parent_id?: string | null;
+  category_en?: string;
+  category_kh?: string | null;
+  logo?: string | null;
+  position: number;
+}
+
+/** `PATCH /api/v1/admin/universities/{university_id}/units/{unit_id}` body. */
+export type UnitUpdatePayload = Partial<UnitCreatePayload>;
+
+/** One facility (lab/centre) row of a unit. */
+export interface Facility {
+  id: string;
+  unit_id: string;
+  title: string;
+  subtitle: string | null;
+  description: string;
+  image: string;
+  position: number;
+}
+
+export type FacilityCreatePayload = Omit<Facility, "id" | "unit_id">;
+
+/** One scholarship row of a unit. */
+export interface UnitScholarship {
+  id: string;
+  unit_id: string;
+  name_en: string;
+  name_kh: string | null;
+  coverage_en: string;
+  coverage_kh: string | null;
+  requirements: Array<Record<string, unknown>> | null;
+  position: number;
+}
+
+export type UnitScholarshipCreatePayload = Omit<UnitScholarship, "id" | "unit_id">;
+
+/** One course block inside a curriculum section. */
+export interface CurriculumBlock {
+  badge_text: string;
+  badge_background?: string | null;
+  title: string;
+  english_title?: string | null;
+  credits: string;
+  description: string;
+  courses: string[];
+  special_badge?: string | null;
+}
+
+/** One curriculum section row of a unit. */
+export interface CurriculumSection {
+  id: string;
+  unit_id: string;
+  heading_en: string;
+  heading_kh: string;
+  banner_text: string | null;
+  blocks: CurriculumBlock[];
+  position: number;
+}
+
+export type CurriculumSectionCreatePayload = Omit<CurriculumSection, "id" | "unit_id">;
+
+/**
+ * `UnitDetail` from `GET /api/v1/admin/universities/{id}/units/{unit_id}`.
+ * `facilities` / `scholarships` / `curriculum_sections` are the *effective*
+ * rows - inherited from the nearest ancestor that declares any - while the
+ * admin content endpoints (`/admin/units/{unit_id}/...`) edit the unit's own
+ * rows. Both carry real row ids.
+ */
+export interface UnitDetail extends UnitSummary {
+  curriculum_sections: CurriculumSection[];
+  facilities: Facility[];
+  scholarships: UnitScholarship[];
+  requirements: Array<Record<string, unknown>>;
 }
 
 /** `POST /api/v1/admin/universities/{id}/programs/` body. */

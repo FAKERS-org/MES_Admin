@@ -1,176 +1,18 @@
 "use client";
 
-import { Folder, Grid, Plus, Trash2 } from "lucide-react";
+import { Folder, Layers, Pencil, Plus, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition, type FormEvent } from "react";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { buttonVariants, Button } from "@/components/ui/button";
 import ConfirmButton from "@/components/ui/confirm-button";
 import { Alert, EmptyState, Spinner } from "@/components/ui/feedback";
-import { Field, Input, Select } from "@/components/ui/field";
+import UnitFields, { unitPayload } from "@/components/units/unit-fields";
 import { apiRequest } from "@/lib/api";
-import { type UnitSummary, type UnitKind } from "@/lib/types";
+import type { UnitSummary } from "@/lib/types";
 import { cn } from "@/lib/utils";
-
-function raw(form: FormData, key: string): string {
-    return String(form.get(key) ?? "").trim();
-}
-
-function nullable(form: FormData, key: string): string | null {
-    return raw(form, key) || null;
-}
-
-function numberOrNull(form: FormData, key: string): number | null {
-    const value = raw(form, key);
-    if (!value) return null;
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : null;
-}
-
-interface UnitFormProps {
-    defaultValue?: Partial<UnitSummary>;
-    onSave: (unit: UnitSummary) => void;
-    onClose: () => void;
-    isEditing: boolean;
-    unitId?: string;
-}
-
-/** Shared field layout for the create and edit unit forms. */
-function UnitForm({ defaultValue, onSave, onClose, isEditing, unitId }: UnitFormProps) {
-    const [nameEn, setNameEn] = useState(defaultValue?.name_en ?? "");
-    const [nameKh, setNameKh] = useState(defaultValue?.name_kh ?? "");
-    const [kind, setKind] = useState<UnitKind>(defaultValue?.kind ?? "FACULTY");
-    const [parentId, setParentId] = useState<string | null>(defaultValue?.parent_id ?? null);
-    const [categoryEn, setCategoryEn] = useState(defaultValue?.category_en ?? "");
-    const [categoryKh, setCategoryKh] = useState(defaultValue?.category_kh ?? "");
-    const [position, setPosition] = useState(defaultValue?.position ?? 0);
-    const [logo, setLogo] = useState(defaultValue?.logo ?? "");
-    const [pending, startTransition] = useTransition();
-
-    function handleSave(event: FormEvent<HTMLFormElement>) {
-        event.preventDefault();
-        startTransition(async () => {
-            try {
-                const payload = {
-                    name_en: nameEn.trim(),
-                    name_kh: nameKh.trim() || undefined,
-                    kind,
-                    parent_id: parentId || undefined,
-                    category_en: categoryEn.trim() || undefined,
-                    category_kh: categoryKh.trim() || undefined,
-                    logo: logo || undefined,
-                    position,
-                };
-
-                let response;
-                if (isEditing && unitId) {
-                    response = await apiRequest<UnitSummary>(
-                        `/api/v1/admin/universities/${unitId}/units`, // Will need to verify endpoint
-                        { method: "PATCH", body: payload }
-                    );
-                } else {
-                    response = await apiRequest<UnitSummary>(
-                        `/api/v1/admin/universities/${unitId}/units`, // Will need to verify endpoint
-                        { method: "POST", body: payload }
-                    );
-                }
-
-                onSave(response);
-                onClose();
-            } catch (caught) {
-                // Error handled by caller via alert
-            }
-        });
-    }
-
-    return (
-        <form onSubmit={handleSave} className="space-y-4 rounded-xl border bg-muted/30 p-4">
-            <p className="text-sm font-medium">{isEditing ? "Edit unit" : "New unit"}</p>
-
-            <Field label="Name (English)" htmlFor="u-name-en" required className="lg:col-span-2">
-                <Input
-                    id="u-name-en"
-                    name="name_en"
-                    placeholder="Faculty of Engineering"
-                    defaultValue={nameEn}
-                    required
-                />
-            </Field>
-
-            <Field label="Name (Khmer)" htmlFor="u-name-kh">
-                <Input id="u-name-kh" name="name_kh" defaultValue={nameKh} />
-            </Field>
-
-            <Field label="Kind" htmlFor="u-kind" required>
-                <Select id="u-kind" name="kind" defaultValue={kind}>
-                    <option value="FACULTY">Faculty</option>
-                    <option value="DEPARTMENT">Department</option>
-                    <option value="SUB_DEPARTMENT">Sub-Department</option>
-                    <option value="FOUNDATION">Foundation</option>
-                </Select>
-            </Field>
-
-            <Field label="Parent Unit" htmlFor="u-parent">
-                <Input
-                    id="u-parent"
-                    name="parent_id"
-                    placeholder="Select parent unit (optional)"
-                    defaultValue={parentId ?? ""}
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                    Leave blank for top-level unit (Faculty/Foundation).
-                </p>
-            </Field>
-
-            <Field label="Category (English)" htmlFor="u-category-en">
-                <Input id="u-category-en" name="category_en" defaultValue={categoryEn} />
-            </Field>
-
-            <Field label="Category (Khmer)" htmlFor="u-category-kh">
-                <Input id="u-category-kh" name="category_kh" defaultValue={categoryKh} />
-            </Field>
-
-            <Field label="Position" htmlFor="u-position" required>
-                <Input
-                    id="u-position"
-                    name="position"
-                    type="number"
-                    min="0"
-                    step="1"
-                    defaultValue={position.toString() || "0"}
-                    required
-                />
-            </Field>
-
-            <Field label="Logo URL" htmlFor="u-logo">
-                <Input
-                    id="u-logo"
-                    name="logo"
-                    placeholder="https://example.edu.kh/logo.png"
-                    defaultValue={logo}
-                />
-            </Field>
-
-            <div className="flex gap-2">
-                <Button
-                    type="submit"
-                    disabled={pending}
-                >
-                    {pending ? <Spinner className="size-4" /> : "Save"}
-                </Button>
-                <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={onClose}
-                    disabled={pending}
-                >
-                    Cancel
-                </Button>
-            </div>
-        </form>
-    );
-}
 
 export default function UnitManager({
     universityId,
@@ -195,33 +37,71 @@ export default function UnitManager({
         setError(null);
     }
 
-    function handleCreate() {
-        setAdding(true);
-        setEditingId(null);
+    /** Insert or replace a row so an edit never shows up as a duplicate. */
+    function upsert(unit: UnitSummary) {
+        setItems(current => {
+            const index = current.findIndex(item => item.id === unit.id);
+            if (index === -1) return [...current, unit];
+            const next = [...current];
+            next[index] = unit;
+            return next;
+        });
     }
 
-    function handleSaveUnit(unit: UnitSummary) {
-        setItems(current => [...current, unit]);
-        setAdding(false);
-        flash(`“${unit.name_en}” added.`);
-        router.refresh();
+    function handleCreate(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+        const payload = unitPayload(new FormData(event.currentTarget));
+        if (!payload.name_en) {
+            setError("Name (English) is required.");
+            return;
+        }
+
+        startTransition(async () => {
+            try {
+                const created = await apiRequest<UnitSummary>(
+                    `/api/admin/universities/${universityId}/units`,
+                    { method: "POST", body: payload }
+                );
+                upsert(created);
+                setAdding(false);
+                flash(`“${created.name_en}” added.`);
+                router.refresh();
+            } catch (caught) {
+                setError(caught instanceof Error ? caught.message : "Could not add the unit.");
+            }
+        });
     }
 
     function handleUpdate(unit: UnitSummary) {
-        return async (event: FormEvent<HTMLFormElement>) => {
+        return (event: FormEvent<HTMLFormElement>) => {
             event.preventDefault();
-            // Unit update handled via handleSaveUnit pattern
-            // For now, just refresh
-            setEditingId(null);
-            flash(`“${unit.name_en}” updated.`);
-            router.refresh();
+            const payload = unitPayload(new FormData(event.currentTarget));
+            if (!payload.name_en) {
+                setError("Name (English) is required.");
+                return;
+            }
+
+            startTransition(async () => {
+                try {
+                    const updated = await apiRequest<UnitSummary>(
+                        `/api/admin/universities/${universityId}/units/${unit.id}`,
+                        { method: "PATCH", body: payload }
+                    );
+                    upsert(updated);
+                    setEditingId(null);
+                    flash(`“${updated.name_en}” updated.`);
+                    router.refresh();
+                } catch (caught) {
+                    setError(caught instanceof Error ? caught.message : "Could not update the unit.");
+                }
+            });
         };
     }
 
     function handleDelete(unit: UnitSummary) {
         return async () => {
             try {
-                await apiRequest(`/api/v1/admin/universities/${unit.id}`, {
+                await apiRequest(`/api/admin/universities/${universityId}/units/${unit.id}`, {
                     method: "DELETE",
                 });
                 setItems(current => current.filter(item => item.id !== unit.id));
@@ -260,9 +140,24 @@ export default function UnitManager({
             {saved && !error ? <Alert variant="success">{saved}</Alert> : null}
 
             {adding ? (
-                <form onSubmit={() => { /* handled via UnitForm onSave */ }} className="space-y-4 rounded-xl border bg-muted/30 p-4">
+                <form onSubmit={handleCreate} className="space-y-4 rounded-xl border bg-muted/30 p-4">
                     <p className="text-sm font-medium">New unit</p>
-                    <UnitForm onSave={handleSaveUnit} onClose={() => setAdding(false)} isEditing={false} />
+                    <UnitFields siblings={items} />
+                    <div className="flex gap-2">
+                        <Button type="submit" size="sm" disabled={pending}>
+                            {pending ? <Spinner className="size-3.5" /> : null}
+                            {pending ? "Adding…" : "Add unit"}
+                        </Button>
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setAdding(false)}
+                            disabled={pending}
+                        >
+                            Cancel
+                        </Button>
+                    </div>
                 </form>
             ) : null}
 
@@ -281,21 +176,28 @@ export default function UnitManager({
 
             {items.length > 0 ? (
                 <div className="divide-y rounded-xl border">
-                    {items.map(unit =>
-                        editingId === unit.id ? (
-                            <form
-                                key={unit.id}
-                                onSubmit={handleUpdate(unit)}
-                                className="space-y-4 bg-muted/30 p-4"
-                            >
+                    {items.map(unit => {
+                        const parent = items.find(item => item.id === unit.parent_id);
+
+                        return editingId === unit.id ? (
+                            <form key={unit.id} onSubmit={handleUpdate(unit)} className="space-y-4 bg-muted/30 p-4">
                                 <p className="text-sm font-medium">Edit “{unit.name_en}”</p>
-                                <UnitForm
-                                    defaultValue={unit}
-                                    onSave={handleSaveUnit}
-                                    onClose={() => setEditingId(null)}
-                                    isEditing={true}
-                                    unitId={unit.id}
-                                />
+                                <UnitFields defaultValue={unit} siblings={items} />
+                                <div className="flex gap-2">
+                                    <Button type="submit" size="sm" disabled={pending}>
+                                        {pending ? <Spinner className="size-3.5" /> : null}
+                                        {pending ? "Saving…" : "Save unit"}
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => setEditingId(null)}
+                                        disabled={pending}
+                                    >
+                                        Cancel
+                                    </Button>
+                                </div>
                             </form>
                         ) : (
                             <div key={unit.id} className="flex flex-wrap items-center gap-3 p-3.5">
@@ -309,13 +211,20 @@ export default function UnitManager({
                                         ) : null}
                                     </p>
                                     <p className={cn("mt-0.5 truncate text-xs text-muted-foreground")}>
-                                        {unit.kind} · Position {unit.position}
+                                        {[parent ? `Under ${parent.name_en}` : `Position ${unit.position}`].join(" · ")}
                                     </p>
                                 </div>
 
-                                <Badge variant="outline">{unit.kind}</Badge>
+                                <Badge variant="outline">{unit.kind.replace(/_/g, " ")}</Badge>
 
                                 <div className="flex items-center gap-1.5">
+                                    <Link
+                                        href={`/universities/${universityId}/units/${unit.id}`}
+                                        className={buttonVariants({ variant: "outline", size: "sm" })}
+                                    >
+                                        <Layers className="size-3.5" />
+                                        Content
+                                    </Link>
                                     <Button
                                         size="sm"
                                         variant="outline"
@@ -325,20 +234,20 @@ export default function UnitManager({
                                         }}
                                         aria-label={`Edit ${unit.name_en}`}
                                     >
-                                        <Folder className="size-3.5" />
+                                        <Pencil className="size-3.5" />
                                         Edit
                                     </Button>
                                     <ConfirmButton
                                         onConfirm={handleDelete(unit)}
-                                        confirmLabel={`Delete “${unit.name_en}”?`}
+                                        confirmLabel={`Delete “${unit.name_en}” and its content?`}
                                     >
                                         <Trash2 className="size-3.5" />
                                         Delete
                                     </ConfirmButton>
                                 </div>
                             </div>
-                        )
-                    )}
+                        );
+                    })}
                 </div>
             ) : null}
         </div>

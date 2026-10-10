@@ -31,11 +31,11 @@ export default async function UniversityDetailPage({ params }: { params: Promise
     const published = await publishedIds();
     const status: Status = published.has(university.id) ? "PUBLISHED" : "DRAFT";
 
-    // Fetch units from the public API
+    // Units come from the admin API: the public list endpoint 403s while the
+    // university is still a DRAFT, which would hide every unit.
     let units: UnitSummary[] = [];
     try {
-        const unitsRes = await apiRequest<{ items: UnitSummary[] }>(`/api/v1/public/universities/${id}/units`);
-        units = unitsRes.items ?? [];
+        units = await apiRequest<UnitSummary[]>(`admin/universities/${id}/units/`);
     } catch {
         // API unreachable - units will render as empty state
     }
