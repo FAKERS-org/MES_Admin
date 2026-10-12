@@ -4,26 +4,6 @@
  */
 
 export interface paths {
-    "/api/v1/admin/upload/generate-presigned-url": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Get Upload Url
-         * @description Generate a presigned URL for direct frontend upload to R2.
-         */
-        post: operations["get_upload_url_api_v1_admin_upload_generate_presigned_url_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/health": {
         parameters: {
             query?: never;
@@ -93,7 +73,8 @@ export interface paths {
         };
         /**
          * Get University Detail
-         * @description Get detailed information about a specific published university.
+         * @description Get detailed information about a specific published university,
+         *     including the scholarships the university itself offers.
          */
         get: operations["get_university_detail_api_v1_public_universities__university_id__get"];
         put?: never;
@@ -240,6 +221,270 @@ export interface paths {
         patch: operations["update_program_api_v1_admin_programs__program_id__patch"];
         trace?: never;
     };
+    "/api/v1/admin/universities/{university_id}/units/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Units Endpoint
+         * @description List all units of a university.
+         */
+        get: operations["list_units_endpoint_api_v1_admin_universities__university_id__units__get"];
+        put?: never;
+        /**
+         * Create Unit Endpoint
+         * @description Create a new unit (Faculty/Department) under a university.
+         */
+        post: operations["create_unit_endpoint_api_v1_admin_universities__university_id__units__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/universities/{university_id}/units/{unit_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Unit Endpoint
+         * @description Get one unit with its curriculum, facilities and scholarships.
+         */
+        get: operations["get_unit_endpoint_api_v1_admin_universities__university_id__units__unit_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete Unit Endpoint
+         * @description Delete a unit with child cascade.
+         */
+        delete: operations["delete_unit_endpoint_api_v1_admin_universities__university_id__units__unit_id__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Update Unit Endpoint
+         * @description Partial update - only send fields you want to change.
+         */
+        patch: operations["update_unit_endpoint_api_v1_admin_universities__university_id__units__unit_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/admin/units/{unit_id}/facilities/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Facilities
+         * @description List the facilities (labs/centres) of a unit.
+         */
+        get: operations["list_facilities_api_v1_admin_units__unit_id__facilities__get"];
+        put?: never;
+        /**
+         * Create Facility
+         * @description Add a facility to a unit.
+         */
+        post: operations["create_facility_api_v1_admin_units__unit_id__facilities__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/units/{unit_id}/facilities/{facility_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Facility
+         * @description Delete one facility of a unit.
+         */
+        delete: operations["delete_facility_api_v1_admin_units__unit_id__facilities__facility_id__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Update Facility
+         * @description Partial update - only send fields you want to change.
+         */
+        patch: operations["update_facility_api_v1_admin_units__unit_id__facilities__facility_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/admin/units/{unit_id}/curriculum-sections/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Curriculum Sections
+         * @description List the curriculum sections of a unit.
+         */
+        get: operations["list_curriculum_sections_api_v1_admin_units__unit_id__curriculum_sections__get"];
+        put?: never;
+        /**
+         * Create Curriculum Section
+         * @description Add a curriculum section to a unit.
+         */
+        post: operations["create_curriculum_section_api_v1_admin_units__unit_id__curriculum_sections__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/units/{unit_id}/curriculum-sections/{section_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Curriculum Section
+         * @description Delete one curriculum section of a unit.
+         */
+        delete: operations["delete_curriculum_section_api_v1_admin_units__unit_id__curriculum_sections__section_id__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Update Curriculum Section
+         * @description Partial update - only send fields you want to change.
+         */
+        patch: operations["update_curriculum_section_api_v1_admin_units__unit_id__curriculum_sections__section_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/admin/units/{unit_id}/scholarships/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Unit Scholarships
+         * @description List the scholarships of a unit.
+         */
+        get: operations["list_unit_scholarships_api_v1_admin_units__unit_id__scholarships__get"];
+        put?: never;
+        /**
+         * Create Unit Scholarship
+         * @description Add a scholarship to a unit.
+         */
+        post: operations["create_unit_scholarship_api_v1_admin_units__unit_id__scholarships__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/units/{unit_id}/scholarships/{scholarship_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Unit Scholarship
+         * @description Delete one scholarship of a unit.
+         */
+        delete: operations["delete_unit_scholarship_api_v1_admin_units__unit_id__scholarships__scholarship_id__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Update Unit Scholarship
+         * @description Partial update - only send fields you want to change.
+         */
+        patch: operations["update_unit_scholarship_api_v1_admin_units__unit_id__scholarships__scholarship_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/admin/universities/{university_id}/scholarships/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List University Scholarships
+         * @description List the scholarships offered by the university itself.
+         */
+        get: operations["list_university_scholarships_api_v1_admin_universities__university_id__scholarships__get"];
+        put?: never;
+        /**
+         * Create University Scholarship
+         * @description Add a scholarship offered by the university itself.
+         */
+        post: operations["create_university_scholarship_api_v1_admin_universities__university_id__scholarships__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/universities/{university_id}/scholarships/{scholarship_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete University Scholarship
+         * @description Delete one scholarship offered by the university itself.
+         */
+        delete: operations["delete_university_scholarship_api_v1_admin_universities__university_id__scholarships__scholarship_id__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Update University Scholarship
+         * @description Partial update - only send fields you want to change.
+         */
+        patch: operations["update_university_scholarship_api_v1_admin_universities__university_id__scholarships__scholarship_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/admin/upload/generate-presigned-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Get Upload Url
+         * @description Generate a presigned URL for direct frontend upload to R2.
+         */
+        post: operations["get_upload_url_api_v1_admin_upload_generate_presigned_url_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -316,6 +561,75 @@ export interface components {
             blocks: components["schemas"]["CurriculumBlock"][];
         };
         /**
+         * CurriculumSectionCreate
+         * @description Create payload for one curriculum section of a unit.
+         */
+        CurriculumSectionCreate: {
+            /** Heading En */
+            heading_en: string;
+            /** Heading Kh */
+            heading_kh: string;
+            /** Banner Text */
+            banner_text?: string | null;
+            /**
+             * Blocks
+             * @default []
+             */
+            blocks: components["schemas"]["CurriculumBlock"][];
+            /**
+             * Position
+             * @default 0
+             */
+            position: number;
+        };
+        /**
+         * CurriculumSectionRead
+         * @description Curriculum section as stored, with its real row id.
+         */
+        CurriculumSectionRead: {
+            /** Heading En */
+            heading_en: string;
+            /** Heading Kh */
+            heading_kh: string;
+            /** Banner Text */
+            banner_text?: string | null;
+            /**
+             * Blocks
+             * @default []
+             */
+            blocks: components["schemas"]["CurriculumBlock"][];
+            /**
+             * Position
+             * @default 0
+             */
+            position: number;
+            /** Id */
+            id: number;
+            /**
+             * Public Id
+             * Format: uuid
+             */
+            public_id: string;
+            /** Unit Id */
+            unit_id: number;
+        };
+        /**
+         * CurriculumSectionUpdate
+         * @description Partial update - only send fields you want to change.
+         */
+        CurriculumSectionUpdate: {
+            /** Heading En */
+            heading_en?: string | null;
+            /** Heading Kh */
+            heading_kh?: string | null;
+            /** Banner Text */
+            banner_text?: string | null;
+            /** Blocks */
+            blocks?: components["schemas"]["CurriculumBlock"][] | null;
+            /** Position */
+            position?: number | null;
+        };
+        /**
          * DegreeLevel
          * @enum {string}
          */
@@ -326,7 +640,14 @@ export interface components {
          */
         Facilities: {
             /** Id */
-            id: string;
+            id: number;
+            /**
+             * Public Id
+             * Format: uuid
+             */
+            public_id: string;
+            /** Unit Id */
+            unit_id: number;
             /** Title */
             title: string;
             /** Subtitle */
@@ -335,6 +656,70 @@ export interface components {
             description: string;
             /** Image */
             image: string;
+        };
+        /**
+         * FacilityCreate
+         * @description Create payload for one facility (lab/centre) of a unit.
+         */
+        FacilityCreate: {
+            /** Title */
+            title: string;
+            /** Subtitle */
+            subtitle?: string | null;
+            /** Description */
+            description: string;
+            /** Image */
+            image: string;
+            /**
+             * Position
+             * @default 0
+             */
+            position: number;
+        };
+        /**
+         * FacilityRead
+         * @description Facility as stored, with its real row id (the public detail route
+         *     synthesizes index-based ids instead - do not rely on those for edits).
+         */
+        FacilityRead: {
+            /** Title */
+            title: string;
+            /** Subtitle */
+            subtitle?: string | null;
+            /** Description */
+            description: string;
+            /** Image */
+            image: string;
+            /**
+             * Position
+             * @default 0
+             */
+            position: number;
+            /** Id */
+            id: number;
+            /**
+             * Public Id
+             * Format: uuid
+             */
+            public_id: string;
+            /** Unit Id */
+            unit_id: number;
+        };
+        /**
+         * FacilityUpdate
+         * @description Partial update - only send fields you want to change.
+         */
+        FacilityUpdate: {
+            /** Title */
+            title?: string | null;
+            /** Subtitle */
+            subtitle?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Image */
+            image?: string | null;
+            /** Position */
+            position?: number | null;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -381,11 +766,13 @@ export interface components {
          * @description Schema for summarizing program information.
          */
         ProgramSummary: {
+            /** Id */
+            id: number;
             /**
-             * Id
+             * Public Id
              * Format: uuid
              */
-            id: string;
+            public_id: string;
             /** Name En */
             name_en: string;
             /** Name Kh */
@@ -431,24 +818,150 @@ export interface components {
             admission_req_kh?: string | null;
         };
         /**
+         * Scholarship
+         * @description One scholarship as the detail pages render it.
+         */
+        Scholarship: {
+            /** Id */
+            id: number;
+            /**
+             * Public Id
+             * Format: uuid
+             */
+            public_id: string;
+            /** Name En */
+            name_en: string;
+            /** Name Kh */
+            name_kh?: string | null;
+            /** Coverage En */
+            coverage_en: string;
+            /** Coverage Kh */
+            coverage_kh?: string | null;
+            /** Requirements */
+            requirements?: {
+                [key: string]: unknown;
+            }[] | null;
+        };
+        /**
+         * ScholarshipCreate
+         * @description Create payload for a scholarship of one university or unit.
+         */
+        ScholarshipCreate: {
+            /** Name En */
+            name_en: string;
+            /** Name Kh */
+            name_kh?: string | null;
+            /** Coverage En */
+            coverage_en: string;
+            /** Coverage Kh */
+            coverage_kh?: string | null;
+            /** Requirements */
+            requirements?: {
+                [key: string]: unknown;
+            }[] | null;
+            /**
+             * Position
+             * @default 0
+             */
+            position: number;
+        };
+        /**
+         * ScholarshipRead
+         * @description Scholarship as stored, with its real row id and which entity owns it.
+         */
+        ScholarshipRead: {
+            /** Name En */
+            name_en: string;
+            /** Name Kh */
+            name_kh?: string | null;
+            /** Coverage En */
+            coverage_en: string;
+            /** Coverage Kh */
+            coverage_kh?: string | null;
+            /** Requirements */
+            requirements?: {
+                [key: string]: unknown;
+            }[] | null;
+            /**
+             * Position
+             * @default 0
+             */
+            position: number;
+            /** Id */
+            id: number;
+            /**
+             * Public Id
+             * Format: uuid
+             */
+            public_id: string;
+            /** Unit Id */
+            unit_id?: number | null;
+            /** University Id */
+            university_id?: number | null;
+        };
+        /**
+         * ScholarshipUpdate
+         * @description Partial update - only send fields you want to change.
+         */
+        ScholarshipUpdate: {
+            /** Name En */
+            name_en?: string | null;
+            /** Name Kh */
+            name_kh?: string | null;
+            /** Coverage En */
+            coverage_en?: string | null;
+            /** Coverage Kh */
+            coverage_kh?: string | null;
+            /** Requirements */
+            requirements?: {
+                [key: string]: unknown;
+            }[] | null;
+            /** Position */
+            position?: number | null;
+        };
+        /**
          * Status
          * @enum {string}
          */
         Status: "DRAFT" | "PUBLISHED";
         /**
+         * UnitCreate
+         * @description The data required to create a new unit.
+         */
+        UnitCreate: {
+            /** Name En */
+            name_en: string;
+            /** Name Kh */
+            name_kh?: string | null;
+            /** @default FACULTY */
+            kind: components["schemas"]["UnitKind"];
+            /** Parent Id */
+            parent_id?: number | null;
+            /** Category En */
+            category_en: string;
+            /** Category Kh */
+            category_kh?: string | null;
+            /** Logo */
+            logo?: string | null;
+            /** Position */
+            position: number;
+        };
+        /**
          * UnitDetail
          * @description UnitSummary plus the content a unit page renders.
          */
         UnitDetail: {
+            /** Id */
+            id: number;
             /**
-             * Id
+             * Public Id
              * Format: uuid
              */
-            id: string;
+            public_id: string;
             /** Slug */
             slug: string;
             /** Parent Id */
-            parent_id?: string | null;
+            parent_id?: number | null;
             kind: components["schemas"]["UnitKind"];
             /** Name En */
             name_en: string;
@@ -476,7 +989,7 @@ export interface components {
              * Scholarships
              * @default []
              */
-            scholarships: components["schemas"]["UnitScholarship"][];
+            scholarships: components["schemas"]["Scholarship"][];
             /**
              * Requirements
              * @default []
@@ -491,36 +1004,21 @@ export interface components {
          */
         UnitKind: "FACULTY" | "DEPARTMENT" | "SUB_DEPARTMENT" | "FOUNDATION";
         /**
-         * UnitScholarship
-         * @description A scholarship open to students of one unit only.
+         * UnitSummary
+         * @description Summary of a unit.
          */
-        UnitScholarship: {
-            /** Id */
-            id: string;
-            /** Name En */
-            name_en: string;
-            /** Name Kh */
-            name_kh?: string | null;
-            /** Coverage En */
-            coverage_en: string;
-            /** Coverage Kh */
-            coverage_kh?: string | null;
-            /** Requirements */
-            requirements?: {
-                [key: string]: unknown;
-            }[] | null;
-        };
-        /** UnitSummary */
         UnitSummary: {
+            /** Id */
+            id: number;
             /**
-             * Id
+             * Public Id
              * Format: uuid
              */
-            id: string;
+            public_id: string;
             /** Slug */
             slug: string;
             /** Parent Id */
-            parent_id?: string | null;
+            parent_id?: number | null;
             kind: components["schemas"]["UnitKind"];
             /** Name En */
             name_en: string;
@@ -534,6 +1032,28 @@ export interface components {
             logo?: string | null;
             /** Position */
             position: number;
+        };
+        /**
+         * UnitUpdate
+         * @description The data required to update a unit (partial update).
+         */
+        UnitUpdate: {
+            /** Name En */
+            name_en?: string | null;
+            /** Name Kh */
+            name_kh?: string | null;
+            /** Kind */
+            kind?: string | null;
+            /** Parent Id */
+            parent_id?: number | null;
+            /** Category En */
+            category_en?: string | null;
+            /** Category Kh */
+            category_kh?: string | null;
+            /** Logo */
+            logo?: string | null;
+            /** Position */
+            position?: number | null;
         };
         /**
          * UniversityCreate
@@ -555,11 +1075,13 @@ export interface components {
          * @description Schema for detailed university information.
          */
         UniversityDetail: {
+            /** Id */
+            id: number;
             /**
-             * Id
+             * Public Id
              * Format: uuid
              */
-            id: string;
+            public_id: string;
             /** Name En */
             name_en: string;
             /** Name Kh */
@@ -571,6 +1093,10 @@ export interface components {
             province: string;
             /** Logo Url */
             logo_url?: string | null;
+            /** Overview En */
+            overview_en?: string | null;
+            /** Overview Kh */
+            overview_kh?: string | null;
             /** Moeys Accredited */
             moeys_accredited: boolean;
             /** Established Year */
@@ -581,10 +1107,6 @@ export interface components {
             website?: string | null;
             /** Cover Image Url */
             cover_image_url?: string | null;
-            /** Overview En */
-            overview_en?: string | null;
-            /** Overview Kh */
-            overview_kh?: string | null;
             /** Has Scholarships */
             has_scholarships: boolean;
             /** Scholarship Info */
@@ -598,6 +1120,11 @@ export interface components {
              * @default []
              */
             programs: components["schemas"]["ProgramSummary"][];
+            /**
+             * Scholarships
+             * @default []
+             */
+            scholarships: components["schemas"]["Scholarship"][];
             /** University Category En */
             university_category_en?: string | null;
             /** University Category Kh */
@@ -626,11 +1153,13 @@ export interface components {
          * @description Schema for summarizing university information.
          */
         UniversitySummary: {
+            /** Id */
+            id: number;
             /**
-             * Id
+             * Public Id
              * Format: uuid
              */
-            id: string;
+            public_id: string;
             /** Name En */
             name_en: string;
             /** Name Kh */
@@ -642,6 +1171,10 @@ export interface components {
             province: string;
             /** Logo Url */
             logo_url?: string | null;
+            /** Overview En */
+            overview_en?: string | null;
+            /** Overview Kh */
+            overview_kh?: string | null;
             /** Moeys Accredited */
             moeys_accredited: boolean;
             /** Established Year */
@@ -736,39 +1269,6 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    get_upload_url_api_v1_admin_upload_generate_presigned_url_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PresignedUrlRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     health_check_health_get: {
         parameters: {
             query?: never;
@@ -1001,7 +1501,7 @@ export interface operations {
         };
         responses: {
             /** @description Successful Response */
-            200: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1025,7 +1525,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                university_id: string;
+                university_id: number;
             };
             cookie?: never;
         };
@@ -1056,7 +1556,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                university_id: string;
+                university_id: number;
             };
             cookie?: never;
         };
@@ -1085,7 +1585,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                university_id: string;
+                university_id: number;
             };
             cookie?: never;
         };
@@ -1120,7 +1620,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                university_id: string;
+                university_id: number;
             };
             cookie?: never;
         };
@@ -1131,7 +1631,7 @@ export interface operations {
         };
         responses: {
             /** @description Successful Response */
-            200: {
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1155,7 +1655,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                program_id: string;
+                program_id: number;
             };
             cookie?: never;
         };
@@ -1184,7 +1684,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                program_id: string;
+                program_id: number;
             };
             cookie?: never;
         };
@@ -1201,6 +1701,731 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProgramSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_units_endpoint_api_v1_admin_universities__university_id__units__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                university_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitSummary"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_unit_endpoint_api_v1_admin_universities__university_id__units__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                university_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UnitCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_unit_endpoint_api_v1_admin_universities__university_id__units__unit_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                university_id: number;
+                unit_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_unit_endpoint_api_v1_admin_universities__university_id__units__unit_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                university_id: number;
+                unit_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_unit_endpoint_api_v1_admin_universities__university_id__units__unit_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                university_id: number;
+                unit_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UnitUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_facilities_api_v1_admin_units__unit_id__facilities__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unit_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FacilityRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_facility_api_v1_admin_units__unit_id__facilities__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unit_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FacilityCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FacilityRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_facility_api_v1_admin_units__unit_id__facilities__facility_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unit_id: number;
+                facility_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_facility_api_v1_admin_units__unit_id__facilities__facility_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unit_id: number;
+                facility_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FacilityUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FacilityRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_curriculum_sections_api_v1_admin_units__unit_id__curriculum_sections__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unit_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CurriculumSectionRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_curriculum_section_api_v1_admin_units__unit_id__curriculum_sections__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unit_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CurriculumSectionCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CurriculumSectionRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_curriculum_section_api_v1_admin_units__unit_id__curriculum_sections__section_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unit_id: number;
+                section_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_curriculum_section_api_v1_admin_units__unit_id__curriculum_sections__section_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unit_id: number;
+                section_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CurriculumSectionUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CurriculumSectionRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_unit_scholarships_api_v1_admin_units__unit_id__scholarships__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unit_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScholarshipRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_unit_scholarship_api_v1_admin_units__unit_id__scholarships__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unit_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScholarshipCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScholarshipRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_unit_scholarship_api_v1_admin_units__unit_id__scholarships__scholarship_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unit_id: number;
+                scholarship_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_unit_scholarship_api_v1_admin_units__unit_id__scholarships__scholarship_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unit_id: number;
+                scholarship_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScholarshipUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScholarshipRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_university_scholarships_api_v1_admin_universities__university_id__scholarships__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                university_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScholarshipRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_university_scholarship_api_v1_admin_universities__university_id__scholarships__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                university_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScholarshipCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScholarshipRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_university_scholarship_api_v1_admin_universities__university_id__scholarships__scholarship_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                university_id: number;
+                scholarship_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_university_scholarship_api_v1_admin_universities__university_id__scholarships__scholarship_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                university_id: number;
+                scholarship_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScholarshipUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScholarshipRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_upload_url_api_v1_admin_upload_generate_presigned_url_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PresignedUrlRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
