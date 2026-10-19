@@ -1,13 +1,19 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
-import { Lexend } from "next/font/google";
+import { Kantumruy_Pro, Lexend } from "next/font/google";
 
 import "./globals.css";
 import { QueryProvider } from "@/providers/query-provider";
 
 const lexend = Lexend({
-  subsets: ["latin"],
-  variable: "--font-lexend",
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-lexend-family",
+  display: "swap",
+});
+
+const kantumruyPro = Kantumruy_Pro({
+  subsets: ["khmer", "latin"],
+  variable: "--font-kantumruy-family",
   display: "swap",
 });
 
@@ -37,7 +43,11 @@ const themeScript = `(function(){try{var t=localStorage.getItem("mes-theme");var
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning className={lexend.variable}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${lexend.variable} ${kantumruyPro.variable}`}
+    >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>

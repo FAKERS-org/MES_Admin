@@ -57,6 +57,9 @@
 }
 
 @theme inline {
+  --font-sans: var(--font-lexend-family), var(--font-kantumruy-family), "Noto Sans Khmer", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-lexend: var(--font-lexend-family), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-khmer: var(--font-kantumruy-family), "Noto Sans Khmer", ui-sans-serif, system-ui, sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -90,7 +93,7 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: var(--font-lexend), system-ui, sans-serif;
+    font-family: var(--font-sans);
   }
 
   html {
