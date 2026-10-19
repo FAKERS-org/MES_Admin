@@ -37,7 +37,7 @@ export interface ContentManagerProps<T extends ContentRow> {
     noun: string;
     emptyTitle: string;
     emptyDescription: string;
-    rowTitle: (item: T) => string;
+    rowTitle?: (item: T) => string;
     rowMeta?: (item: T) => ReactNode;
     /** Extra note under the header, e.g. inherited-content counts. */
     notice?: ReactNode;
@@ -77,6 +77,34 @@ export default function ContentManager<T extends ContentRow>({
     useEffect(() => setRows(items), [items]);
 
     const basePath = `/api/admin/units/${unitId}/${collection}`;
+
+    function getRowTitle(item: T): string {
+        if (rowTitle) return rowTitle(item);
+        const record = item as Record<string, unknown>;
+        return (
+            (record.heading_en as string) ||
+            (record.title as string) ||
+            (record.name_en as string) ||
+            (record.name as string) ||
+            String(item.id)
+        );
+    }
+
+    function getRowMeta(item: T): ReactNode {
+        if (rowMeta) return rowMeta(item);
+        const record = item as Record<string, unknown>;
+        if (collection === "curriculum-sections") {
+            const blocks = Array.isArray(record.blocks) ? record.blocks : [];
+            return `${blocks.length} block${blocks.length === 1 ? "" : "s"} · position ${record.position ?? 0}`;
+        }
+        if (collection === "facilities") {
+            return (record.subtitle as ReactNode) ?? (record.description as ReactNode) ?? null;
+        }
+        if (collection === "scholarships") {
+            return (record.coverage_en as ReactNode) ?? null;
+        }
+        return null;
+    }
 
     function flash(message: string) {
         setSaved(message);
@@ -170,7 +198,7 @@ export default function ContentManager<T extends ContentRow>({
                 });
                 upsert(created);
                 setAdding(false);
-                flash(`“${rowTitle(created)}” added.`);
+                flash(`“${getRowTitle(created)}” added.`);
                 router.refresh();
             } catch (caught) {
                 setError(caught instanceof Error ? caught.message : `Could not add the ${noun}.`);
@@ -189,7 +217,7 @@ export default function ContentManager<T extends ContentRow>({
                     });
                     upsert(updated);
                     setEditingId(null);
-                    flash(`“${rowTitle(updated)}” updated.`);
+                    flash(`“${getRowTitle(updated)}” updated.`);
                     router.refresh();
                 } catch (caught) {
                     setError(caught instanceof Error ? caught.message : `Could not update the ${noun}.`);
@@ -203,7 +231,7 @@ export default function ContentManager<T extends ContentRow>({
             try {
                 await apiRequest(`${basePath}/${item.id}`, { method: "DELETE" });
                 setRows(current => current.filter(row => row.id !== item.id));
-                flash(`“${rowTitle(item)}” deleted.`);
+                flash(`“${getRowTitle(item)}” deleted.`);
                 router.refresh();
             } catch (caught) {
                 setError(caught instanceof Error ? caught.message : `Could not delete the ${noun}.`);
@@ -278,7 +306,7 @@ export default function ContentManager<T extends ContentRow>({
                     {rows.map(item =>
                         editingId === item.id ? (
                             <form key={item.id} onSubmit={handleUpdate(item)} className="space-y-4 bg-muted/30 p-4">
-                                <p className="text-sm font-medium">Edit “{rowTitle(item)}”</p>
+                                <p className="text-sm font-medium">Edit “{getRowTitle(item)}”</p>
                                 <div className="grid gap-4 sm:grid-cols-2">{formFields(item)}</div>
                                 <div className="flex gap-2">
                                     <Button type="submit" size="sm" disabled={pending}>
@@ -299,9 +327,9 @@ export default function ContentManager<T extends ContentRow>({
                         ) : (
                             <div key={item.id} className="flex flex-wrap items-center gap-3 p-3.5">
                                 <div className="min-w-0 flex-1">
-                                    <p className="truncate text-sm font-medium">{rowTitle(item)}</p>
-                                    {rowMeta ? (
-                                        <p className="mt-0.5 truncate text-xs text-muted-foreground">{rowMeta(item)}</p>
+                                    <p className="truncate text-sm font-medium">{getRowTitle(item)}</p>
+                                    {getRowMeta(item) ? (
+                                        <p className="mt-0.5 truncate text-xs text-muted-foreground">{getRowMeta(item)}</p>
                                     ) : null}
                                 </div>
 
@@ -313,13 +341,13 @@ export default function ContentManager<T extends ContentRow>({
                                             setEditingId(item.id);
                                             setAdding(false);
                                         }}
-                                        aria-label={`Edit ${rowTitle(item)}`}
+                                        aria-label={`Edit ${getRowTitle(item)}`}
                                     >
                                         Edit
                                     </Button>
                                     <ConfirmButton
                                         onConfirm={handleDelete(item)}
-                                        confirmLabel={`Delete “${rowTitle(item)}”?`}
+                                        confirmLabel={`Delete “${getRowTitle(item)}”?`}
                                     >
                                         <Trash2 className="size-3.5" />
                                         Delete

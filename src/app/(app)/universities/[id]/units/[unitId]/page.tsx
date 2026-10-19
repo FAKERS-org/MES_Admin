@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { PageHeader } from "@/components/ui/feedback";
+import { Alert, PageHeader } from "@/components/ui/feedback";
 import ContentManager from "@/components/units/content-manager";
 import UnitEditForm from "@/components/units/unit-edit-form";
 import { ApiError, apiList, apiRequest } from "@/lib/server-api";
@@ -24,8 +24,29 @@ export const dynamic = "force-dynamic";
  * shows the *effective* rows, which may be inherited from a parent unit.
  */
 function inheritedNotice(own: number, effective: number, singular: string, plural: string) {
-    if (own > 0 || effective === 0) return undefined;
-    return `This unit has no own ${plural} yet - the public page currently shows ${effective} inherited from a parent unit.`;
+    if (effective === 0) return undefined;
+    const inherited = effective - own;
+    if (own === 0) {
+        return `This unit has no own ${plural} yet - the public page currently shows ${effective} inherited from a parent unit.`;
+    }
+    if (inherited > 0) {
+        return `The public page shows ${effective} ${plural}: ${own} owned by this unit, ${inherited} inherited from a parent unit.`;
+    }
+    return undefined;
+}
+
+/** Result of fetching one content collection independently, without throwing. */
+type ContentResult<T> = { items: T[]; error: string | null };
+
+/** Fetch one content collection; a bad endpoint yields an empty array + error instead of crashing the page. */
+async function fetchContent<T>(path: string): Promise<ContentResult<T>> {
+    try {
+        const items = await apiRequest<T[]>(path);
+        return { items, error: null };
+    } catch (caught) {
+        const message = caught instanceof ApiError ? caught.message : "Failed to load.";
+        return { items: [], error: message };
+    }
 }
 
 export default async function UnitDetailPage({
@@ -43,12 +64,16 @@ export default async function UnitDetailPage({
         throw error;
     }
 
-    // Own rows (what the admin edits) plus the sibling list for the parent dropdown.
-    const [siblings, facilities, scholarships, sections] = await Promise.all([
-        apiList<UnitSummary>(`admin/universities/${id}/units/`),
-        apiRequest<Facility[]>(`admin/units/${unitId}/facilities/`),
-        apiRequest<UnitScholarship[]>(`admin/units/${unitId}/scholarships/`),
-        apiRequest<CurriculumSection[]>(`admin/units/${unitId}/curriculum-sections/`),
+    // Siblings feed the parent dropdown in the edit form.
+    const siblings = await apiList<UnitSummary>(`admin/universities/${id}/units/`);
+
+    // Each content collection is fetched independently. fetchContent swallows
+    // failures and returns an empty array plus an error, so one broken endpoint
+    // renders an error alert on its card instead of a full-page crash.
+    const [facilitiesRes, scholarshipsRes, sectionsRes] = await Promise.all([
+        fetchContent<Facility>(`admin/units/${unitId}/facilities/`),
+        fetchContent<UnitScholarship>(`admin/units/${unitId}/scholarships/`),
+        fetchContent<CurriculumSection>(`admin/units/${unitId}/curriculum-sections/`),
     ]);
 
     return (
@@ -91,22 +116,19 @@ export default async function UnitDetailPage({
                                 <CardDescription>Year-by-year structure with course blocks.</CardDescription>
                             </div>
                         </CardHeader>
+                        {sectionsRes.error && <Alert className="mt-3">{sectionsRes.error}</Alert>}
                         <CardContent>
                             <ContentManager<CurriculumSection>
                                 unitId={unitId}
                                 collection="curriculum-sections"
                                 title="Sections"
                                 icon={<BookOpen className="size-4 text-primary" />}
-                                items={sections}
+                                items={sectionsRes.items}
                                 noun="section"
                                 emptyTitle="No curriculum sections yet"
                                 emptyDescription="Add year or semester sections with their course blocks."
-                                rowTitle={item => item.heading_en}
-                                rowMeta={item =>
-                                    `${item.blocks.length} block${item.blocks.length === 1 ? "" : "s"} · position ${item.position}`
-                                }
                                 notice={inheritedNotice(
-                                    sections.length,
+                                    sectionsRes.items.length,
                                     unit.curriculum_sections.length,
                                     "section",
                                     "curriculum sections",
@@ -155,20 +177,19 @@ export default async function UnitDetailPage({
                                 <CardDescription>Labs, centres and workshops.</CardDescription>
                             </div>
                         </CardHeader>
+                        {facilitiesRes.error && <Alert className="mt-3">{facilitiesRes.error}</Alert>}
                         <CardContent>
                             <ContentManager<Facility>
                                 unitId={unitId}
                                 collection="facilities"
                                 title="Facilities"
                                 icon={<FlaskConical className="size-4 text-primary" />}
-                                items={facilities}
+                                items={facilitiesRes.items}
                                 noun="facility"
                                 emptyTitle="No facilities yet"
                                 emptyDescription="Add the labs and centres this unit offers."
-                                rowTitle={item => item.title}
-                                rowMeta={item => item.subtitle ?? item.description}
                                 notice={inheritedNotice(
-                                    facilities.length,
+                                    facilitiesRes.items.length,
                                     unit.facilities.length,
                                     "facility",
                                     "facilities",
@@ -202,20 +223,19 @@ export default async function UnitDetailPage({
                                 <CardDescription>Awards open to students of this unit.</CardDescription>
                             </div>
                         </CardHeader>
+                        {scholarshipsRes.error && <Alert className="mt-3">{scholarshipsRes.error}</Alert>}
                         <CardContent>
                             <ContentManager<UnitScholarship>
                                 unitId={unitId}
                                 collection="scholarships"
                                 title="Scholarships"
                                 icon={<Award className="size-4 text-primary" />}
-                                items={scholarships}
+                                items={scholarshipsRes.items}
                                 noun="scholarship"
                                 emptyTitle="No scholarships yet"
                                 emptyDescription="Add scholarships specific to this unit."
-                                rowTitle={item => item.name_en}
-                                rowMeta={item => item.coverage_en}
                                 notice={inheritedNotice(
-                                    scholarships.length,
+                                    scholarshipsRes.items.length,
                                     unit.scholarships.length,
                                     "scholarship",
                                     "scholarships",

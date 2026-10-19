@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition, type FormEvent } from "react";
+import { useEffect, useState, useTransition, type FormEvent } from "react";
 
+import { setBreadcrumbLabel } from "@/components/layout/breadcrumbs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, Spinner } from "@/components/ui/feedback";
@@ -27,6 +28,10 @@ export default function UnitEditForm({
     const [saved, setSaved] = useState<string | null>(null);
     const [pending, startTransition] = useTransition();
 
+    useEffect(() => {
+        setBreadcrumbLabel(`/universities/${universityId}/units/${unitId}`, unit.name_en);
+    }, [universityId, unitId, unit.name_en]);
+
     function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         const payload = unitPayload(new FormData(event.currentTarget));
@@ -41,6 +46,7 @@ export default function UnitEditForm({
                     `/api/admin/universities/${universityId}/units/${unitId}`,
                     { method: "PATCH", body: payload }
                 );
+                setBreadcrumbLabel(`/universities/${universityId}/units/${unitId}`, updated.name_en);
                 setError(null);
                 setSaved(`“${updated.name_en}” updated.`);
                 router.refresh();

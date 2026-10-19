@@ -2,6 +2,12 @@ import { proxyToApi } from "@/lib/proxy";
 
 type Context = { params: Promise<{ id: string; unitId: string }> };
 
+/** GET /api/v1/admin/universities/{id}/units/{unit_id} - get unit detail. */
+export async function GET(req: Request, { params }: Context) {
+  const { id, unitId } = await params;
+  return proxyToApi(req, `admin/universities/${id}/units/${unitId}`);
+}
+
 /** PATCH /api/v1/admin/universities/{id}/units/{unit_id} - partial unit update. */
 export async function PATCH(req: Request, { params }: Context) {
   const { id, unitId } = await params;

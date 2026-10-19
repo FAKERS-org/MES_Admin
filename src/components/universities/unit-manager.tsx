@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition, type FormEvent } from "react";
 
+import { setBreadcrumbLabel } from "@/components/layout/breadcrumbs";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants, Button } from "@/components/ui/button";
 import ConfirmButton from "@/components/ui/confirm-button";
@@ -30,7 +31,14 @@ export default function UnitManager({
     const [pending, startTransition] = useTransition();
 
     // Keep local rows in sync when the server component refetches after router.refresh().
-    useEffect(() => setItems(units), [units]);
+    useEffect(() => {
+        setItems(units);
+        if (units) {
+            for (const unit of units) {
+                setBreadcrumbLabel(`/universities/${universityId}/units/${unit.id}`, unit.name_en);
+            }
+        }
+    }, [units, universityId]);
 
     function flash(message: string) {
         setSaved(message);

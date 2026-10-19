@@ -2,8 +2,9 @@
 
 import { Check, GraduationCap, Landmark, Save, Sofa } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, useTransition, type FormEvent } from "react";
+import { useEffect, useState, useTransition, type FormEvent } from "react";
 
+import { setBreadcrumbLabel } from "@/components/layout/breadcrumbs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, Spinner } from "@/components/ui/feedback";
@@ -27,6 +28,10 @@ export default function UniversityEditForm({ university }: { university: Univers
     const [pending, startTransition] = useTransition();
     const [logoUrl, setLogoUrl] = useState(university.logo_url ?? "");
     const [coverImageUrl, setCoverImageUrl] = useState(university.cover_image_url ?? "");
+
+    useEffect(() => {
+        setBreadcrumbLabel(`/universities/${university.id}`, university.name_en);
+    }, [university.id, university.name_en]);
 
     function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -73,6 +78,7 @@ export default function UniversityEditForm({ university }: { university: Univers
                     method: "PATCH",
                     body: payload,
                 });
+                setBreadcrumbLabel(`/universities/${university.id}`, payload.name_en ?? university.name_en);
                 setSaved(true);
                 router.refresh();
             } catch (caught) {
