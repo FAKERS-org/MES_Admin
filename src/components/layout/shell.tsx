@@ -24,7 +24,7 @@ export default function Shell({ children, docsUrl }: { children: ReactNode; docs
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar onToggleSidebar={() => setSidebarOpen((open) => !open)} docsUrl={docsUrl} />
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          <div className="mx-auto w-full max-w-6xl space-y-5">{children}</div>
+          <div className="w-full space-y-5">{children}</div>
         </main>
       </div>
     </div>
