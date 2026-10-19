@@ -70,6 +70,25 @@ export async function apiRequest<T>(
   return (await res.json()) as T;
 }
 
+/**
+ * Fetch a paginated list endpoint and return just the `items` array.
+ *
+ * Every list endpoint now returns the `Page` envelope (page/limit/
+ * total_items/total_pages/has_next/has_prev/items). This helper unwraps
+ * `.items` so call sites can keep working with `T[]` as before.
+ *
+ * Defensive: if the body is not the envelope (e.g. a bare array from a
+ * stale route, or a 204 with no body) we return `[]` rather than
+ * `undefined`, so a missing `items` never propagates as a render error.
+ */
+export async function apiList<T>(
+  path: string,
+  options: { method?: Method; body?: unknown } = {},
+): Promise<T[]> {
+  const page = await apiRequest<import("@/lib/types").Page<T>>(path, options);
+  return page?.items ?? [];
+}
+
 /** Unauthenticated health probe used by the dashboard and the top bar. */
 export async function fetchHealth(): Promise<{ ok: boolean; status?: string; env?: string }> {
   try {

@@ -8,7 +8,7 @@ import { Input, Select } from "@/components/ui/field";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { StatusBadge, TypeBadge } from "@/components/universities/badges";
 import { UniversityAvatar } from "@/components/universities/university-avatar";
-import { apiRequest, publishedIds } from "@/lib/server-api";
+import { apiList, publishedIds } from "@/lib/server-api";
 import type { UniversitySummary } from "@/lib/types";
 
 export const metadata = { title: "Universities" };
@@ -36,7 +36,7 @@ export default async function UniversitiesPage({ searchParams }: { searchParams:
     const requestedPage = Number(params.page ?? 1);
 
     const [universities, published] = await Promise.all([
-        apiRequest<UniversitySummary[]>("admin/universities/?skip=0&limit=1000"),
+        apiList<UniversitySummary>("admin/universities/?page=1&limit=100"),
         publishedIds(),
     ]);
 

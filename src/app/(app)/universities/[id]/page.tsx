@@ -11,7 +11,7 @@ import ProgramManager from "@/components/universities/program-manager";
 import PublishToggle from "@/components/universities/publish-toggle";
 import UnitManager from "@/components/universities/unit-manager";
 import UniversityEditForm from "@/components/universities/university-edit-form";
-import { ApiError, apiRequest, publishedIds } from "@/lib/server-api";
+import { ApiError, apiList, apiRequest, publishedIds } from "@/lib/server-api";
 import type { Status, UnitSummary, UniversityDetail } from "@/lib/types";
 
 export const metadata = { title: "University" };
@@ -35,7 +35,7 @@ export default async function UniversityDetailPage({ params }: { params: Promise
     // university is still a DRAFT, which would hide every unit.
     let units: UnitSummary[] = [];
     try {
-        units = await apiRequest<UnitSummary[]>(`admin/universities/${id}/units/`);
+        units = await apiList<UnitSummary>(`admin/universities/${id}/units/`);
     } catch {
         // API unreachable - units will render as empty state
     }

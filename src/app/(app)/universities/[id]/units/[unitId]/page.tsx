@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { PageHeader } from "@/components/ui/feedback";
 import ContentManager from "@/components/units/content-manager";
 import UnitEditForm from "@/components/units/unit-edit-form";
-import { ApiError, apiRequest } from "@/lib/server-api";
+import { ApiError, apiList, apiRequest } from "@/lib/server-api";
 import type {
     CurriculumSection,
     Facility,
@@ -45,7 +45,7 @@ export default async function UnitDetailPage({
 
     // Own rows (what the admin edits) plus the sibling list for the parent dropdown.
     const [siblings, facilities, scholarships, sections] = await Promise.all([
-        apiRequest<UnitSummary[]>(`admin/universities/${id}/units/`),
+        apiList<UnitSummary>(`admin/universities/${id}/units/`),
         apiRequest<Facility[]>(`admin/units/${unitId}/facilities/`),
         apiRequest<UnitScholarship[]>(`admin/units/${unitId}/scholarships/`),
         apiRequest<CurriculumSection[]>(`admin/units/${unitId}/curriculum-sections/`),

@@ -22,7 +22,7 @@ export default function UnitManager({
     units: UnitSummary[];
 }) {
     const router = useRouter();
-    const [items, setItems] = useState<UnitSummary[]>(units);
+    const [items, setItems] = useState<UnitSummary[]>(units ?? []);
     const [adding, setAdding] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);

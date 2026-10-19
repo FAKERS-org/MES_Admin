@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Building2, FilePlus2, Globe2, Lock } from "lucide-react";
 
-import { apiRequest, fetchHealth, publishedIds } from "@/lib/server-api";
+import { apiList, fetchHealth, publishedIds } from "@/lib/server-api";
 import { API_DOCS_URL } from "@/lib/config";
 import type { UniversitySummary } from "@/lib/types";
 import { PageHeader } from "@/components/ui/feedback";
@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const [universities, health, published] = await Promise.all([
-    apiRequest<UniversitySummary[]>("admin/universities/?skip=0&limit=1000"),
+    apiList<UniversitySummary>("admin/universities/?page=1&limit=100"),
     fetchHealth(),
     publishedIds(),
   ]);

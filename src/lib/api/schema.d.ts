@@ -53,7 +53,7 @@ export interface paths {
         };
         /**
          * List Universities
-         * @description Get a paginated list of published universities.
+         * @description Get a paginated list of published, non-deleted universities.
          */
         get: operations["list_universities_api_v1_public_universities__get"];
         put?: never;
@@ -94,7 +94,7 @@ export interface paths {
         };
         /**
          * List University Units
-         * @description Get the unit tree (flat, with parent_id) of a published university.
+         * @description Get the unit tree (flat, with parent_id) of a published university, paginated.
          */
         get: operations["list_university_units_api_v1_public_universities__university_id__units_get"];
         put?: never;
@@ -134,7 +134,7 @@ export interface paths {
         };
         /**
          * Get Universities
-         * @description Get all of universities including DRAFT.
+         * @description Get all universities (including DRAFT), paginated.
          */
         get: operations["get_universities_api_v1_admin_universities__get"];
         put?: never;
@@ -280,24 +280,18 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * List Facilities
-         * @description List the facilities (labs/centres) of a unit.
-         */
-        get: operations["list_facilities_api_v1_admin_units__unit_id__facilities__get"];
+        /** List Rows */
+        get: operations["list_rows_api_v1_admin_units__unit_id__facilities__get"];
         put?: never;
-        /**
-         * Create Facility
-         * @description Add a facility to a unit.
-         */
-        post: operations["create_facility_api_v1_admin_units__unit_id__facilities__post"];
+        /** Create Row */
+        post: operations["create_row_api_v1_admin_units__unit_id__facilities__post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/units/{unit_id}/facilities/{facility_id}": {
+    "/api/v1/admin/units/{unit_id}/facilities/{row_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -307,18 +301,15 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /**
-         * Delete Facility
-         * @description Delete one facility of a unit.
-         */
-        delete: operations["delete_facility_api_v1_admin_units__unit_id__facilities__facility_id__delete"];
+        /** Delete Row */
+        delete: operations["delete_row_api_v1_admin_units__unit_id__facilities__row_id__delete"];
         options?: never;
         head?: never;
         /**
-         * Update Facility
+         * Update Row
          * @description Partial update - only send fields you want to change.
          */
-        patch: operations["update_facility_api_v1_admin_units__unit_id__facilities__facility_id__patch"];
+        patch: operations["update_row_api_v1_admin_units__unit_id__facilities__row_id__patch"];
         trace?: never;
     };
     "/api/v1/admin/units/{unit_id}/curriculum-sections/": {
@@ -328,24 +319,63 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * List Curriculum Sections
-         * @description List the curriculum sections of a unit.
-         */
-        get: operations["list_curriculum_sections_api_v1_admin_units__unit_id__curriculum_sections__get"];
+        /** List Rows */
+        get: operations["list_rows_api_v1_admin_units__unit_id__curriculum_sections__get"];
         put?: never;
-        /**
-         * Create Curriculum Section
-         * @description Add a curriculum section to a unit.
-         */
-        post: operations["create_curriculum_section_api_v1_admin_units__unit_id__curriculum_sections__post"];
+        /** Create Row */
+        post: operations["create_row_api_v1_admin_units__unit_id__curriculum_sections__post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/units/{unit_id}/curriculum-sections/{section_id}": {
+    "/api/v1/admin/units/{unit_id}/curriculum-sections/{row_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Row */
+        delete: operations["delete_row_api_v1_admin_units__unit_id__curriculum_sections__row_id__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Update Row
+         * @description Partial update - only send fields you want to change.
+         */
+        patch: operations["update_row_api_v1_admin_units__unit_id__curriculum_sections__row_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/admin/units/{owner_id}/scholarships/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Endpoint
+         * @description List scholarships of the owner.
+         */
+        get: operations["list_endpoint_api_v1_admin_units__owner_id__scholarships__get"];
+        put?: never;
+        /**
+         * Create Endpoint
+         * @description Add a scholarship to the owner.
+         */
+        post: operations["create_endpoint_api_v1_admin_units__owner_id__scholarships__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/units/{owner_id}/scholarships/{scholarship_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -356,20 +386,20 @@ export interface paths {
         put?: never;
         post?: never;
         /**
-         * Delete Curriculum Section
-         * @description Delete one curriculum section of a unit.
+         * Delete Endpoint
+         * @description Delete one scholarship of the owner.
          */
-        delete: operations["delete_curriculum_section_api_v1_admin_units__unit_id__curriculum_sections__section_id__delete"];
+        delete: operations["delete_endpoint_api_v1_admin_units__owner_id__scholarships__scholarship_id__delete"];
         options?: never;
         head?: never;
         /**
-         * Update Curriculum Section
+         * Update Endpoint
          * @description Partial update - only send fields you want to change.
          */
-        patch: operations["update_curriculum_section_api_v1_admin_units__unit_id__curriculum_sections__section_id__patch"];
+        patch: operations["update_endpoint_api_v1_admin_units__owner_id__scholarships__scholarship_id__patch"];
         trace?: never;
     };
-    "/api/v1/admin/units/{unit_id}/scholarships/": {
+    "/api/v1/admin/universities/{owner_id}/scholarships/": {
         parameters: {
             query?: never;
             header?: never;
@@ -377,23 +407,23 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List Unit Scholarships
-         * @description List the scholarships of a unit.
+         * List Endpoint
+         * @description List scholarships of the owner.
          */
-        get: operations["list_unit_scholarships_api_v1_admin_units__unit_id__scholarships__get"];
+        get: operations["list_endpoint_api_v1_admin_universities__owner_id__scholarships__get"];
         put?: never;
         /**
-         * Create Unit Scholarship
-         * @description Add a scholarship to a unit.
+         * Create Endpoint
+         * @description Add a scholarship to the owner.
          */
-        post: operations["create_unit_scholarship_api_v1_admin_units__unit_id__scholarships__post"];
+        post: operations["create_endpoint_api_v1_admin_universities__owner_id__scholarships__post"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/v1/admin/units/{unit_id}/scholarships/{scholarship_id}": {
+    "/api/v1/admin/universities/{owner_id}/scholarships/{scholarship_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -404,65 +434,17 @@ export interface paths {
         put?: never;
         post?: never;
         /**
-         * Delete Unit Scholarship
-         * @description Delete one scholarship of a unit.
+         * Delete Endpoint
+         * @description Delete one scholarship of the owner.
          */
-        delete: operations["delete_unit_scholarship_api_v1_admin_units__unit_id__scholarships__scholarship_id__delete"];
+        delete: operations["delete_endpoint_api_v1_admin_universities__owner_id__scholarships__scholarship_id__delete"];
         options?: never;
         head?: never;
         /**
-         * Update Unit Scholarship
+         * Update Endpoint
          * @description Partial update - only send fields you want to change.
          */
-        patch: operations["update_unit_scholarship_api_v1_admin_units__unit_id__scholarships__scholarship_id__patch"];
-        trace?: never;
-    };
-    "/api/v1/admin/universities/{university_id}/scholarships/": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List University Scholarships
-         * @description List the scholarships offered by the university itself.
-         */
-        get: operations["list_university_scholarships_api_v1_admin_universities__university_id__scholarships__get"];
-        put?: never;
-        /**
-         * Create University Scholarship
-         * @description Add a scholarship offered by the university itself.
-         */
-        post: operations["create_university_scholarship_api_v1_admin_universities__university_id__scholarships__post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/admin/universities/{university_id}/scholarships/{scholarship_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /**
-         * Delete University Scholarship
-         * @description Delete one scholarship offered by the university itself.
-         */
-        delete: operations["delete_university_scholarship_api_v1_admin_universities__university_id__scholarships__scholarship_id__delete"];
-        options?: never;
-        head?: never;
-        /**
-         * Update University Scholarship
-         * @description Partial update - only send fields you want to change.
-         */
-        patch: operations["update_university_scholarship_api_v1_admin_universities__university_id__scholarships__scholarship_id__patch"];
+        patch: operations["update_endpoint_api_v1_admin_universities__owner_id__scholarships__scholarship_id__patch"];
         trace?: never;
     };
     "/api/v1/admin/upload/generate-presigned-url": {
@@ -725,6 +707,76 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** Page[UnitSummary] */
+        Page_UnitSummary_: {
+            /**
+             * Page
+             * @description Current page number (1-based)
+             */
+            page: number;
+            /**
+             * Limit
+             * @description Items per page
+             */
+            limit: number;
+            /**
+             * Total Items
+             * @description Total number of matching rows
+             */
+            total_items: number;
+            /**
+             * Total Pages
+             * @description Ceil(total_items / limit)
+             */
+            total_pages: number;
+            /**
+             * Has Next
+             * @description Whether a next page exists
+             */
+            has_next: boolean;
+            /**
+             * Has Prev
+             * @description Whether a previous page exists
+             */
+            has_prev: boolean;
+            /** Items */
+            items: components["schemas"]["UnitSummary"][];
+        };
+        /** Page[UniversitySummary] */
+        Page_UniversitySummary_: {
+            /**
+             * Page
+             * @description Current page number (1-based)
+             */
+            page: number;
+            /**
+             * Limit
+             * @description Items per page
+             */
+            limit: number;
+            /**
+             * Total Items
+             * @description Total number of matching rows
+             */
+            total_items: number;
+            /**
+             * Total Pages
+             * @description Ceil(total_items / limit)
+             */
+            total_pages: number;
+            /**
+             * Has Next
+             * @description Whether a next page exists
+             */
+            has_next: boolean;
+            /**
+             * Has Prev
+             * @description Whether a previous page exists
+             */
+            has_prev: boolean;
+            /** Items */
+            items: components["schemas"]["UniversitySummary"][];
         };
         /** PresignedUrlRequest */
         PresignedUrlRequest: {
@@ -1331,6 +1383,7 @@ export interface operations {
                 type?: string | null;
                 /** @description Page number */
                 page?: number;
+                /** @description Items per page (capped at MAX_PAGE_SIZE) */
                 limit?: number;
             };
             header?: never;
@@ -1345,9 +1398,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["Page_UniversitySummary_"];
                 };
             };
             /** @description Validation Error */
@@ -1394,7 +1445,12 @@ export interface operations {
     };
     list_university_units_api_v1_public_universities__university_id__units_get: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Page number */
+                page?: number;
+                /** @description Items per page (capped at MAX_PAGE_SIZE) */
+                limit?: number;
+            };
             header?: never;
             path: {
                 university_id: string;
@@ -1409,7 +1465,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UnitSummary"][];
+                    "application/json": components["schemas"]["Page_UnitSummary_"];
                 };
             };
             /** @description Validation Error */
@@ -1458,7 +1514,9 @@ export interface operations {
     get_universities_api_v1_admin_universities__get: {
         parameters: {
             query?: {
-                skip?: number;
+                /** @description Page number */
+                page?: number;
+                /** @description Items per page (capped at MAX_PAGE_SIZE) */
                 limit?: number;
             };
             header?: never;
@@ -1473,7 +1531,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UniversitySummary"][];
+                    "application/json": components["schemas"]["Page_UniversitySummary_"];
                 };
             };
             /** @description Validation Error */
@@ -1878,7 +1936,7 @@ export interface operations {
             };
         };
     };
-    list_facilities_api_v1_admin_units__unit_id__facilities__get: {
+    list_rows_api_v1_admin_units__unit_id__facilities__get: {
         parameters: {
             query?: never;
             header?: never;
@@ -1909,7 +1967,7 @@ export interface operations {
             };
         };
     };
-    create_facility_api_v1_admin_units__unit_id__facilities__post: {
+    create_row_api_v1_admin_units__unit_id__facilities__post: {
         parameters: {
             query?: never;
             header?: never;
@@ -1944,13 +2002,13 @@ export interface operations {
             };
         };
     };
-    delete_facility_api_v1_admin_units__unit_id__facilities__facility_id__delete: {
+    delete_row_api_v1_admin_units__unit_id__facilities__row_id__delete: {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 unit_id: number;
-                facility_id: number;
+                row_id: number;
             };
             cookie?: never;
         };
@@ -1974,13 +2032,13 @@ export interface operations {
             };
         };
     };
-    update_facility_api_v1_admin_units__unit_id__facilities__facility_id__patch: {
+    update_row_api_v1_admin_units__unit_id__facilities__row_id__patch: {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 unit_id: number;
-                facility_id: number;
+                row_id: number;
             };
             cookie?: never;
         };
@@ -2010,7 +2068,7 @@ export interface operations {
             };
         };
     };
-    list_curriculum_sections_api_v1_admin_units__unit_id__curriculum_sections__get: {
+    list_rows_api_v1_admin_units__unit_id__curriculum_sections__get: {
         parameters: {
             query?: never;
             header?: never;
@@ -2041,7 +2099,7 @@ export interface operations {
             };
         };
     };
-    create_curriculum_section_api_v1_admin_units__unit_id__curriculum_sections__post: {
+    create_row_api_v1_admin_units__unit_id__curriculum_sections__post: {
         parameters: {
             query?: never;
             header?: never;
@@ -2076,13 +2134,13 @@ export interface operations {
             };
         };
     };
-    delete_curriculum_section_api_v1_admin_units__unit_id__curriculum_sections__section_id__delete: {
+    delete_row_api_v1_admin_units__unit_id__curriculum_sections__row_id__delete: {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 unit_id: number;
-                section_id: number;
+                row_id: number;
             };
             cookie?: never;
         };
@@ -2106,13 +2164,13 @@ export interface operations {
             };
         };
     };
-    update_curriculum_section_api_v1_admin_units__unit_id__curriculum_sections__section_id__patch: {
+    update_row_api_v1_admin_units__unit_id__curriculum_sections__row_id__patch: {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 unit_id: number;
-                section_id: number;
+                row_id: number;
             };
             cookie?: never;
         };
@@ -2142,12 +2200,12 @@ export interface operations {
             };
         };
     };
-    list_unit_scholarships_api_v1_admin_units__unit_id__scholarships__get: {
+    list_endpoint_api_v1_admin_units__owner_id__scholarships__get: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                unit_id: number;
+                owner_id: number;
             };
             cookie?: never;
         };
@@ -2173,12 +2231,12 @@ export interface operations {
             };
         };
     };
-    create_unit_scholarship_api_v1_admin_units__unit_id__scholarships__post: {
+    create_endpoint_api_v1_admin_units__owner_id__scholarships__post: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                unit_id: number;
+                owner_id: number;
             };
             cookie?: never;
         };
@@ -2208,12 +2266,12 @@ export interface operations {
             };
         };
     };
-    delete_unit_scholarship_api_v1_admin_units__unit_id__scholarships__scholarship_id__delete: {
+    delete_endpoint_api_v1_admin_units__owner_id__scholarships__scholarship_id__delete: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                unit_id: number;
+                owner_id: number;
                 scholarship_id: number;
             };
             cookie?: never;
@@ -2238,12 +2296,12 @@ export interface operations {
             };
         };
     };
-    update_unit_scholarship_api_v1_admin_units__unit_id__scholarships__scholarship_id__patch: {
+    update_endpoint_api_v1_admin_units__owner_id__scholarships__scholarship_id__patch: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                unit_id: number;
+                owner_id: number;
                 scholarship_id: number;
             };
             cookie?: never;
@@ -2274,12 +2332,12 @@ export interface operations {
             };
         };
     };
-    list_university_scholarships_api_v1_admin_universities__university_id__scholarships__get: {
+    list_endpoint_api_v1_admin_universities__owner_id__scholarships__get: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                university_id: number;
+                owner_id: number;
             };
             cookie?: never;
         };
@@ -2305,12 +2363,12 @@ export interface operations {
             };
         };
     };
-    create_university_scholarship_api_v1_admin_universities__university_id__scholarships__post: {
+    create_endpoint_api_v1_admin_universities__owner_id__scholarships__post: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                university_id: number;
+                owner_id: number;
             };
             cookie?: never;
         };
@@ -2340,12 +2398,12 @@ export interface operations {
             };
         };
     };
-    delete_university_scholarship_api_v1_admin_universities__university_id__scholarships__scholarship_id__delete: {
+    delete_endpoint_api_v1_admin_universities__owner_id__scholarships__scholarship_id__delete: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                university_id: number;
+                owner_id: number;
                 scholarship_id: number;
             };
             cookie?: never;
@@ -2370,12 +2428,12 @@ export interface operations {
             };
         };
     };
-    update_university_scholarship_api_v1_admin_universities__university_id__scholarships__scholarship_id__patch: {
+    update_endpoint_api_v1_admin_universities__owner_id__scholarships__scholarship_id__patch: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                university_id: number;
+                owner_id: number;
                 scholarship_id: number;
             };
             cookie?: never;

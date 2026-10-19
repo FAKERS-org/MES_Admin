@@ -253,3 +253,20 @@ export interface HealthStatus {
   status: string;
   env: string;
 }
+
+/**
+ * Standard paginated envelope returned by every list endpoint.
+ *
+ * Mirrors `app.schemas.pagination.Page` in MES_Api: flat snake_case,
+ * 1-based `page`, exact `total_items` COUNT(*), plus convenience flags
+ * so the frontend never has to recompute `total_pages`.
+ */
+export interface Page<T> {
+  page: number;
+  limit: number;
+  total_items: number;
+  total_pages: number;
+  has_next: boolean;
+  has_prev: boolean;
+  items: T[];
+}
