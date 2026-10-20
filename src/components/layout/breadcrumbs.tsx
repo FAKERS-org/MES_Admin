@@ -12,6 +12,9 @@ const labels: Record<string, string> = {
     new: "New university",
     programs: "Programs",
     units: "Units",
+    scholarships: "Scholarships",
+    users: "Users",
+    settings: "Settings",
 };
 
 const titleCache: Record<string, string> = {};

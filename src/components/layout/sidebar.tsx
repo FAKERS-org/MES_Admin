@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, LayoutDashboard, LogOut, X } from "lucide-react";
+import { Award, Building2, GraduationCap, LayoutDashboard, LogOut, Settings, Users, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -15,7 +15,16 @@ const navSections = [
     },
     {
         label: "Manage",
-        items: [{ href: "/universities", label: "Universities", icon: Building2 }],
+        items: [
+            { href: "/universities", label: "Universities", icon: Building2 },
+            { href: "/programs", label: "Programs", icon: GraduationCap },
+            { href: "/scholarships", label: "Scholarships", icon: Award },
+            { href: "/users", label: "Users", icon: Users },
+        ],
+    },
+    {
+        label: "System",
+        items: [{ href: "/settings", label: "Settings", icon: Settings }],
     },
 ];
 
