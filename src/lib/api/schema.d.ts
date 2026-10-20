@@ -226,10 +226,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /**
-         * Create Program
-         * @description Add a new program to a specific university.
-         */
+        /** Create Program */
         post: operations["create_program_api_v1_admin_universities__university_id__programs__post"];
         delete?: never;
         options?: never;
@@ -264,24 +261,15 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * Get Program
-         * @description Get single program with university details.
-         */
+        /** Get Program */
         get: operations["get_program_api_v1_admin_programs__program_id__get"];
         put?: never;
         post?: never;
-        /**
-         * Delete Program
-         * @description Delete a program.
-         */
+        /** Delete Program */
         delete: operations["delete_program_api_v1_admin_programs__program_id__delete"];
         options?: never;
         head?: never;
-        /**
-         * Update Program
-         * @description Update program details.
-         */
+        /** Update Program */
         patch: operations["update_program_api_v1_admin_programs__program_id__patch"];
         trace?: never;
     };
@@ -428,10 +416,7 @@ export interface paths {
          */
         get: operations["list_all_scholarships_api_v1_admin_scholarships__get"];
         put?: never;
-        /**
-         * Create Direct Scholarship
-         * @description Add a scholarship specifying university_id or unit_id.
-         */
+        /** Create Direct Scholarship */
         post: operations["create_direct_scholarship_api_v1_admin_scholarships__post"];
         delete?: never;
         options?: never;
@@ -449,17 +434,11 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /**
-         * Delete Direct Scholarship
-         * @description Delete scholarship directly.
-         */
+        /** Delete Direct Scholarship */
         delete: operations["delete_direct_scholarship_api_v1_admin_scholarships__scholarship_id__delete"];
         options?: never;
         head?: never;
-        /**
-         * Update Direct Scholarship
-         * @description Update scholarship directly.
-         */
+        /** Update Direct Scholarship */
         patch: operations["update_direct_scholarship_api_v1_admin_scholarships__scholarship_id__patch"];
         trace?: never;
     };
@@ -470,16 +449,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * List Endpoint
-         * @description List scholarships of the owner.
-         */
+        /** List Endpoint */
         get: operations["list_endpoint_api_v1_admin_units__owner_id__scholarships__get"];
         put?: never;
-        /**
-         * Create Endpoint
-         * @description Add a scholarship to the owner.
-         */
+        /** Create Endpoint */
         post: operations["create_endpoint_api_v1_admin_units__owner_id__scholarships__post"];
         delete?: never;
         options?: never;
@@ -497,17 +470,11 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /**
-         * Delete Endpoint
-         * @description Delete one scholarship of the owner.
-         */
+        /** Delete Endpoint */
         delete: operations["delete_endpoint_api_v1_admin_units__owner_id__scholarships__scholarship_id__delete"];
         options?: never;
         head?: never;
-        /**
-         * Update Endpoint
-         * @description Partial update - only send fields you want to change.
-         */
+        /** Update Endpoint */
         patch: operations["update_endpoint_api_v1_admin_units__owner_id__scholarships__scholarship_id__patch"];
         trace?: never;
     };
@@ -518,16 +485,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * List Endpoint
-         * @description List scholarships of the owner.
-         */
+        /** List Endpoint */
         get: operations["list_endpoint_api_v1_admin_universities__owner_id__scholarships__get"];
         put?: never;
-        /**
-         * Create Endpoint
-         * @description Add a scholarship to the owner.
-         */
+        /** Create Endpoint */
         post: operations["create_endpoint_api_v1_admin_universities__owner_id__scholarships__post"];
         delete?: never;
         options?: never;
@@ -545,17 +506,11 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /**
-         * Delete Endpoint
-         * @description Delete one scholarship of the owner.
-         */
+        /** Delete Endpoint */
         delete: operations["delete_endpoint_api_v1_admin_universities__owner_id__scholarships__scholarship_id__delete"];
         options?: never;
         head?: never;
-        /**
-         * Update Endpoint
-         * @description Partial update - only send fields you want to change.
-         */
+        /** Update Endpoint */
         patch: operations["update_endpoint_api_v1_admin_universities__owner_id__scholarships__scholarship_id__patch"];
         trace?: never;
     };
@@ -630,24 +585,15 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * Get User
-         * @description Get single user with assigned roles.
-         */
+        /** Get User */
         get: operations["get_user_api_v1_admin_users__user_id__get"];
         put?: never;
         post?: never;
-        /**
-         * Delete User
-         * @description Delete a user. Users cannot delete their own account.
-         */
+        /** Delete User */
         delete: operations["delete_user_api_v1_admin_users__user_id__delete"];
         options?: never;
         head?: never;
-        /**
-         * Update User
-         * @description Update user fields, password, or role assignments.
-         */
+        /** Update User */
         patch: operations["update_user_api_v1_admin_users__user_id__patch"];
         trace?: never;
     };
@@ -2336,7 +2282,7 @@ export interface operations {
                 page?: number;
                 /** @description Items per page */
                 limit?: number;
-                /** @description Search term for program name or faculty */
+                /** @description Search term */
                 q?: string | null;
                 /** @description Filter by degree level */
                 degree_level?: components["schemas"]["DegreeLevel"] | null;
@@ -2904,7 +2850,7 @@ export interface operations {
                 page?: number;
                 /** @description Items per page */
                 limit?: number;
-                /** @description Search term for scholarship name or coverage */
+                /** @description Search term */
                 q?: string | null;
                 /** @description Filter by university ID */
                 university_id?: number | null;
