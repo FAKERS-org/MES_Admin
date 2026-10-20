@@ -25,130 +25,130 @@ export const CURRENCIES: Currency[] = ["USD", "KHR"];
 
 /** Cambodian provinces, for the location dropdown. */
 export const PROVINCES: string[] = [
-  "Phnom Penh",
-  "Banteay Meanchey",
-  "Battambang",
-  "Kampong Cham",
-  "Kampong Chhnang",
-  "Kampong Speu",
-  "Kampong Thom",
-  "Kampot",
-  "Kandal",
-  "Kep",
-  "Koh Kong",
-  "Kratié",
-  "Mondulkiri",
-  "Oddar Meanchey",
-  "Pailin",
-  "Preah Sihanouk",
-  "Preah Vihear",
-  "Prey Veng",
-  "Pursat",
-  "Ratanakiri",
-  "Siem Reap",
-  "Stung Treng",
-  "Svay Rieng",
-  "Takeo",
-  "Tbong Khmum",
+    "Phnom Penh",
+    "Banteay Meanchey",
+    "Battambang",
+    "Kampong Cham",
+    "Kampong Chhnang",
+    "Kampong Speu",
+    "Kampong Thom",
+    "Kampot",
+    "Kandal",
+    "Kep",
+    "Koh Kong",
+    "Kratié",
+    "Mondulkiri",
+    "Oddar Meanchey",
+    "Pailin",
+    "Preah Sihanouk",
+    "Preah Vihear",
+    "Prey Veng",
+    "Pursat",
+    "Ratanakiri",
+    "Siem Reap",
+    "Stung Treng",
+    "Svay Rieng",
+    "Takeo",
+    "Tbong Khmum",
 ];
 
 /** `GET /api/v1/admin/universities/` item. */
 export interface UniversitySummary {
-  id: string;
-  name_en: string;
-  name_kh: string | null;
-  abbreviation: string | null;
-  type: UniversityType;
-  province: string;
-  logo_url: string | null;
-  moeys_accredited: boolean;
-  established_year: number | null;
+    id: string;
+    name_en: string;
+    name_kh: string | null;
+    abbreviation: string | null;
+    type: UniversityType;
+    province: string;
+    logo_url: string | null;
+    moeys_accredited: boolean;
+    established_year: number | null;
 }
 
 /** `GET /api/v1/admin/universities/{id}` response. */
 export interface UniversityDetail extends UniversitySummary {
-  address: string | null;
-  website: string | null;
-  cover_image_url: string | null;
-  overview_en: string | null;
-  overview_kh: string | null;
-  has_scholarships: boolean;
-  scholarship_info: string | null;
-  has_dormitory: boolean;
-  dormitory_details: string | null;
-  programs: ProgramSummary[];
+    address: string | null;
+    website: string | null;
+    cover_image_url: string | null;
+    overview_en: string | null;
+    overview_kh: string | null;
+    has_scholarships: boolean;
+    scholarship_info: string | null;
+    has_dormitory: boolean;
+    dormitory_details: string | null;
+    programs: ProgramSummary[];
 }
 
 /** `POST /api/v1/admin/universities/` body. */
 export interface UniversityCreatePayload {
-  name_en: string;
-  name_kh?: string | null;
-  abbreviation?: string | null;
-  type: UniversityType;
-  province: string;
+    name_en: string;
+    name_kh?: string | null;
+    abbreviation?: string | null;
+    type: UniversityType;
+    province: string;
 }
 
 /** `PATCH /api/v1/admin/universities/{id}` body (field names as the API accepts them). */
 export interface UniversityUpdatePayload {
-  name_en?: string;
-  name_kh?: string | null;
-  abbreviation?: string | null;
-  type?: UniversityType;
-  status?: Status;
-  moeys_accredited?: boolean;
-  province?: string;
-  address?: string | null;
-  website?: string | null;
-  logo_url?: string | null;
-  cover_image_url?: string | null;
-  overview_en?: string | null;
-  overview_kh?: string | null;
-  established_year?: number | null;
-  has_scholarships?: boolean;
-  scholarship_info?: string | null;
-  has_dormitory?: boolean;
-  dormitory_details?: string | null;
+    name_en?: string;
+    name_kh?: string | null;
+    abbreviation?: string | null;
+    type?: UniversityType;
+    status?: Status;
+    moeys_accredited?: boolean;
+    province?: string;
+    address?: string | null;
+    website?: string | null;
+    logo_url?: string | null;
+    cover_image_url?: string | null;
+    overview_en?: string | null;
+    overview_kh?: string | null;
+    established_year?: number | null;
+    has_scholarships?: boolean;
+    scholarship_info?: string | null;
+    has_dormitory?: boolean;
+    dormitory_details?: string | null;
 }
 
 /** `ProgramSummary` item, embedded in `UniversityDetail.programs`. */
 export interface ProgramSummary {
-  id: string;
-  name_en: string;
-  name_kh: string | null;
-  faculty: string | null;
-  degree_level: DegreeLevel;
-  duration_years: number | null;
-  tuition_per_year: number | null;
-  tuition_per_credit: number | null;
-  fee_currency: Currency;
+    id: string;
+    name_en: string;
+    name_kh: string | null;
+    faculty: string | null;
+    degree_level: DegreeLevel;
+    duration_years: number | null;
+    tuition_per_year: number | null;
+    tuition_per_credit: number | null;
+    fee_currency: Currency;
 }
 
 /** `UnitSummary` item, from `GET /api/v1/admin/universities/{university_id}/units`. */
 export interface UnitSummary {
-  id: string;
-  slug: string;
-  parent_id?: string | null;
-  kind: UnitKind;
-  name_en: string;
-  name_kh?: string | null;
-  category_en: string;
-  category_kh?: string | null;
-  logo?: string | null;
-  position: number;
+    id: string;
+    slug: string;
+    parent_id?: string | null;
+    kind: UnitKind;
+    name_en: string;
+    name_kh?: string | null;
+    category_en: string;
+    category_kh?: string | null;
+    logo?: string | null;
+    position: number;
 }
 
 export const UNIT_KINDS: UnitKind[] = ["FACULTY", "DEPARTMENT", "SUB_DEPARTMENT", "FOUNDATION"];
 
 /** `POST /api/v1/admin/universities/{university_id}/units/` body. */
 export interface UnitCreatePayload {
-  name_en: string;
-  name_kh?: string | null;
-  kind: UnitKind;
-  parent_id?: string | null;
-  category_en?: string;
-  category_kh?: string | null;
-  logo?: string | null;
-  position: number;
+    name_en: string;
+    name_kh?: string | null;
+    kind: UnitKind;
+    parent_id?: string | null;
+    category_en?: string;
+    category_kh?: string | null;
+    logo?: string | null;
+    position: number;
 }
 
 /** `PATCH /api/v1/admin/universities/{university_id}/units/{unit_id}` body. */
@@ -156,52 +156,52 @@ export type UnitUpdatePayload = Partial<UnitCreatePayload>;
 
 /** One facility (lab/centre) row of a unit. */
 export interface Facility {
-  id: string;
-  unit_id: string;
-  title: string;
-  subtitle: string | null;
-  description: string;
-  image: string;
-  position: number;
+    id: string;
+    unit_id: string;
+    title: string;
+    subtitle: string | null;
+    description: string;
+    image: string;
+    position: number;
 }
 
 export type FacilityCreatePayload = Omit<Facility, "id" | "unit_id">;
 
 /** One scholarship row of a unit. */
 export interface UnitScholarship {
-  id: string;
-  unit_id: string;
-  name_en: string;
-  name_kh: string | null;
-  coverage_en: string;
-  coverage_kh: string | null;
-  requirements: Array<Record<string, unknown>> | null;
-  position: number;
+    id: string;
+    unit_id: string;
+    name_en: string;
+    name_kh: string | null;
+    coverage_en: string;
+    coverage_kh: string | null;
+    requirements: Array<Record<string, unknown>> | null;
+    position: number;
 }
 
 export type UnitScholarshipCreatePayload = Omit<UnitScholarship, "id" | "unit_id">;
 
 /** One course block inside a curriculum section. */
 export interface CurriculumBlock {
-  badge_text: string;
-  badge_background?: string | null;
-  title: string;
-  english_title?: string | null;
-  credits: string;
-  description: string;
-  courses: string[];
-  special_badge?: string | null;
+    badge_text: string;
+    badge_background?: string | null;
+    title: string;
+    english_title?: string | null;
+    credits: string;
+    description: string;
+    courses: string[];
+    special_badge?: string | null;
 }
 
 /** One curriculum section row of a unit. */
 export interface CurriculumSection {
-  id: string;
-  unit_id: string;
-  heading_en: string;
-  heading_kh: string;
-  banner_text: string | null;
-  blocks: CurriculumBlock[];
-  position: number;
+    id: string;
+    unit_id: string;
+    heading_en: string;
+    heading_kh: string;
+    banner_text: string | null;
+    blocks: CurriculumBlock[];
+    position: number;
 }
 
 export type CurriculumSectionCreatePayload = Omit<CurriculumSection, "id" | "unit_id">;
@@ -214,44 +214,44 @@ export type CurriculumSectionCreatePayload = Omit<CurriculumSection, "id" | "uni
  * rows. Both carry real row ids.
  */
 export interface UnitDetail extends UnitSummary {
-  curriculum_sections: CurriculumSection[];
-  facilities: Facility[];
-  scholarships: UnitScholarship[];
-  requirements: Array<Record<string, unknown>>;
+    curriculum_sections: CurriculumSection[];
+    facilities: Facility[];
+    scholarships: UnitScholarship[];
+    requirements: Array<Record<string, unknown>>;
 }
 
 /** `POST /api/v1/admin/universities/{id}/programs/` body. */
 export interface ProgramCreatePayload {
-  name_en: string;
-  name_kh?: string | null;
-  faculty?: string | null;
-  degree_level: DegreeLevel;
-  duration_years: number;
-  tuition_per_year?: number | null;
-  tuition_per_credit?: number | null;
-  fee_currency: Currency;
+    name_en: string;
+    name_kh?: string | null;
+    faculty?: string | null;
+    degree_level: DegreeLevel;
+    duration_years: number;
+    tuition_per_year?: number | null;
+    tuition_per_credit?: number | null;
+    fee_currency: Currency;
 }
 
 /** `PATCH /api/v1/admin/programs/{id}` body. */
 export interface ProgramUpdatePayload {
-  name_en?: string;
-  name_kh?: string | null;
-  faculty?: string | null;
-  degree_level?: DegreeLevel;
-  duration_years?: number;
-  tuition_per_year?: number | null;
-  tuition_per_credit?: number | null;
-  fee_currency?: Currency;
-  overview_en?: string | null;
-  overview_kh?: string | null;
-  admission_req_en?: string | null;
-  admission_req_kh?: string | null;
+    name_en?: string;
+    name_kh?: string | null;
+    faculty?: string | null;
+    degree_level?: DegreeLevel;
+    duration_years?: number;
+    tuition_per_year?: number | null;
+    tuition_per_credit?: number | null;
+    fee_currency?: Currency;
+    overview_en?: string | null;
+    overview_kh?: string | null;
+    admission_req_en?: string | null;
+    admission_req_kh?: string | null;
 }
 
 /** `GET /health` response. */
 export interface HealthStatus {
-  status: string;
-  env: string;
+    status: string;
+    env: string;
 }
 
 /**
@@ -262,11 +262,103 @@ export interface HealthStatus {
  * so the frontend never has to recompute `total_pages`.
  */
 export interface Page<T> {
-  page: number;
-  limit: number;
-  total_items: number;
-  total_pages: number;
-  has_next: boolean;
-  has_prev: boolean;
-  items: T[];
+    page: number;
+    limit: number;
+    total_items: number;
+    total_pages: number;
+    has_next: boolean;
+    has_prev: boolean;
+    items: T[];
+}
+
+/** `ProgramListItem` from `GET /api/v1/admin/programs/`. */
+export interface ProgramListItem extends ProgramSummary {
+    university_id: string | number;
+    university_name: string | null;
+    university_abbreviation: string | null;
+}
+
+/** `ScholarshipListItem` from `GET /api/v1/admin/scholarships/`. */
+export interface ScholarshipListItem {
+    id: string | number;
+    public_id: string;
+    name_en: string;
+    name_kh?: string | null;
+    coverage_en: string;
+    coverage_kh?: string | null;
+    requirements?: Array<Record<string, unknown>> | null;
+    position: number;
+    unit_id?: string | number | null;
+    university_id?: string | number | null;
+    university_name?: string | null;
+    unit_name?: string | null;
+}
+
+export interface ScholarshipCreateDirectPayload {
+    name_en: string;
+    name_kh?: string | null;
+    coverage_en: string;
+    coverage_kh?: string | null;
+    requirements?: Array<Record<string, unknown>> | null;
+    position?: number;
+    university_id?: number | null;
+    unit_id?: number | null;
+}
+
+export interface RoleSummary {
+    id: number;
+    name: string;
+    description: string | null;
+}
+
+export interface UserSummary {
+    id: number;
+    public_id: string;
+    email: string;
+    is_active: boolean;
+    is_superuser: boolean;
+    roles: string[];
+    created_at: string;
+}
+
+export interface UserDetail extends UserSummary {
+    role_ids: number[];
+}
+
+export interface UserCreatePayload {
+    email: string;
+    password: string;
+    is_active?: boolean;
+    is_superuser?: boolean;
+    role_ids?: number[];
+}
+
+export interface UserUpdatePayload {
+    email?: string;
+    password?: string;
+    is_active?: boolean;
+    is_superuser?: boolean;
+    role_ids?: number[];
+}
+
+export interface UserProfile {
+    id: number;
+    public_id: string;
+    email: string;
+    is_active: boolean;
+    is_superuser: boolean;
+    roles: string[];
+    permissions: string[];
+}
+
+export interface SystemInfo {
+    project_name: string;
+    environment: string;
+    database_status: string;
+    r2_storage_configured: boolean;
+    total_universities: number;
+    total_programs: number;
+    total_units: number;
+    total_scholarships: number;
+    total_users: number;
 }

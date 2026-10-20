@@ -44,6 +44,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Me
+         * @description Get the current authenticated user's profile, roles, and permissions.
+         */
+        get: operations["get_me_api_v1_auth_me_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/change-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Change Password
+         * @description Change the current user's password.
+         */
+        post: operations["change_password_api_v1_auth_change_password_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/public/universities/": {
         parameters: {
             query?: never;
@@ -197,6 +237,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/programs/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Programs
+         * @description List all programs with pagination and filtering.
+         */
+        get: operations["list_programs_api_v1_admin_programs__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/programs/{program_id}": {
         parameters: {
             query?: never;
@@ -204,7 +264,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * Get Program
+         * @description Get single program with university details.
+         */
+        get: operations["get_program_api_v1_admin_programs__program_id__get"];
         put?: never;
         post?: never;
         /**
@@ -230,7 +294,7 @@ export interface paths {
         };
         /**
          * List Units Endpoint
-         * @description List all units of a university.
+         * @description List all units of a university, paginated.
          */
         get: operations["list_units_endpoint_api_v1_admin_universities__university_id__units__get"];
         put?: never;
@@ -351,6 +415,54 @@ export interface paths {
         patch: operations["update_row_api_v1_admin_units__unit_id__curriculum_sections__row_id__patch"];
         trace?: never;
     };
+    "/api/v1/admin/scholarships/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List All Scholarships
+         * @description List all scholarships across universities and units, paginated.
+         */
+        get: operations["list_all_scholarships_api_v1_admin_scholarships__get"];
+        put?: never;
+        /**
+         * Create Direct Scholarship
+         * @description Add a scholarship specifying university_id or unit_id.
+         */
+        post: operations["create_direct_scholarship_api_v1_admin_scholarships__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/scholarships/{scholarship_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Direct Scholarship
+         * @description Delete scholarship directly.
+         */
+        delete: operations["delete_direct_scholarship_api_v1_admin_scholarships__scholarship_id__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Update Direct Scholarship
+         * @description Update scholarship directly.
+         */
+        patch: operations["update_direct_scholarship_api_v1_admin_scholarships__scholarship_id__patch"];
+        trace?: never;
+    };
     "/api/v1/admin/units/{owner_id}/scholarships/": {
         parameters: {
             query?: never;
@@ -461,6 +573,98 @@ export interface paths {
          * @description Generate a presigned URL for direct frontend upload to R2.
          */
         post: operations["get_upload_url_api_v1_admin_upload_generate_presigned_url_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Roles
+         * @description List all available roles in the system.
+         */
+        get: operations["list_roles_api_v1_admin_users_roles_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Users
+         * @description List users with pagination and search.
+         */
+        get: operations["list_users_api_v1_admin_users__get"];
+        put?: never;
+        /**
+         * Create User
+         * @description Create a new user and assign roles.
+         */
+        post: operations["create_user_api_v1_admin_users__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get User
+         * @description Get single user with assigned roles.
+         */
+        get: operations["get_user_api_v1_admin_users__user_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete User
+         * @description Delete a user. Users cannot delete their own account.
+         */
+        delete: operations["delete_user_api_v1_admin_users__user_id__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Update User
+         * @description Update user fields, password, or role assignments.
+         */
+        patch: operations["update_user_api_v1_admin_users__user_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/admin/system/info": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get System Info
+         * @description Retrieve system diagnostics, statistics, and configuration status.
+         */
+        get: operations["get_system_info_api_v1_admin_system_info_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -708,6 +912,76 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** Page[ProgramListItem] */
+        Page_ProgramListItem_: {
+            /**
+             * Page
+             * @description Current page number (1-based)
+             */
+            page: number;
+            /**
+             * Limit
+             * @description Items per page
+             */
+            limit: number;
+            /**
+             * Total Items
+             * @description Total number of matching rows
+             */
+            total_items: number;
+            /**
+             * Total Pages
+             * @description Ceil(total_items / limit)
+             */
+            total_pages: number;
+            /**
+             * Has Next
+             * @description Whether a next page exists
+             */
+            has_next: boolean;
+            /**
+             * Has Prev
+             * @description Whether a previous page exists
+             */
+            has_prev: boolean;
+            /** Items */
+            items: components["schemas"]["ProgramListItem"][];
+        };
+        /** Page[ScholarshipListItem] */
+        Page_ScholarshipListItem_: {
+            /**
+             * Page
+             * @description Current page number (1-based)
+             */
+            page: number;
+            /**
+             * Limit
+             * @description Items per page
+             */
+            limit: number;
+            /**
+             * Total Items
+             * @description Total number of matching rows
+             */
+            total_items: number;
+            /**
+             * Total Pages
+             * @description Ceil(total_items / limit)
+             */
+            total_pages: number;
+            /**
+             * Has Next
+             * @description Whether a next page exists
+             */
+            has_next: boolean;
+            /**
+             * Has Prev
+             * @description Whether a previous page exists
+             */
+            has_prev: boolean;
+            /** Items */
+            items: components["schemas"]["ScholarshipListItem"][];
+        };
         /** Page[UnitSummary] */
         Page_UnitSummary_: {
             /**
@@ -778,6 +1052,48 @@ export interface components {
             /** Items */
             items: components["schemas"]["UniversitySummary"][];
         };
+        /** Page[UserSummary] */
+        Page_UserSummary_: {
+            /**
+             * Page
+             * @description Current page number (1-based)
+             */
+            page: number;
+            /**
+             * Limit
+             * @description Items per page
+             */
+            limit: number;
+            /**
+             * Total Items
+             * @description Total number of matching rows
+             */
+            total_items: number;
+            /**
+             * Total Pages
+             * @description Ceil(total_items / limit)
+             */
+            total_pages: number;
+            /**
+             * Has Next
+             * @description Whether a next page exists
+             */
+            has_next: boolean;
+            /**
+             * Has Prev
+             * @description Whether a previous page exists
+             */
+            has_prev: boolean;
+            /** Items */
+            items: components["schemas"]["UserSummary"][];
+        };
+        /** PasswordChangeRequest */
+        PasswordChangeRequest: {
+            /** Current Password */
+            current_password: string;
+            /** New Password */
+            new_password: string;
+        };
         /** PresignedUrlRequest */
         PresignedUrlRequest: {
             /** File Name */
@@ -814,6 +1130,40 @@ export interface components {
             fee_currency: components["schemas"]["Currency"];
         };
         /**
+         * ProgramListItem
+         * @description Schema for program list view with university context.
+         */
+        ProgramListItem: {
+            /** Id */
+            id: number;
+            /**
+             * Public Id
+             * Format: uuid
+             */
+            public_id: string;
+            /** University Id */
+            university_id?: number | null;
+            /** Name En */
+            name_en: string;
+            /** Name Kh */
+            name_kh?: string | null;
+            /** Faculty */
+            faculty?: string | null;
+            degree_level: components["schemas"]["DegreeLevel"];
+            /** Duration Years */
+            duration_years?: number | null;
+            /** @default USD */
+            fee_currency: components["schemas"]["Currency"];
+            /** Tuition Per Year */
+            tuition_per_year?: number | null;
+            /** Tuition Per Credit */
+            tuition_per_credit?: number | null;
+            /** University Name */
+            university_name?: string | null;
+            /** University Abbreviation */
+            university_abbreviation?: string | null;
+        };
+        /**
          * ProgramSummary
          * @description Schema for summarizing program information.
          */
@@ -825,6 +1175,8 @@ export interface components {
              * Format: uuid
              */
             public_id: string;
+            /** University Id */
+            university_id?: number | null;
             /** Name En */
             name_en: string;
             /** Name Kh */
@@ -868,6 +1220,15 @@ export interface components {
             admission_req_en?: string | null;
             /** Admission Req Kh */
             admission_req_kh?: string | null;
+        };
+        /** RoleRead */
+        RoleRead: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** Description */
+            description?: string | null;
         };
         /**
          * Scholarship
@@ -916,6 +1277,71 @@ export interface components {
              * @default 0
              */
             position: number;
+        };
+        /**
+         * ScholarshipCreateDirect
+         * @description Direct create payload specifying university_id or unit_id.
+         */
+        ScholarshipCreateDirect: {
+            /** Name En */
+            name_en: string;
+            /** Name Kh */
+            name_kh?: string | null;
+            /** Coverage En */
+            coverage_en: string;
+            /** Coverage Kh */
+            coverage_kh?: string | null;
+            /** Requirements */
+            requirements?: {
+                [key: string]: unknown;
+            }[] | null;
+            /**
+             * Position
+             * @default 0
+             */
+            position: number;
+            /** University Id */
+            university_id?: number | null;
+            /** Unit Id */
+            unit_id?: number | null;
+        };
+        /**
+         * ScholarshipListItem
+         * @description Scholarship with owner context (university/unit name).
+         */
+        ScholarshipListItem: {
+            /** Name En */
+            name_en: string;
+            /** Name Kh */
+            name_kh?: string | null;
+            /** Coverage En */
+            coverage_en: string;
+            /** Coverage Kh */
+            coverage_kh?: string | null;
+            /** Requirements */
+            requirements?: {
+                [key: string]: unknown;
+            }[] | null;
+            /**
+             * Position
+             * @default 0
+             */
+            position: number;
+            /** Id */
+            id: number;
+            /**
+             * Public Id
+             * Format: uuid
+             */
+            public_id: string;
+            /** Unit Id */
+            unit_id?: number | null;
+            /** University Id */
+            university_id?: number | null;
+            /** University Name */
+            university_name?: string | null;
+            /** Unit Name */
+            unit_name?: string | null;
         };
         /**
          * ScholarshipRead
@@ -976,6 +1402,27 @@ export interface components {
          * @enum {string}
          */
         Status: "DRAFT" | "PUBLISHED";
+        /** SystemInfo */
+        SystemInfo: {
+            /** Project Name */
+            project_name: string;
+            /** Environment */
+            environment: string;
+            /** Database Status */
+            database_status: string;
+            /** R2 Storage Configured */
+            r2_storage_configured: boolean;
+            /** Total Universities */
+            total_universities: number;
+            /** Total Programs */
+            total_programs: number;
+            /** Total Units */
+            total_units: number;
+            /** Total Scholarships */
+            total_scholarships: number;
+            /** Total Users */
+            total_users: number;
+        };
         /**
          * UnitCreate
          * @description The data required to create a new unit.
@@ -1299,6 +1746,127 @@ export interface components {
             /** Stats Established */
             stats_established?: string | null;
         };
+        /** UserCreate */
+        UserCreate: {
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+            /** Password */
+            password: string;
+            /**
+             * Is Active
+             * @default true
+             */
+            is_active: boolean;
+            /**
+             * Is Superuser
+             * @default false
+             */
+            is_superuser: boolean;
+            /**
+             * Role Ids
+             * @default []
+             */
+            role_ids: number[];
+        };
+        /** UserDetail */
+        UserDetail: {
+            /** Id */
+            id: number;
+            /**
+             * Public Id
+             * Format: uuid
+             */
+            public_id: string;
+            /** Email */
+            email: string;
+            /** Is Active */
+            is_active: boolean;
+            /** Is Superuser */
+            is_superuser: boolean;
+            /**
+             * Roles
+             * @default []
+             */
+            roles: string[];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Role Ids
+             * @default []
+             */
+            role_ids: number[];
+        };
+        /** UserProfile */
+        UserProfile: {
+            /** Id */
+            id: number;
+            /**
+             * Public Id
+             * Format: uuid
+             */
+            public_id: string;
+            /** Email */
+            email: string;
+            /** Is Active */
+            is_active: boolean;
+            /** Is Superuser */
+            is_superuser: boolean;
+            /**
+             * Roles
+             * @default []
+             */
+            roles: string[];
+            /**
+             * Permissions
+             * @default []
+             */
+            permissions: string[];
+        };
+        /** UserSummary */
+        UserSummary: {
+            /** Id */
+            id: number;
+            /**
+             * Public Id
+             * Format: uuid
+             */
+            public_id: string;
+            /** Email */
+            email: string;
+            /** Is Active */
+            is_active: boolean;
+            /** Is Superuser */
+            is_superuser: boolean;
+            /**
+             * Roles
+             * @default []
+             */
+            roles: string[];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** UserUpdate */
+        UserUpdate: {
+            /** Email */
+            email?: string | null;
+            /** Password */
+            password?: string | null;
+            /** Is Active */
+            is_active?: boolean | null;
+            /** Is Superuser */
+            is_superuser?: boolean | null;
+            /** Role Ids */
+            role_ids?: number[] | null;
+        };
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -1351,6 +1919,59 @@ export interface operations {
         requestBody: {
             content: {
                 "application/x-www-form-urlencoded": components["schemas"]["Body_login_api_v1_auth_login_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_me_api_v1_auth_me_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserProfile"];
+                };
+            };
+        };
+    };
+    change_password_api_v1_auth_change_password_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordChangeRequest"];
             };
         };
         responses: {
@@ -1708,6 +2329,77 @@ export interface operations {
             };
         };
     };
+    list_programs_api_v1_admin_programs__get: {
+        parameters: {
+            query?: {
+                /** @description Page number */
+                page?: number;
+                /** @description Items per page */
+                limit?: number;
+                /** @description Search term for program name or faculty */
+                q?: string | null;
+                /** @description Filter by degree level */
+                degree_level?: components["schemas"]["DegreeLevel"] | null;
+                /** @description Filter by university ID */
+                university_id?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_ProgramListItem_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_program_api_v1_admin_programs__program_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                program_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProgramListItem"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     delete_program_api_v1_admin_programs__program_id__delete: {
         parameters: {
             query?: never;
@@ -1774,7 +2466,12 @@ export interface operations {
     };
     list_units_endpoint_api_v1_admin_universities__university_id__units__get: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Page number */
+                page?: number;
+                /** @description Items per page (capped at MAX_PAGE_SIZE) */
+                limit?: number;
+            };
             header?: never;
             path: {
                 university_id: number;
@@ -1789,7 +2486,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["UnitSummary"][];
+                    "application/json": components["schemas"]["Page_UnitSummary_"];
                 };
             };
             /** @description Validation Error */
@@ -2200,6 +2897,141 @@ export interface operations {
             };
         };
     };
+    list_all_scholarships_api_v1_admin_scholarships__get: {
+        parameters: {
+            query?: {
+                /** @description Page number */
+                page?: number;
+                /** @description Items per page */
+                limit?: number;
+                /** @description Search term for scholarship name or coverage */
+                q?: string | null;
+                /** @description Filter by university ID */
+                university_id?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_ScholarshipListItem_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_direct_scholarship_api_v1_admin_scholarships__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScholarshipCreateDirect"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScholarshipRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_direct_scholarship_api_v1_admin_scholarships__scholarship_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scholarship_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_direct_scholarship_api_v1_admin_scholarships__scholarship_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scholarship_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScholarshipUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScholarshipRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_endpoint_api_v1_admin_units__owner_id__scholarships__get: {
         parameters: {
             query?: never;
@@ -2493,6 +3325,210 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_roles_api_v1_admin_users_roles_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoleRead"][];
+                };
+            };
+        };
+    };
+    list_users_api_v1_admin_users__get: {
+        parameters: {
+            query?: {
+                /** @description Page number */
+                page?: number;
+                /** @description Items per page */
+                limit?: number;
+                /** @description Search by email */
+                q?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_UserSummary_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_user_api_v1_admin_users__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_user_api_v1_admin_users__user_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_user_api_v1_admin_users__user_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_user_api_v1_admin_users__user_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_system_info_api_v1_admin_system_info_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SystemInfo"];
                 };
             };
         };

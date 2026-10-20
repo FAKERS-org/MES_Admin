@@ -20,7 +20,13 @@ export async function proxyToApi(req: Request, upstreamPath: string): Promise<Ne
 
   let res: Response;
   try {
-    res = await fetch(`${API_URL}/api/v1/${upstreamPath}`, {
+    const reqUrl = new URL(req.url);
+    const search = reqUrl.search;
+    const finalPath = search
+      ? `${upstreamPath}${upstreamPath.includes("?") ? "&" : "?"}${search.slice(1)}`
+      : upstreamPath;
+
+    res = await fetch(`${API_URL}/api/v1/${finalPath}`, {
       method,
       cache: "no-store",
       headers: {
