@@ -89,6 +89,16 @@ export async function apiList<T>(
   return page?.items ?? [];
 }
 
+/**
+ * Fetch a paginated endpoint and return full Page envelope (page, limit, total_items, total_pages, items).
+ */
+export async function apiPage<T>(
+  path: string,
+  options: { method?: Method; body?: unknown } = {},
+): Promise<import("@/lib/types").Page<T>> {
+  return apiRequest<import("@/lib/types").Page<T>>(path, options);
+}
+
 /** Unauthenticated health probe used by the dashboard and the top bar. */
 export async function fetchHealth(): Promise<{ ok: boolean; status?: string; env?: string }> {
   try {
