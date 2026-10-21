@@ -91,10 +91,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /**
-         * List Universities
-         * @description Get a paginated list of published, non-deleted universities.
-         */
+        /** List Universities */
         get: operations["list_universities_api_v1_public_universities__get"];
         put?: never;
         post?: never;
@@ -134,7 +131,7 @@ export interface paths {
         };
         /**
          * List University Units
-         * @description Get the unit tree (flat, with parent_id) of a published university, paginated.
+         * @description Get the unit tree of a published university, paginated.
          */
         get: operations["list_university_units_api_v1_public_universities__university_id__units_get"];
         put?: never;
@@ -217,6 +214,26 @@ export interface paths {
         patch: operations["update_university_partial_api_v1_admin_universities__university_id__patch"];
         trace?: never;
     };
+    "/api/v1/admin/universities/{university_id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Restore University
+         * @description Restore a previously soft-deleted university.
+         */
+        post: operations["restore_university_api_v1_admin_universities__university_id__restore_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/universities/{university_id}/programs/": {
         parameters: {
             query?: never;
@@ -226,7 +243,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Create Program */
+        /**
+         * Create Program
+         * @description Create a program under an active university.
+         */
         post: operations["create_program_api_v1_admin_universities__university_id__programs__post"];
         delete?: never;
         options?: never;
@@ -243,7 +263,7 @@ export interface paths {
         };
         /**
          * List Programs
-         * @description List all programs with pagination and filtering.
+         * @description List programs for admins, optionally including soft-deleted ones.
          */
         get: operations["list_programs_api_v1_admin_programs__get"];
         put?: never;
@@ -261,16 +281,45 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Program */
+        /**
+         * Get Program
+         * @description Get a program by ID (allows viewing deleted records if requested).
+         */
         get: operations["get_program_api_v1_admin_programs__program_id__get"];
         put?: never;
         post?: never;
-        /** Delete Program */
+        /**
+         * Delete Program
+         * @description Soft-delete a program.
+         */
         delete: operations["delete_program_api_v1_admin_programs__program_id__delete"];
         options?: never;
         head?: never;
-        /** Update Program */
+        /**
+         * Update Program
+         * @description Update an active program.
+         */
         patch: operations["update_program_api_v1_admin_programs__program_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/admin/programs/{program_id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Restore Program
+         * @description Restore a previously soft-deleted program.
+         */
+        post: operations["restore_program_api_v1_admin_programs__program_id__restore_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/admin/universities/{university_id}/units/": {
@@ -282,7 +331,7 @@ export interface paths {
         };
         /**
          * List Units Endpoint
-         * @description List all units of a university, paginated.
+         * @description List all units of a university, paginated with filtering and sorting.
          */
         get: operations["list_units_endpoint_api_v1_admin_universities__university_id__units__get"];
         put?: never;
@@ -323,6 +372,26 @@ export interface paths {
          * @description Partial update - only send fields you want to change.
          */
         patch: operations["update_unit_endpoint_api_v1_admin_universities__university_id__units__unit_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/admin/universities/{university_id}/units/{unit_id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Restore Unit Endpoint
+         * @description Restore a previously soft-deleted unit.
+         */
+        post: operations["restore_unit_endpoint_api_v1_admin_universities__university_id__units__unit_id__restore_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/admin/units/{unit_id}/facilities/": {
@@ -440,6 +509,26 @@ export interface paths {
         head?: never;
         /** Update Direct Scholarship */
         patch: operations["update_direct_scholarship_api_v1_admin_scholarships__scholarship_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/admin/scholarships/{scholarship_id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Restore Direct Scholarship
+         * @description Restore a previously soft-deleted scholarship.
+         */
+        post: operations["restore_direct_scholarship_api_v1_admin_scholarships__scholarship_id__restore_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/admin/units/{owner_id}/scholarships/": {
@@ -595,6 +684,26 @@ export interface paths {
         head?: never;
         /** Update User */
         patch: operations["update_user_api_v1_admin_users__user_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/admin/users/{user_id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Restore User
+         * @description Restore a previously soft-deleted user.
+         */
+        post: operations["restore_user_api_v1_admin_users__user_id__restore_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/admin/system/info": {
@@ -1382,14 +1491,15 @@ export interface components {
             kind: components["schemas"]["UnitKind"];
             /** Parent Id */
             parent_id?: number | null;
-            /** Category En */
-            category_en: string;
+            /**
+             * Category En
+             * @default
+             */
+            category_en: string | null;
             /** Category Kh */
             category_kh?: string | null;
             /** Logo */
             logo?: string | null;
-            /** Position */
-            position: number;
         };
         /**
          * UnitDetail
@@ -1418,8 +1528,6 @@ export interface components {
             category_kh?: string | null;
             /** Logo */
             logo?: string | null;
-            /** Position */
-            position: number;
             /**
              * Curriculum Sections
              * @default []
@@ -1475,8 +1583,6 @@ export interface components {
             category_kh?: string | null;
             /** Logo */
             logo?: string | null;
-            /** Position */
-            position: number;
         };
         /**
          * UnitUpdate
@@ -1497,8 +1603,6 @@ export interface components {
             category_kh?: string | null;
             /** Logo */
             logo?: string | null;
-            /** Position */
-            position?: number | null;
         };
         /**
          * UniversityCreate
@@ -2017,6 +2121,16 @@ export interface operations {
                 page?: number;
                 /** @description Items per page (capped at MAX_PAGE_SIZE) */
                 limit?: number;
+                /** @description Search term for name or category */
+                q?: string | null;
+                /** @description Filter by unit kind */
+                kind?: components["schemas"]["UnitKind"] | null;
+                /** @description Filter by parent unit ID */
+                parent_id?: number | null;
+                /** @description Sort by field: name_en, created_at, id */
+                sort_by?: string;
+                /** @description Sort direction: asc or desc */
+                order?: string;
             };
             header?: never;
             path: {
@@ -2085,6 +2199,8 @@ export interface operations {
                 page?: number;
                 /** @description Items per page (capped at MAX_PAGE_SIZE) */
                 limit?: number;
+                /** @description Admin filter: set to true to include soft-deleted records */
+                include_deleted?: boolean;
             };
             header?: never;
             path?: never;
@@ -2147,7 +2263,10 @@ export interface operations {
     };
     get_university_api_v1_admin_universities__university_id__get: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Allow admin to retrieve a soft-deleted university */
+                include_deleted?: boolean;
+            };
             header?: never;
             path: {
                 university_id: number;
@@ -2240,6 +2359,37 @@ export interface operations {
             };
         };
     };
+    restore_university_api_v1_admin_universities__university_id__restore_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                university_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UniversitySummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     create_program_api_v1_admin_universities__university_id__programs__post: {
         parameters: {
             query?: never;
@@ -2288,6 +2438,8 @@ export interface operations {
                 degree_level?: components["schemas"]["DegreeLevel"] | null;
                 /** @description Filter by university ID */
                 university_id?: number | null;
+                /** @description Admin filter: set to true to include soft-deleted records */
+                include_deleted?: boolean;
             };
             header?: never;
             path?: never;
@@ -2317,7 +2469,10 @@ export interface operations {
     };
     get_program_api_v1_admin_programs__program_id__get: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Allow admin to retrieve a soft-deleted program */
+                include_deleted?: boolean;
+            };
             header?: never;
             path: {
                 program_id: number;
@@ -2410,6 +2565,37 @@ export interface operations {
             };
         };
     };
+    restore_program_api_v1_admin_programs__program_id__restore_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                program_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProgramSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_units_endpoint_api_v1_admin_universities__university_id__units__get: {
         parameters: {
             query?: {
@@ -2417,6 +2603,18 @@ export interface operations {
                 page?: number;
                 /** @description Items per page (capped at MAX_PAGE_SIZE) */
                 limit?: number;
+                /** @description Search term for name or category */
+                q?: string | null;
+                /** @description Filter by unit kind */
+                kind?: components["schemas"]["UnitKind"] | null;
+                /** @description Filter by parent unit ID */
+                parent_id?: number | null;
+                /** @description Sort by field: name_en, created_at, id */
+                sort_by?: string;
+                /** @description Sort direction: asc or desc */
+                order?: string;
+                /** @description Admin filter: set to true to include soft-deleted records */
+                include_deleted?: boolean;
             };
             header?: never;
             path: {
@@ -2483,7 +2681,10 @@ export interface operations {
     };
     get_unit_endpoint_api_v1_admin_universities__university_id__units__unit_id__get: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Allow admin to retrieve a soft-deleted unit */
+                include_deleted?: boolean;
+            };
             header?: never;
             path: {
                 university_id: number;
@@ -2558,6 +2759,38 @@ export interface operations {
                 "application/json": components["schemas"]["UnitUpdate"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    restore_unit_endpoint_api_v1_admin_universities__university_id__units__unit_id__restore_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                university_id: number;
+                unit_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {
@@ -2854,6 +3087,8 @@ export interface operations {
                 q?: string | null;
                 /** @description Filter by university ID */
                 university_id?: number | null;
+                /** @description Admin filter: set to true to include soft-deleted records */
+                include_deleted?: boolean;
             };
             header?: never;
             path?: never;
@@ -2978,9 +3213,43 @@ export interface operations {
             };
         };
     };
-    list_endpoint_api_v1_admin_units__owner_id__scholarships__get: {
+    restore_direct_scholarship_api_v1_admin_scholarships__scholarship_id__restore_post: {
         parameters: {
             query?: never;
+            header?: never;
+            path: {
+                scholarship_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScholarshipRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_endpoint_api_v1_admin_units__owner_id__scholarships__get: {
+        parameters: {
+            query?: {
+                /** @description Admin filter: set to true to include soft-deleted records */
+                include_deleted?: boolean;
+            };
             header?: never;
             path: {
                 owner_id: number;
@@ -3112,7 +3381,10 @@ export interface operations {
     };
     list_endpoint_api_v1_admin_universities__owner_id__scholarships__get: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Admin filter: set to true to include soft-deleted records */
+                include_deleted?: boolean;
+            };
             header?: never;
             path: {
                 owner_id: number;
@@ -3304,6 +3576,8 @@ export interface operations {
                 limit?: number;
                 /** @description Search by email */
                 q?: string | null;
+                /** @description Admin filter: set to true to include soft-deleted records */
+                include_deleted?: boolean;
             };
             header?: never;
             path?: never;
@@ -3366,7 +3640,10 @@ export interface operations {
     };
     get_user_api_v1_admin_users__user_id__get: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Allow admin to retrieve a soft-deleted user */
+                include_deleted?: boolean;
+            };
             header?: never;
             path: {
                 user_id: number;
@@ -3438,6 +3715,37 @@ export interface operations {
                 "application/json": components["schemas"]["UserUpdate"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    restore_user_api_v1_admin_users__user_id__restore_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {

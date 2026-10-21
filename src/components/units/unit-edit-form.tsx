@@ -60,7 +60,7 @@ export default function UnitEditForm({
         <Card>
             <CardHeader>
                 <CardTitle>Unit details</CardTitle>
-                <CardDescription>Name, kind and position of this unit.</CardDescription>
+                <CardDescription>Name, kind and category of this unit.</CardDescription>
             </CardHeader>
             <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">

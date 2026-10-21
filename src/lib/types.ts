@@ -134,7 +134,6 @@ export interface UnitSummary {
     category_en: string;
     category_kh?: string | null;
     logo?: string | null;
-    position?: number;
 }
 
 export const UNIT_KINDS: UnitKind[] = ["FACULTY", "DEPARTMENT", "SUB_DEPARTMENT", "FOUNDATION"];
@@ -148,7 +147,6 @@ export interface UnitCreatePayload {
     category_en?: string;
     category_kh?: string | null;
     logo?: string | null;
-    position?: number;
 }
 
 /** `PATCH /api/v1/admin/universities/{university_id}/units/{unit_id}` body. */
