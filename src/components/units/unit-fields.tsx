@@ -21,7 +21,6 @@ export function unitPayload(form: FormData): UnitCreatePayload {
         category_en: raw(form, "category_en"),
         category_kh: nullable(form, "category_kh"),
         logo: nullable(form, "logo"),
-        position: Number(raw(form, "position") || 0),
     };
 }
 
@@ -94,18 +93,6 @@ export default function UnitFields({
 
             <Field label="Category (Khmer)" htmlFor="u-category-kh">
                 <Input id="u-category-kh" name="category_kh" defaultValue={defaultValue?.category_kh ?? ""} />
-            </Field>
-
-            <Field label="Position" htmlFor="u-position" required>
-                <Input
-                    id="u-position"
-                    name="position"
-                    type="number"
-                    min="0"
-                    step="1"
-                    defaultValue={String(defaultValue?.position ?? 0)}
-                    required
-                />
             </Field>
 
             <Field label="Logo URL" htmlFor="u-logo" className="lg:col-span-2">
