@@ -70,6 +70,8 @@ export default function UniversityEditForm({ university }: { university: Univers
             scholarship_info: nullable(form, "scholarship_info"),
             has_dormitory: form.get("has_dormitory") === "on",
             dormitory_details: nullable(form, "dormitory_details"),
+            campus_name: nullable(form, "campus_name"),
+            is_main_campus: form.get("is_main_campus") === "on",
         };
 
         startTransition(async () => {
@@ -132,6 +134,20 @@ export default function UniversityEditForm({ university }: { university: Univers
                                     <option value="PRIVATE">Private</option>
                                 </Select>
                             </Field>
+                            <Field label="Campus Name" htmlFor="campus_name">
+                                <Input
+                                    id="campus_name"
+                                    name="campus_name"
+                                    defaultValue={university.campus_name ?? ""}
+                                    placeholder="e.g. Main Campus, Toul Kork, Battambang..."
+                                />
+                            </Field>
+                            <Checkbox
+                                id="is_main_campus"
+                                name="is_main_campus"
+                                label="Is main campus"
+                                defaultChecked={Boolean(university.is_main_campus)}
+                            />
                             <Field label="Province" htmlFor="province" required className="sm:col-span-2">
                                 <>
                                     <Input

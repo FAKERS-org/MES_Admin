@@ -111,7 +111,7 @@ export interface paths {
         /**
          * Get University Detail
          * @description Get detailed information about a specific published university,
-         *     including the scholarships the university itself offers.
+         *     including the scholarships the university itself offers and its campuses.
          */
         get: operations["get_university_detail_api_v1_public_universities__university_id__get"];
         put?: never;
@@ -171,7 +171,7 @@ export interface paths {
         };
         /**
          * Get Universities
-         * @description Get all universities (including DRAFT), paginated.
+         * @description Get all universities (including DRAFT), paginated with search and filters.
          */
         get: operations["get_universities_api_v1_admin_universities__get"];
         put?: never;
@@ -753,6 +753,30 @@ export interface components {
              * Format: password
              */
             client_secret?: string | null;
+        };
+        /**
+         * CampusSummary
+         * @description Lightweight summary of a campus.
+         */
+        CampusSummary: {
+            /** Id */
+            id: number;
+            /**
+             * Public Id
+             * Format: uuid
+             */
+            public_id: string;
+            /** Campus Name */
+            campus_name?: string | null;
+            /**
+             * Is Main Campus
+             * @default false
+             */
+            is_main_campus: boolean;
+            /** Province */
+            province: string;
+            /** Address */
+            address?: string | null;
         };
         /**
          * Currency
@@ -1618,6 +1642,15 @@ export interface components {
             type: components["schemas"]["UniversityType"];
             /** Province */
             province: string;
+            /** Parent Id */
+            parent_id?: number | null;
+            /** Campus Name */
+            campus_name?: string | null;
+            /**
+             * Is Main Campus
+             * @default false
+             */
+            is_main_campus: boolean;
         };
         /**
          * UniversityDetail
@@ -1650,6 +1683,15 @@ export interface components {
             moeys_accredited: boolean;
             /** Established Year */
             established_year?: number | null;
+            /** Parent Id */
+            parent_id?: number | null;
+            /** Campus Name */
+            campus_name?: string | null;
+            /**
+             * Is Main Campus
+             * @default false
+             */
+            is_main_campus: boolean;
             /** Address */
             address?: string | null;
             /** Website */
@@ -1674,6 +1716,11 @@ export interface components {
              * @default []
              */
             scholarships: components["schemas"]["Scholarship"][];
+            /**
+             * Campuses
+             * @default []
+             */
+            campuses: components["schemas"]["CampusSummary"][];
             /** University Category En */
             university_category_en?: string | null;
             /** University Category Kh */
@@ -1728,6 +1775,15 @@ export interface components {
             moeys_accredited: boolean;
             /** Established Year */
             established_year?: number | null;
+            /** Parent Id */
+            parent_id?: number | null;
+            /** Campus Name */
+            campus_name?: string | null;
+            /**
+             * Is Main Campus
+             * @default false
+             */
+            is_main_campus: boolean;
         };
         /**
          * UniversityType
@@ -1795,6 +1851,12 @@ export interface components {
             stats_tuition?: string | null;
             /** Stats Established */
             stats_established?: string | null;
+            /** Parent Id */
+            parent_id?: number | null;
+            /** Campus Name */
+            campus_name?: string | null;
+            /** Is Main Campus */
+            is_main_campus?: boolean | null;
         };
         /** UserCreate */
         UserCreate: {
@@ -2199,6 +2261,22 @@ export interface operations {
                 page?: number;
                 /** @description Items per page (capped at MAX_PAGE_SIZE) */
                 limit?: number;
+                /** @description Search term across name, abbreviation, province */
+                q?: string | null;
+                /** @description Filter by type (PUBLIC / PRIVATE) */
+                type?: string | null;
+                /** @description Filter by status (PUBLISHED / DRAFT / ARCHIVED) */
+                status?: string | null;
+                /** @description Filter by province */
+                province?: string | null;
+                /** @description Filter by parent university ID */
+                parent_id?: number | null;
+                /** @description Filter root universities only (parent_id is None) */
+                is_root?: boolean | null;
+                /** @description Sort field: name_en, created_at, established_year */
+                sort_by?: string;
+                /** @description Sort direction: asc or desc */
+                order?: string;
                 /** @description Admin filter: set to true to include soft-deleted records */
                 include_deleted?: boolean;
             };

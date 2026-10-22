@@ -1,6 +1,7 @@
 import { FilePlus2, Search } from "lucide-react";
 import Link from "next/link";
 
+import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState, PageHeader } from "@/components/ui/feedback";
@@ -179,7 +180,19 @@ export default async function UniversitiesPage({ searchParams }: { searchParams:
                                                     abbreviation={university.abbreviation}
                                                 />
                                                 <div className="min-w-0">
-                                                    <p className="truncate font-medium">{university.name_en}</p>
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                        <p className="truncate font-medium">{university.name_en}</p>
+                                                        {university.campus_name ? (
+                                                            <Badge variant="outline" className="text-[11px] py-0 px-1.5 font-normal">
+                                                                {university.campus_name}
+                                                            </Badge>
+                                                        ) : null}
+                                                        {university.parent_id ? (
+                                                            <Badge variant="outline" className="text-[10px] py-0 px-1">
+                                                                Branch
+                                                            </Badge>
+                                                        ) : null}
+                                                    </div>
                                                     <p className="truncate text-xs text-muted-foreground">
                                                         {[
                                                             university.name_kh,

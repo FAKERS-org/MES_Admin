@@ -9,7 +9,7 @@ import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, PageHeader, Spinner } from "@/components/ui/feedback";
-import { Field, Input, Select } from "@/components/ui/field";
+import { Checkbox, Field, Input, Select } from "@/components/ui/field";
 import { apiRequest } from "@/lib/api";
 import { PROVINCES, type UniversityCreatePayload, type UniversitySummary, type UniversityType } from "@/lib/types";
 
@@ -37,6 +37,8 @@ export default function UniversityCreateForm() {
             abbreviation: String(form.get("abbreviation") ?? "").trim() || null,
             type: form.get("type") as UniversityType,
             province,
+            campus_name: String(form.get("campus_name") ?? "").trim() || null,
+            is_main_campus: form.get("is_main_campus") === "on",
         };
 
         startTransition(async () => {
@@ -102,6 +104,17 @@ export default function UniversityCreateForm() {
                                     <option value="PRIVATE">Private</option>
                                 </Select>
                             </Field>
+
+                            <Field label="Campus Name (Optional)" htmlFor="campus_name">
+                                <Input id="campus_name" name="campus_name" placeholder="e.g. Main Campus, Toul Kork" />
+                            </Field>
+
+                            <Checkbox
+                                id="is_main_campus"
+                                name="is_main_campus"
+                                label="Set as main campus"
+                                description="Check if this is the primary campus location."
+                            />
 
                             <Field
                                 label="Province"

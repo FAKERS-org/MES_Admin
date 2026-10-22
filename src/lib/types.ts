@@ -52,6 +52,16 @@ export const PROVINCES: string[] = [
     "Tbong Khmum",
 ];
 
+/** Lightweight campus item returned in university details */
+export interface CampusSummary {
+    id: number;
+    public_id: string;
+    campus_name?: string | null;
+    is_main_campus: boolean;
+    province: string;
+    address?: string | null;
+}
+
 /** `GET /api/v1/admin/universities/` item. */
 export interface UniversitySummary {
     id: string;
@@ -63,6 +73,9 @@ export interface UniversitySummary {
     logo_url: string | null;
     moeys_accredited: boolean;
     established_year: number | null;
+    parent_id?: number | null;
+    campus_name?: string | null;
+    is_main_campus?: boolean;
 }
 
 /** `GET /api/v1/admin/universities/{id}` response. */
@@ -77,6 +90,7 @@ export interface UniversityDetail extends UniversitySummary {
     has_dormitory: boolean;
     dormitory_details: string | null;
     programs: ProgramSummary[];
+    campuses?: CampusSummary[];
 }
 
 /** `POST /api/v1/admin/universities/` body. */
@@ -86,6 +100,9 @@ export interface UniversityCreatePayload {
     abbreviation?: string | null;
     type: UniversityType;
     province: string;
+    parent_id?: number | null;
+    campus_name?: string | null;
+    is_main_campus?: boolean;
 }
 
 /** `PATCH /api/v1/admin/universities/{id}` body (field names as the API accepts them). */
@@ -108,6 +125,9 @@ export interface UniversityUpdatePayload {
     scholarship_info?: string | null;
     has_dormitory?: boolean;
     dormitory_details?: string | null;
+    parent_id?: number | null;
+    campus_name?: string | null;
+    is_main_campus?: boolean;
 }
 
 /** `ProgramSummary` item, embedded in `UniversityDetail.programs`. */
