@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   reactStrictMode: true,
   // Program/university logos are stored as arbitrary external URLs in the API,
   // so we allow any https host and let the browser render them directly.
