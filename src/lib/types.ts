@@ -69,6 +69,7 @@ export interface UniversitySummary {
     name_kh: string | null;
     abbreviation: string | null;
     type: UniversityType;
+    status?: Status;
     province: string;
     logo_url: string | null;
     moeys_accredited: boolean;
@@ -99,6 +100,7 @@ export interface UniversityCreatePayload {
     name_kh?: string | null;
     abbreviation?: string | null;
     type: UniversityType;
+    status?: Status;
     province: string;
     parent_id?: number | null;
     campus_name?: string | null;

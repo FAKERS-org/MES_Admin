@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Building2, FilePlus2, Globe2, Lock } from "lucide-react";
 
-import { apiList, fetchHealth, publishedIds } from "@/lib/server-api";
+import { apiList, fetchHealth } from "@/lib/server-api";
 import { API_DOCS_URL } from "@/lib/config";
 import type { UniversitySummary } from "@/lib/types";
 import { PageHeader } from "@/components/ui/feedback";
@@ -16,14 +16,13 @@ export const metadata = { title: "Dashboard" };
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const [universities, health, published] = await Promise.all([
+  const [universities, health] = await Promise.all([
     apiList<UniversitySummary>("admin/universities/?page=1&limit=100"),
     fetchHealth(),
-    publishedIds(),
   ]);
 
   const total = universities.length;
-  const publishedCount = universities.filter((u) => published.has(u.id)).length;
+  const publishedCount = universities.filter((u) => u.status === "PUBLISHED").length;
   const draftCount = total - publishedCount;
   const privateCount = universities.filter((u) => u.type === "PRIVATE").length;
   const recent = universities.slice(0, 6);
@@ -132,7 +131,7 @@ export default async function DashboardPage() {
                     </TableCell>
                     <TableCell className="text-muted-foreground">{university.province}</TableCell>
                     <TableCell>
-                      <StatusBadge status={published.has(university.id) ? "PUBLISHED" : "DRAFT"} />
+                      <StatusBadge status={university.status ?? "DRAFT"} />
                     </TableCell>
                     <TableCell className="text-right">
                       <Link

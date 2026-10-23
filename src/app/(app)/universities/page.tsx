@@ -9,7 +9,7 @@ import { Input, Select } from "@/components/ui/field";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { StatusBadge, TypeBadge } from "@/components/universities/badges";
 import { UniversityAvatar } from "@/components/universities/university-avatar";
-import { apiPage, publishedIds } from "@/lib/server-api";
+import { apiPage } from "@/lib/server-api";
 import type { UniversitySummary } from "@/lib/types";
 
 export const metadata = { title: "Universities" };
@@ -43,14 +43,11 @@ export default async function UniversitiesPage({ searchParams }: { searchParams:
     if (type) apiParams.set("type", type);
     if (status) apiParams.set("status", status);
 
-    const [pageData, published] = await Promise.all([
-        apiPage<UniversitySummary>(`admin/universities/?${apiParams.toString()}`),
-        publishedIds(),
-    ]);
+    const pageData = await apiPage<UniversitySummary>(`admin/universities/?${apiParams.toString()}`);
 
     const pageRows = (pageData?.items ?? []).map(university => ({
         ...university,
-        isPublished: published.has(university.id),
+        isPublished: university.status === "PUBLISHED",
     }));
 
     const totalPages = Math.max(1, pageData?.total_pages ?? 1);

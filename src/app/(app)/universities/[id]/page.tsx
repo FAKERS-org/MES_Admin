@@ -12,7 +12,7 @@ import ProgramManager from "@/components/universities/program-manager";
 import PublishToggle from "@/components/universities/publish-toggle";
 import UnitManager from "@/components/universities/unit-manager";
 import UniversityEditForm from "@/components/universities/university-edit-form";
-import { ApiError, apiList, apiRequest, publishedIds } from "@/lib/server-api";
+import { ApiError, apiList, apiRequest } from "@/lib/server-api";
 import type { Status, UnitSummary, UniversityDetail, UniversitySummary } from "@/lib/types";
 
 export const metadata = { title: "University" };
@@ -38,8 +38,7 @@ export default async function UniversityDetailPage({ params }: { params: Promise
         }
     }
 
-    const published = await publishedIds();
-    const status: Status = published.has(university.id) ? "PUBLISHED" : "DRAFT";
+    const status: Status = university.status ?? "DRAFT";
 
     // Units come from the admin API: the public list endpoint 403s while the
     // university is still a DRAFT, which would hide every unit.
