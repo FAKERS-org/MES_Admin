@@ -44,7 +44,7 @@ jobs:
     needs: build-and-push
     runs-on: self-hosted
     steps:
-      - name: Run Blue-Green Deployment
+      - name: Deploy with Rollback
         run: |
           IMAGE_NAME="ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')"
           cd /opt/mes
