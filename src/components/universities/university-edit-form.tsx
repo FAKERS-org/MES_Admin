@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, GraduationCap, Landmark, Save, Sofa } from "lucide-react";
+import { Check, CircleDollarSign, GraduationCap, Landmark, Save, Sofa } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition, type FormEvent } from "react";
 
@@ -52,6 +52,9 @@ export default function UniversityEditForm({ university }: { university: Univers
             return;
         }
 
+        const defaultTuitionRaw = raw(form, "default_tuition_per_year");
+        const defaultTuitionFemaleRaw = raw(form, "default_tuition_female_per_year");
+
         const payload: UniversityUpdatePayload = {
             name_en: nameEn,
             name_kh: nullable(form, "name_kh"),
@@ -70,6 +73,8 @@ export default function UniversityEditForm({ university }: { university: Univers
             scholarship_info: nullable(form, "scholarship_info"),
             has_dormitory: form.get("has_dormitory") === "on",
             dormitory_details: nullable(form, "dormitory_details"),
+            default_tuition_per_year: defaultTuitionRaw ? Number(defaultTuitionRaw) : null,
+            default_tuition_female_per_year: defaultTuitionFemaleRaw ? Number(defaultTuitionFemaleRaw) : null,
             campus_name: nullable(form, "campus_name"),
             is_main_campus: form.get("is_main_campus") === "on",
         };
@@ -238,6 +243,35 @@ export default function UniversityEditForm({ university }: { university: Univers
                                 defaultValue={university.overview_kh ?? ""}
                             />
                         </Field>
+                    </section>
+
+                    <section className="space-y-4">
+                        <h4 className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                            <CircleDollarSign className="size-3.5" /> University tuition defaults
+                        </h4>
+                        <p className="text-xs text-muted-foreground">
+                            Set uniform tuition fees for this university. Individual academic programs will inherit these amounts unless explicitly overridden.
+                        </p>
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <Field label="Default Tuition / Year ($ USD)" htmlFor="default_tuition_per_year">
+                                <Input
+                                    id="default_tuition_per_year"
+                                    name="default_tuition_per_year"
+                                    type="number"
+                                    placeholder="e.g. 800"
+                                    defaultValue={university.default_tuition_per_year ?? ""}
+                                />
+                            </Field>
+                            <Field label="Default Female Tuition / Year ($ USD)" htmlFor="default_tuition_female_per_year">
+                                <Input
+                                    id="default_tuition_female_per_year"
+                                    name="default_tuition_female_per_year"
+                                    type="number"
+                                    placeholder="e.g. 400 (if female incentive applies)"
+                                    defaultValue={university.default_tuition_female_per_year ?? ""}
+                                />
+                            </Field>
+                        </div>
                     </section>
 
                     <section className="space-y-4">

@@ -86,14 +86,27 @@ function ProgramFields({ defaultValue }: { defaultValue?: Partial<ProgramSummary
                 />
             </Field>
 
-            <Field label="Tuition / year" htmlFor="p-tuition-year">
+            <Field label="Tuition / year (General / Male)" htmlFor="p-tuition-year">
                 <Input
                     id="p-tuition-year"
                     name="tuition_per_year"
                     type="number"
                     step="0.01"
                     min="0"
+                    placeholder="e.g. 800"
                     defaultValue={defaultValue?.tuition_per_year ?? ""}
+                />
+            </Field>
+
+            <Field label="Tuition / year (Female incentive rate, optional)" htmlFor="p-tuition-female">
+                <Input
+                    id="p-tuition-female"
+                    name="tuition_female_per_year"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="e.g. 400 (if discounted)"
+                    defaultValue={defaultValue?.tuition_female_per_year ?? ""}
                 />
             </Field>
 
@@ -160,6 +173,7 @@ export default function ProgramManager({
             degree_level: form.get("degree_level") as DegreeLevel,
             duration_years: Number(raw(form, "duration_years") || 4),
             tuition_per_year: numberOrNull(form, "tuition_per_year"),
+            tuition_female_per_year: numberOrNull(form, "tuition_female_per_year"),
             tuition_per_credit: numberOrNull(form, "tuition_per_credit"),
             fee_currency: form.get("fee_currency") as Currency,
         };
@@ -202,6 +216,8 @@ export default function ProgramManager({
             // must not overwrite the stored value.
             const perYear = numberOrNull(form, "tuition_per_year");
             if (perYear !== null) payload.tuition_per_year = perYear;
+            const perYearFemale = numberOrNull(form, "tuition_female_per_year");
+            if (perYearFemale !== null) payload.tuition_female_per_year = perYearFemale;
             const perCredit = numberOrNull(form, "tuition_per_credit");
             if (perCredit !== null) payload.tuition_per_credit = perCredit;
 

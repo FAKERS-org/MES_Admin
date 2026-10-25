@@ -88,6 +88,7 @@ export function ProgramsManager({
             degree_level: raw(form, "degree_level") as DegreeLevel,
             duration_years: Number(raw(form, "duration_years")) || 4,
             tuition_per_year: numberOrNull(form, "tuition_per_year"),
+            tuition_female_per_year: numberOrNull(form, "tuition_female_per_year"),
             tuition_per_credit: numberOrNull(form, "tuition_per_credit"),
             fee_currency: (raw(form, "fee_currency") as Currency) || "USD",
         };
@@ -117,6 +118,7 @@ export function ProgramsManager({
             degree_level: raw(form, "degree_level") as DegreeLevel,
             duration_years: Number(raw(form, "duration_years")) || 4,
             tuition_per_year: numberOrNull(form, "tuition_per_year"),
+            tuition_female_per_year: numberOrNull(form, "tuition_female_per_year"),
             tuition_per_credit: numberOrNull(form, "tuition_per_credit"),
             fee_currency: (raw(form, "fee_currency") as Currency) || "USD",
         };
@@ -258,11 +260,20 @@ export function ProgramsManager({
                                         <TableCell><Badge variant="outline">{program.degree_level}</Badge></TableCell>
                                         <TableCell className="text-muted-foreground">{program.duration_years ? `${program.duration_years} yrs` : "—"}</TableCell>
                                         <TableCell className="text-muted-foreground text-sm">
-                                            {program.tuition_per_year
-                                                ? `${formatCurrency(program.tuition_per_year, program.fee_currency)}/yr`
-                                                : program.tuition_per_credit
-                                                ? `${formatCurrency(program.tuition_per_credit, program.fee_currency)}/credit`
-                                                : "Free / Unset"}
+                                            {program.tuition_per_year ? (
+                                                <div>
+                                                    <div>{formatCurrency(program.tuition_per_year, program.fee_currency)}/yr</div>
+                                                    {program.tuition_female_per_year ? (
+                                                        <div className="text-xs text-rose-600 dark:text-rose-400 font-medium">
+                                                            ♀ {formatCurrency(program.tuition_female_per_year, program.fee_currency)}/yr
+                                                        </div>
+                                                    ) : null}
+                                                </div>
+                                            ) : program.tuition_per_credit ? (
+                                                `${formatCurrency(program.tuition_per_credit, program.fee_currency)}/credit`
+                                            ) : (
+                                                "Free / Unset"
+                                            )}
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex items-center justify-end gap-2">
@@ -315,12 +326,9 @@ export function ProgramsManager({
                         </Field>
                     </div>
 
-                    <div className="grid gap-4 sm:grid-cols-3">
+                    <div className="grid gap-4 sm:grid-cols-2">
                         <Field label="Duration (years)" htmlFor="create-duration" required>
                             <Input id="create-duration" name="duration_years" type="number" step="0.5" defaultValue="4" required />
-                        </Field>
-                        <Field label="Tuition / Year" htmlFor="create-tuition">
-                            <Input id="create-tuition" name="tuition_per_year" type="number" placeholder="1000" />
                         </Field>
                         <Field label="Currency" htmlFor="create-currency">
                             <Select id="create-currency" name="fee_currency" defaultValue="USD">
@@ -328,6 +336,15 @@ export function ProgramsManager({
                                     <option key={c} value={c}>{c}</option>
                                 ))}
                             </Select>
+                        </Field>
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <Field label="Tuition / Year (Standard)" htmlFor="create-tuition">
+                            <Input id="create-tuition" name="tuition_per_year" type="number" placeholder="1000" />
+                        </Field>
+                        <Field label="Tuition / Year (Female Discount)" htmlFor="create-tuition-female">
+                            <Input id="create-tuition-female" name="tuition_female_per_year" type="number" placeholder="e.g. 500" />
                         </Field>
                     </div>
 
@@ -364,12 +381,9 @@ export function ProgramsManager({
                             </Field>
                         </div>
 
-                        <div className="grid gap-4 sm:grid-cols-3">
+                        <div className="grid gap-4 sm:grid-cols-2">
                             <Field label="Duration (years)" htmlFor="edit-duration" required>
                                 <Input id="edit-duration" name="duration_years" type="number" step="0.5" defaultValue={editingProgram.duration_years ?? 4} required />
-                            </Field>
-                            <Field label="Tuition / Year" htmlFor="edit-tuition">
-                                <Input id="edit-tuition" name="tuition_per_year" type="number" defaultValue={editingProgram.tuition_per_year ?? ""} />
                             </Field>
                             <Field label="Currency" htmlFor="edit-currency">
                                 <Select id="edit-currency" name="fee_currency" defaultValue={editingProgram.fee_currency}>
@@ -377,6 +391,15 @@ export function ProgramsManager({
                                         <option key={c} value={c}>{c}</option>
                                     ))}
                                 </Select>
+                            </Field>
+                        </div>
+
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <Field label="Tuition / Year (Standard)" htmlFor="edit-tuition">
+                                <Input id="edit-tuition" name="tuition_per_year" type="number" defaultValue={editingProgram.tuition_per_year ?? ""} />
+                            </Field>
+                            <Field label="Tuition / Year (Female Discount)" htmlFor="edit-tuition-female">
+                                <Input id="edit-tuition-female" name="tuition_female_per_year" type="number" defaultValue={editingProgram.tuition_female_per_year ?? ""} />
                             </Field>
                         </div>
 

@@ -90,6 +90,8 @@ export interface UniversityDetail extends UniversitySummary {
     scholarship_info: string | null;
     has_dormitory: boolean;
     dormitory_details: string | null;
+    default_tuition_per_year?: number | null;
+    default_tuition_female_per_year?: number | null;
     programs: ProgramSummary[];
     campuses?: CampusSummary[];
 }
@@ -127,6 +129,8 @@ export interface UniversityUpdatePayload {
     scholarship_info?: string | null;
     has_dormitory?: boolean;
     dormitory_details?: string | null;
+    default_tuition_per_year?: number | null;
+    default_tuition_female_per_year?: number | null;
     parent_id?: number | null;
     campus_name?: string | null;
     is_main_campus?: boolean;
@@ -141,6 +145,7 @@ export interface ProgramSummary {
     degree_level: DegreeLevel;
     duration_years: number | null;
     tuition_per_year: number | null;
+    tuition_female_per_year?: number | null;
     tuition_per_credit: number | null;
     fee_currency: Currency;
 }
@@ -248,6 +253,7 @@ export interface ProgramCreatePayload {
     degree_level: DegreeLevel;
     duration_years: number;
     tuition_per_year?: number | null;
+    tuition_female_per_year?: number | null;
     tuition_per_credit?: number | null;
     fee_currency: Currency;
 }
@@ -260,6 +266,7 @@ export interface ProgramUpdatePayload {
     degree_level?: DegreeLevel;
     duration_years?: number;
     tuition_per_year?: number | null;
+    tuition_female_per_year?: number | null;
     tuition_per_credit?: number | null;
     fee_currency?: Currency;
     overview_en?: string | null;
