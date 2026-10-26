@@ -11,6 +11,13 @@ function nullable(form: FormData, key: string): string | null {
     return raw(form, key) || null;
 }
 
+function numberOrNull(form: FormData, key: string): number | null {
+    const value = raw(form, key);
+    if (!value) return null;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+}
+
 /** FormData -> unit payload, shared by the create/edit forms. */
 export function unitPayload(form: FormData): UnitCreatePayload {
     return {
@@ -21,6 +28,8 @@ export function unitPayload(form: FormData): UnitCreatePayload {
         category_en: raw(form, "category_en"),
         category_kh: nullable(form, "category_kh"),
         logo: nullable(form, "logo"),
+        default_tuition_per_year: numberOrNull(form, "default_tuition_per_year"),
+        default_tuition_female_per_year: numberOrNull(form, "default_tuition_female_per_year"),
     };
 }
 
@@ -102,6 +111,32 @@ export default function UnitFields({
                     placeholder="https://example.edu.kh/logo.png"
                     defaultValue={defaultValue?.logo ?? ""}
                 />
+            </Field>
+
+            <Field label="Unit Default Tuition / Year ($)" htmlFor="u-tuition">
+                <Input
+                    id="u-tuition"
+                    name="default_tuition_per_year"
+                    type="number"
+                    placeholder="e.g. 1000"
+                    defaultValue={defaultValue?.default_tuition_per_year ?? ""}
+                />
+                <p className="text-xs text-muted-foreground">
+                    Optional: Uniform rate for all majors under this faculty.
+                </p>
+            </Field>
+
+            <Field label="Unit Female Tuition / Year ($)" htmlFor="u-tuition-female">
+                <Input
+                    id="u-tuition-female"
+                    name="default_tuition_female_per_year"
+                    type="number"
+                    placeholder="e.g. 500"
+                    defaultValue={defaultValue?.default_tuition_female_per_year ?? ""}
+                />
+                <p className="text-xs text-muted-foreground">
+                    Optional: Female STEM incentive rate for this faculty.
+                </p>
             </Field>
         </div>
     );

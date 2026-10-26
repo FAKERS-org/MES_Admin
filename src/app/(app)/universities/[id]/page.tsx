@@ -152,7 +152,7 @@ export default async function UniversityDetailPage({ params }: { params: Promise
                 </div>
             </div>
 
-            {/* <Card>
+            <Card>
                 <CardHeader className="flex flex-row items-center gap-2 space-y-0">
                     <Newspaper className="size-4 text-primary" />
                     <div>
@@ -161,9 +161,9 @@ export default async function UniversityDetailPage({ params }: { params: Promise
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <ProgramManager universityId={university.id} programs={university.programs} />
+                    <ProgramManager universityId={university.id} programs={university.programs} units={units} />
                 </CardContent>
-            </Card> */}
+            </Card>
 
             {!university.parent_id ? (
                 <CampusManager

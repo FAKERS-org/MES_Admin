@@ -18,6 +18,7 @@ import {
     type ProgramCreatePayload,
     type ProgramSummary,
     type ProgramUpdatePayload,
+    type UnitSummary,
 } from "@/lib/types";
 import { cn, formatCurrency } from "@/lib/utils";
 
@@ -37,7 +38,7 @@ function numberOrNull(form: FormData, key: string): number | null {
 }
 
 /** Shared field layout for the create and edit program forms. */
-function ProgramFields({ defaultValue }: { defaultValue?: Partial<ProgramSummary> }) {
+function ProgramFields({ defaultValue, units }: { defaultValue?: Partial<ProgramSummary>; units?: UnitSummary[] }) {
     return (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <Field label="Program name (English)" htmlFor="p-name" required className="lg:col-span-2">
@@ -54,14 +55,27 @@ function ProgramFields({ defaultValue }: { defaultValue?: Partial<ProgramSummary
                 <Input id="p-name-kh" name="name_kh" defaultValue={defaultValue?.name_kh ?? ""} />
             </Field>
 
-            <Field label="Faculty" htmlFor="p-faculty">
-                <Input
-                    id="p-faculty"
-                    name="faculty"
-                    placeholder="Faculty of Engineering"
-                    defaultValue={defaultValue?.faculty ?? ""}
-                />
-            </Field>
+            {units && units.length > 0 ? (
+                <Field label="Belongs to Unit / Faculty" htmlFor="p-unit">
+                    <Select id="p-unit" name="unit_id" defaultValue={defaultValue?.unit_id ? String(defaultValue.unit_id) : ""}>
+                        <option value="">No unit (University-Wide / Standalone)</option>
+                        {units.map(u => (
+                            <option key={u.id} value={String(u.id)}>
+                                {u.name_en} ({u.kind})
+                            </option>
+                        ))}
+                    </Select>
+                </Field>
+            ) : (
+                <Field label="Faculty" htmlFor="p-faculty">
+                    <Input
+                        id="p-faculty"
+                        name="faculty"
+                        placeholder="Faculty of Engineering"
+                        defaultValue={defaultValue?.faculty ?? ""}
+                    />
+                </Field>
+            )}
 
             <Field label="Degree level" htmlFor="p-level" required>
                 <Select id="p-level" name="degree_level" defaultValue={defaultValue?.degree_level ?? "BACHELOR"}>
@@ -137,9 +151,11 @@ function ProgramFields({ defaultValue }: { defaultValue?: Partial<ProgramSummary
 export default function ProgramManager({
     universityId,
     programs,
+    units,
 }: {
     universityId: string;
     programs: ProgramSummary[];
+    units?: UnitSummary[];
 }) {
     const router = useRouter();
     const [items, setItems] = useState<ProgramSummary[]>(programs);
@@ -166,10 +182,16 @@ export default function ProgramManager({
             return;
         }
 
+        const unitIdRaw = raw(form, "unit_id");
+        const unitId = unitIdRaw ? Number(unitIdRaw) : null;
+        const selectedUnit = units?.find(u => String(u.id) === unitIdRaw);
+        const faculty = selectedUnit ? selectedUnit.name_en : nullable(form, "faculty");
+
         const payload: ProgramCreatePayload = {
             name_en: nameEn,
             name_kh: nullable(form, "name_kh"),
-            faculty: nullable(form, "faculty"),
+            faculty,
+            unit_id: unitId,
             degree_level: form.get("degree_level") as DegreeLevel,
             duration_years: Number(raw(form, "duration_years") || 4),
             tuition_per_year: numberOrNull(form, "tuition_per_year"),
@@ -204,10 +226,16 @@ export default function ProgramManager({
                 return;
             }
 
+            const unitIdRaw = raw(form, "unit_id");
+            const unitId = unitIdRaw ? Number(unitIdRaw) : null;
+            const selectedUnit = units?.find(u => String(u.id) === unitIdRaw);
+            const faculty = selectedUnit ? selectedUnit.name_en : nullable(form, "faculty");
+
             const payload: ProgramUpdatePayload = {
                 name_en: nameEn,
                 name_kh: nullable(form, "name_kh"),
-                faculty: nullable(form, "faculty"),
+                faculty,
+                unit_id: unitId,
                 degree_level: form.get("degree_level") as DegreeLevel,
                 duration_years: Number(raw(form, "duration_years") || 1),
                 fee_currency: form.get("fee_currency") as Currency,
@@ -280,7 +308,7 @@ export default function ProgramManager({
             {adding ? (
                 <form onSubmit={handleCreate} className="space-y-4 rounded-xl border bg-muted/30 p-4">
                     <p className="text-sm font-medium">New program</p>
-                    <ProgramFields />
+                    <ProgramFields units={units} />
                     <div className="flex gap-2">
                         <Button type="submit" size="sm" disabled={pending}>
                             {pending ? <Spinner className="size-3.5" /> : null}
@@ -322,7 +350,7 @@ export default function ProgramManager({
                                 className="space-y-4 bg-muted/30 p-4"
                             >
                                 <p className="text-sm font-medium">Edit “{program.name_en}”</p>
-                                <ProgramFields defaultValue={program} />
+                                <ProgramFields defaultValue={program} units={units} />
                                 <div className="flex gap-2">
                                     <Button type="submit" size="sm" disabled={pending}>
                                         {pending ? <Spinner className="size-3.5" /> : null}
@@ -355,6 +383,11 @@ export default function ProgramManager({
                                             " · ",
                                         )}{" "}
                                         · {formatCurrency(program.tuition_per_year, program.fee_currency)}
+                                        {program.tuition_female_per_year ? (
+                                            <span className="ml-1.5 text-rose-600 dark:text-rose-400 font-medium">
+                                                (♀ {formatCurrency(program.tuition_female_per_year, program.fee_currency)})
+                                            </span>
+                                        ) : null}
                                     </p>
                                 </div>
 

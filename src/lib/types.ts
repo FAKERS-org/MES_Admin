@@ -139,6 +139,7 @@ export interface UniversityUpdatePayload {
 /** `ProgramSummary` item, embedded in `UniversityDetail.programs`. */
 export interface ProgramSummary {
     id: string;
+    unit_id?: number | null;
     name_en: string;
     name_kh: string | null;
     faculty: string | null;
@@ -147,6 +148,9 @@ export interface ProgramSummary {
     tuition_per_year: number | null;
     tuition_female_per_year?: number | null;
     tuition_per_credit: number | null;
+    effective_tuition_per_year?: number | null;
+    effective_tuition_female_per_year?: number | null;
+    tuition_discount_percent?: number | null;
     fee_currency: Currency;
 }
 
@@ -161,6 +165,8 @@ export interface UnitSummary {
     category_en: string;
     category_kh?: string | null;
     logo?: string | null;
+    default_tuition_per_year?: number | null;
+    default_tuition_female_per_year?: number | null;
 }
 
 export const UNIT_KINDS: UnitKind[] = ["FACULTY", "DEPARTMENT", "SUB_DEPARTMENT", "FOUNDATION"];
@@ -174,6 +180,8 @@ export interface UnitCreatePayload {
     category_en?: string;
     category_kh?: string | null;
     logo?: string | null;
+    default_tuition_per_year?: number | null;
+    default_tuition_female_per_year?: number | null;
 }
 
 /** `PATCH /api/v1/admin/universities/{university_id}/units/{unit_id}` body. */
@@ -250,6 +258,7 @@ export interface ProgramCreatePayload {
     name_en: string;
     name_kh?: string | null;
     faculty?: string | null;
+    unit_id?: number | null;
     degree_level: DegreeLevel;
     duration_years: number;
     tuition_per_year?: number | null;
@@ -263,6 +272,7 @@ export interface ProgramUpdatePayload {
     name_en?: string;
     name_kh?: string | null;
     faculty?: string | null;
+    unit_id?: number | null;
     degree_level?: DegreeLevel;
     duration_years?: number;
     tuition_per_year?: number | null;
