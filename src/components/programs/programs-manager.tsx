@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, type FormEvent } from "react";
+import { useMemo, useState, useTransition, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { GraduationCap, Pencil, Plus, Search } from "lucide-react";
@@ -54,14 +54,31 @@ export function ProgramsManager({
     const [search, setSearch] = useState("");
     const [degreeFilter, setDegreeFilter] = useState("");
     const [uniFilter, setUniFilter] = useState("");
+    const [facultyFilter, setFacultyFilter] = useState("");
+    const [tuitionFilter, setTuitionFilter] = useState("");
 
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [editingProgram, setEditingProgram] = useState<ProgramListItem | null>(null);
     const [error, setError] = useState<string | null>(null);
 
+    const availableFaculties = useMemo(() => {
+        const set = new Set<string>();
+        for (const p of initialPrograms) {
+            if (p.faculty) set.add(p.faculty);
+        }
+        return Array.from(set).sort();
+    }, [initialPrograms]);
+
     const filtered = initialPrograms.filter((p) => {
         if (degreeFilter && p.degree_level !== degreeFilter) return false;
         if (uniFilter && String(p.university_id) !== uniFilter) return false;
+        if (facultyFilter && p.faculty !== facultyFilter) return false;
+        if (tuitionFilter === "DISCOUNT" && !p.tuition_female_per_year) return false;
+        if (tuitionFilter === "FREE" && (p.tuition_per_year ?? 0) > 0) return false;
+        if (tuitionFilter === "PAID" && !(p.tuition_per_year && p.tuition_per_year > 0)) return false;
+        if (tuitionFilter === "UNDER_1000" && (!p.tuition_per_year || p.tuition_per_year > 1000)) return false;
+        if (tuitionFilter === "OVER_1000" && (!p.tuition_per_year || p.tuition_per_year <= 1000)) return false;
+
         if (search) {
             const term = search.toLowerCase();
             const text = `${p.name_en} ${p.name_kh ?? ""} ${p.faculty ?? ""} ${p.university_name ?? ""}`.toLowerCase();
@@ -203,8 +220,32 @@ export function ProgramsManager({
                     </Select>
                 </div>
 
-                {(search || degreeFilter || uniFilter) ? (
-                    <Button variant="ghost" onClick={() => { setSearch(""); setDegreeFilter(""); setUniFilter(""); }}>
+                {availableFaculties.length > 0 && (
+                    <div className="w-48 space-y-1.5">
+                        <label htmlFor="p-fac" className="text-xs font-medium text-muted-foreground">Faculty</label>
+                        <Select id="p-fac" value={facultyFilter} onChange={(e) => setFacultyFilter(e.target.value)}>
+                            <option value="">All faculties</option>
+                            {availableFaculties.map((fac) => (
+                                <option key={fac} value={fac}>{fac}</option>
+                            ))}
+                        </Select>
+                    </div>
+                )}
+
+                <div className="w-44 space-y-1.5">
+                    <label htmlFor="p-fee" className="text-xs font-medium text-muted-foreground">Tuition / Fee</label>
+                    <Select id="p-fee" value={tuitionFilter} onChange={(e) => setTuitionFilter(e.target.value)}>
+                        <option value="">All tuitions</option>
+                        <option value="DISCOUNT">♀ Female Discount</option>
+                        <option value="FREE">Free / Unset</option>
+                        <option value="PAID">Paid (&gt; $0)</option>
+                        <option value="UNDER_1000">&le; $1,000 / yr</option>
+                        <option value="OVER_1000">&gt; $1,000 / yr</option>
+                    </Select>
+                </div>
+
+                {(search || degreeFilter || uniFilter || facultyFilter || tuitionFilter) ? (
+                    <Button variant="ghost" onClick={() => { setSearch(""); setDegreeFilter(""); setUniFilter(""); setFacultyFilter(""); setTuitionFilter(""); }}>
                         Reset
                     </Button>
                 ) : null}

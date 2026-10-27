@@ -1,8 +1,8 @@
 "use client";
 
-import { GraduationCap, Pencil, Plus, Trash2 } from "lucide-react";
+import { GraduationCap, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition, type FormEvent } from "react";
+import { useEffect, useMemo, useState, useTransition, type FormEvent } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -159,6 +159,8 @@ export default function ProgramManager({
 }) {
     const router = useRouter();
     const [items, setItems] = useState<ProgramSummary[]>(programs);
+    const [search, setSearch] = useState("");
+    const [degreeFilter, setDegreeFilter] = useState("");
     const [adding, setAdding] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -167,6 +169,18 @@ export default function ProgramManager({
 
     // Keep local rows in sync when the server component refetches after router.refresh().
     useEffect(() => setItems(programs), [programs]);
+
+    const displayedItems = useMemo(() => {
+        return items.filter(p => {
+            if (degreeFilter && p.degree_level !== degreeFilter) return false;
+            if (search) {
+                const term = search.toLowerCase();
+                const text = `${p.name_en} ${p.name_kh ?? ""} ${p.faculty ?? ""}`.toLowerCase();
+                if (!text.includes(term)) return false;
+            }
+            return true;
+        });
+    }, [items, search, degreeFilter]);
 
     function flash(message: string) {
         setSaved(message);
@@ -340,15 +354,43 @@ export default function ProgramManager({
                 />
             ) : null}
 
+            {items.length > 2 ? (
+                <div className="flex flex-wrap items-center gap-2.5">
+                    <div className="relative min-w-48 flex-1">
+                        <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            placeholder="Filter programs…"
+                            className="h-8 pl-8 text-xs"
+                        />
+                    </div>
+                    <Select value={degreeFilter} onChange={e => setDegreeFilter(e.target.value)} className="h-8 w-36 text-xs">
+                        <option value="">All degrees</option>
+                        {DEGREE_LEVELS.map(level => (
+                            <option key={level} value={level}>{level}</option>
+                        ))}
+                    </Select>
+                    {(search || degreeFilter) && (
+                        <Button variant="ghost" size="sm" onClick={() => { setSearch(""); setDegreeFilter(""); }} className="h-8 text-xs">
+                            Reset
+                        </Button>
+                    )}
+                </div>
+            ) : null}
+
             {items.length > 0 ? (
                 <div className="divide-y rounded-xl border">
-                    {items.map(program =>
-                        editingId === program.id ? (
-                            <form
-                                key={program.id}
-                                onSubmit={handleUpdate(program)}
-                                className="space-y-4 bg-muted/30 p-4"
-                            >
+                    {displayedItems.length === 0 ? (
+                        <p className="p-4 text-center text-xs text-muted-foreground">No matching programs found.</p>
+                    ) : (
+                        displayedItems.map(program =>
+                            editingId === program.id ? (
+                                <form
+                                    key={program.id}
+                                    onSubmit={handleUpdate(program)}
+                                    className="space-y-4 bg-muted/30 p-4"
+                                >
                                 <p className="text-sm font-medium">Edit “{program.name_en}”</p>
                                 <ProgramFields defaultValue={program} units={units} />
                                 <div className="flex gap-2">
@@ -416,7 +458,7 @@ export default function ProgramManager({
                                 </div>
                             </div>
                         ),
-                    )}
+                    ))}
                 </div>
             ) : null}
         </div>
