@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, CircleDollarSign, GraduationCap, Landmark, Save, Sofa } from "lucide-react";
+import { Check, CircleDollarSign, FileText, GraduationCap, Landmark, Save, Sofa, UserCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition, type FormEvent } from "react";
 
@@ -28,6 +28,7 @@ export default function UniversityEditForm({ university }: { university: Univers
     const [pending, startTransition] = useTransition();
     const [logoUrl, setLogoUrl] = useState(university.logo_url ?? "");
     const [coverImageUrl, setCoverImageUrl] = useState(university.cover_image_url ?? "");
+    const [advisorAvatarUrl, setAdvisorAvatarUrl] = useState(university.advisor_avatar_url ?? "");
 
     useEffect(() => {
         setBreadcrumbLabel(`/universities/${university.id}`, university.name_en);
@@ -73,6 +74,14 @@ export default function UniversityEditForm({ university }: { university: Univers
             scholarship_info: nullable(form, "scholarship_info"),
             has_dormitory: form.get("has_dormitory") === "on",
             dormitory_details: nullable(form, "dormitory_details"),
+            contact_phone: nullable(form, "contact_phone"),
+            contact_email: nullable(form, "contact_email"),
+            contact_telegram: nullable(form, "contact_telegram"),
+            advisor_name: nullable(form, "advisor_name"),
+            advisor_role: nullable(form, "advisor_role"),
+            advisor_avatar_url: nullable(form, "advisor_avatar_url"),
+            admissions_requirements_en: nullable(form, "admissions_requirements_en"),
+            admissions_requirements_kh: nullable(form, "admissions_requirements_kh"),
             default_tuition_per_year: defaultTuitionRaw ? Number(defaultTuitionRaw) : null,
             default_tuition_female_per_year: defaultTuitionFemaleRaw ? Number(defaultTuitionFemaleRaw) : null,
             campus_name: nullable(form, "campus_name"),
@@ -188,6 +197,31 @@ export default function UniversityEditForm({ university }: { university: Univers
                                     defaultValue={university.website ?? ""}
                                 />
                             </Field>
+                            <Field label="Contact Phone / Hotline" htmlFor="contact_phone">
+                                <Input
+                                    id="contact_phone"
+                                    name="contact_phone"
+                                    placeholder="023 880 370"
+                                    defaultValue={university.contact_phone ?? ""}
+                                />
+                            </Field>
+                            <Field label="Contact Email" htmlFor="contact_email">
+                                <Input
+                                    id="contact_email"
+                                    name="contact_email"
+                                    type="email"
+                                    placeholder="info@itc.edu.kh"
+                                    defaultValue={university.contact_email ?? ""}
+                                />
+                            </Field>
+                            <Field label="Contact Telegram (User / Link)" htmlFor="contact_telegram">
+                                <Input
+                                    id="contact_telegram"
+                                    name="contact_telegram"
+                                    placeholder="itc_admissions or https://t.me/itc_admissions"
+                                    defaultValue={university.contact_telegram ?? ""}
+                                />
+                            </Field>
                             <Field label="Established year" htmlFor="established_year">
                                 <Input
                                     id="established_year"
@@ -197,7 +231,7 @@ export default function UniversityEditForm({ university }: { university: Univers
                                     defaultValue={university.established_year ?? ""}
                                 />
                             </Field>
-                            <div className="grid gap-4 sm:grid-cols-2">
+                            <div className="grid gap-4 sm:grid-cols-2 sm:col-span-2">
                                 <Field label="Logo">
                                     <input type="hidden" name="logo_url" value={logoUrl} />
                                     <ImageUploader
@@ -328,6 +362,83 @@ export default function UniversityEditForm({ university }: { university: Univers
                                     />
                                 </Field>
                             </div>
+                        </div>
+                    </section>
+
+                    <section className="space-y-4">
+                        <h4 className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                            <UserCheck className="size-3.5" /> Admissions advisor & contact
+                        </h4>
+                        <p className="text-xs text-muted-foreground">
+                            Staff profile displayed on university overview, admissions, and student Q&A cards.
+                        </p>
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <Field label="Advisor Name" htmlFor="advisor_name">
+                                <Input
+                                    id="advisor_name"
+                                    name="advisor_name"
+                                    placeholder="e.g. លោកគ្រូ វណ្ណារ៉ា (Vannara)"
+                                    defaultValue={university.advisor_name ?? ""}
+                                />
+                            </Field>
+                            <Field label="Advisor Role / Title" htmlFor="advisor_role">
+                                <Input
+                                    id="advisor_role"
+                                    name="advisor_role"
+                                    placeholder="e.g. Head of Student Admissions"
+                                    defaultValue={university.advisor_role ?? ""}
+                                />
+                            </Field>
+                            <div className="sm:col-span-2">
+                                <Field label="Advisor Avatar Image">
+                                    <input type="hidden" name="advisor_avatar_url" value={advisorAvatarUrl} />
+                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                                        <Input
+                                            placeholder="Avatar image URL or upload photo"
+                                            value={advisorAvatarUrl}
+                                            onChange={e => setAdvisorAvatarUrl(e.target.value)}
+                                            className="flex-1"
+                                        />
+                                        <ImageUploader
+                                            label="Upload photo"
+                                            value={advisorAvatarUrl}
+                                            onChange={setAdvisorAvatarUrl}
+                                            abbreviation={university.abbreviation ?? ""}
+                                            purpose="other"
+                                            previewClassName="max-w-[80px]"
+                                        />
+                                    </div>
+                                </Field>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section className="space-y-4">
+                        <h4 className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                            <FileText className="size-3.5" /> Admissions requirements
+                        </h4>
+                        <p className="text-xs text-muted-foreground">
+                            Specific entry criteria and requirements displayed on the university admissions page.
+                        </p>
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <Field label="Requirements (English)" htmlFor="admissions_requirements_en">
+                                <Textarea
+                                    id="admissions_requirements_en"
+                                    name="admissions_requirements_en"
+                                    rows={3}
+                                    placeholder="e.g. High School Diploma (BacII) Grade A-E or passing the national entrance examination."
+                                    defaultValue={university.admissions_requirements_en ?? ""}
+                                />
+                            </Field>
+                            <Field label="Requirements (Khmer)" htmlFor="admissions_requirements_kh">
+                                <Textarea
+                                    id="admissions_requirements_kh"
+                                    name="admissions_requirements_kh"
+                                    rows={3}
+                                    placeholder="ឧទាហរណ៍៖ សញ្ញាបត្រមធ្យមសិក្សាទុតិយភូមិ (បាក់ឌុប) និទ្ទេស A-E ឬប្រឡងជាប់ការប្រឡងជ្រើសរើសថ្នាក់ជាតិ..."
+                                    defaultValue={university.admissions_requirements_kh ?? ""}
+                                />
+                            </Field>
                         </div>
                     </section>
 

@@ -90,6 +90,14 @@ export interface UniversityDetail extends UniversitySummary {
     scholarship_info: string | null;
     has_dormitory: boolean;
     dormitory_details: string | null;
+    contact_phone?: string | null;
+    contact_email?: string | null;
+    contact_telegram?: string | null;
+    advisor_name?: string | null;
+    advisor_role?: string | null;
+    advisor_avatar_url?: string | null;
+    admissions_requirements_en?: string | null;
+    admissions_requirements_kh?: string | null;
     default_tuition_per_year?: number | null;
     default_tuition_female_per_year?: number | null;
     programs: ProgramSummary[];
@@ -107,6 +115,14 @@ export interface UniversityCreatePayload {
     parent_id?: number | null;
     campus_name?: string | null;
     is_main_campus?: boolean;
+    contact_phone?: string | null;
+    contact_email?: string | null;
+    contact_telegram?: string | null;
+    advisor_name?: string | null;
+    advisor_role?: string | null;
+    advisor_avatar_url?: string | null;
+    admissions_requirements_en?: string | null;
+    admissions_requirements_kh?: string | null;
 }
 
 /** `PATCH /api/v1/admin/universities/{id}` body (field names as the API accepts them). */
@@ -129,6 +145,14 @@ export interface UniversityUpdatePayload {
     scholarship_info?: string | null;
     has_dormitory?: boolean;
     dormitory_details?: string | null;
+    contact_phone?: string | null;
+    contact_email?: string | null;
+    contact_telegram?: string | null;
+    advisor_name?: string | null;
+    advisor_role?: string | null;
+    advisor_avatar_url?: string | null;
+    admissions_requirements_en?: string | null;
+    admissions_requirements_kh?: string | null;
     default_tuition_per_year?: number | null;
     default_tuition_female_per_year?: number | null;
     parent_id?: number | null;
