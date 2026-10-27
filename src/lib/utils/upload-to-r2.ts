@@ -2,7 +2,7 @@ export async function uploadImageToR2(
     file: File,
     options: {
         abbreviation: string;
-        purpose: "logo" | "cover" | "other";
+        purpose: "logo" | "cover" | "avatar";
     },
 ): Promise<string> {
     const response = await fetch("/api/admin/upload/generate-presigned-url", {

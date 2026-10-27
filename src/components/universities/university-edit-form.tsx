@@ -404,7 +404,7 @@ export default function UniversityEditForm({ university }: { university: Univers
                                             value={advisorAvatarUrl}
                                             onChange={setAdvisorAvatarUrl}
                                             abbreviation={university.abbreviation ?? ""}
-                                            purpose="other"
+                                            purpose="avatar"
                                             previewClassName="max-w-[80px]"
                                         />
                                     </div>

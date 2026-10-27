@@ -19,7 +19,7 @@ export function ImageUploader({
   hint?: string;
   previewClassName?: string;
   abbreviation: string;
-  purpose: "logo" | "cover" | "other";
+  purpose: "logo" | "cover" | "avatar";
 }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +27,7 @@ export function ImageUploader({
 
   const id = `uploader-${label.toLowerCase().replace(/\s+/g, "-")}`;
 
-  async function upload(file: File, options: { abbreviation: string; purpose: "logo" | "cover" | "other" }) {
+  async function upload(file: File, options: { abbreviation: string; purpose: "logo" | "cover" | "avatar" }) {
     if (!file.type.startsWith("image/")) {
       setError("Please choose an image file.");
       return;
