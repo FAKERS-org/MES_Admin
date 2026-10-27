@@ -232,7 +232,7 @@ export default function UniversityEditForm({ university }: { university: Univers
                                 />
                             </Field>
                             <div className="grid gap-4 sm:grid-cols-2 sm:col-span-2">
-                                <Field label="Logo">
+                                <Field label="Logo" className="sm:col-span-2">
                                     <input type="hidden" name="logo_url" value={logoUrl} />
                                     <ImageUploader
                                         label="Upload logo"
@@ -240,11 +240,16 @@ export default function UniversityEditForm({ university }: { university: Univers
                                         onChange={setLogoUrl}
                                         abbreviation={university.abbreviation ?? ""}
                                         purpose="logo"
-                                        previewClassName="max-w-[120px]"
+                                    />
+                                    <Input
+                                        placeholder="or paste logo URL"
+                                        value={logoUrl}
+                                        onChange={e => setLogoUrl(e.target.value)}
+                                        className="mt-2"
                                     />
                                 </Field>
 
-                                <Field label="Cover image">
+                                <Field label="Cover image" className="sm:col-span-2">
                                     <input type="hidden" name="cover_image_url" value={coverImageUrl} />
                                     <ImageUploader
                                         label="Upload cover"
@@ -252,7 +257,12 @@ export default function UniversityEditForm({ university }: { university: Univers
                                         onChange={setCoverImageUrl}
                                         abbreviation={university.abbreviation ?? ""}
                                         purpose="cover"
-                                        previewClassName="w-full"
+                                    />
+                                    <Input
+                                        placeholder="or paste cover URL"
+                                        value={coverImageUrl}
+                                        onChange={e => setCoverImageUrl(e.target.value)}
+                                        className="mt-2"
                                     />
                                 </Field>
                             </div>
@@ -389,27 +399,22 @@ export default function UniversityEditForm({ university }: { university: Univers
                                     defaultValue={university.advisor_role ?? ""}
                                 />
                             </Field>
-                            <div className="sm:col-span-2">
-                                <Field label="Advisor Avatar Image">
-                                    <input type="hidden" name="advisor_avatar_url" value={advisorAvatarUrl} />
-                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                                        <Input
-                                            placeholder="Avatar image URL or upload photo"
-                                            value={advisorAvatarUrl}
-                                            onChange={e => setAdvisorAvatarUrl(e.target.value)}
-                                            className="flex-1"
-                                        />
-                                        <ImageUploader
-                                            label="Upload photo"
-                                            value={advisorAvatarUrl}
-                                            onChange={setAdvisorAvatarUrl}
-                                            abbreviation={university.abbreviation ?? ""}
-                                            purpose="avatar"
-                                            previewClassName="max-w-[80px]"
-                                        />
-                                    </div>
-                                </Field>
-                            </div>
+                            <Field label="Advisor Avatar Image" className="sm:col-span-2">
+                                <input type="hidden" name="advisor_avatar_url" value={advisorAvatarUrl} />
+                                <ImageUploader
+                                    label="Upload photo"
+                                    value={advisorAvatarUrl}
+                                    onChange={setAdvisorAvatarUrl}
+                                    abbreviation={university.abbreviation ?? ""}
+                                    purpose="avatar"
+                                />
+                                <Input
+                                    placeholder="or paste image URL"
+                                    value={advisorAvatarUrl}
+                                    onChange={e => setAdvisorAvatarUrl(e.target.value)}
+                                    className="mt-2"
+                                />
+                            </Field>
                         </div>
                     </section>
 
