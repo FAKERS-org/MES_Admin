@@ -291,7 +291,7 @@ export default function UnitManager({
 
                                         <div className="flex items-center gap-1.5">
                                             <Link
-                                                href={`/universities/${universityId}/units/${unit.id}`}
+                                                href={`/universities/${universityId}/units/${unit.slug}`}
                                                 className={buttonVariants({ variant: "outline", size: "sm" })}
                                             >
                                                 <Layers className="size-3.5" />

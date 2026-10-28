@@ -28,6 +28,7 @@ export function setBreadcrumbLabel(href: string, label: string) {
 }
 
 function labelFor(segment: string, href: string, titles: Record<string, string>) {
+    if (segment === "units") return labels.units;
     if (titles[href]) return titles[href];
     if (labels[segment]) return labels[segment];
     if (/^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(segment)) return segment.slice(0, 8).toUpperCase();

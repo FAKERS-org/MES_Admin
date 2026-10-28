@@ -52,13 +52,19 @@ async function fetchContent<T>(path: string): Promise<ContentResult<T>> {
 export default async function UnitDetailPage({
     params,
 }: {
-    params: Promise<{ id: string; unitId: string }>;
+    params: Promise<{ slug: string; unitId: string }>;
 }) {
-    const { id, unitId } = await params;
+    const { slug, unitId: unitSlug } = await params;
 
+    let university = await apiRequest<{id:number}>(`admin/universities/${slug}`);
+    const id = String(university.id);
     let unit: UnitDetail;
+    let unitId = unitSlug;
     try {
-        unit = await apiRequest<UnitDetail>(`admin/universities/${id}/units/${unitId}`);
+        const unitsList = await apiList<UnitSummary>(`admin/universities/${id}/units/`);
+    const matched = unitsList.find(u => u.slug === unitSlug);
+    unitId = matched ? String(matched.id) : unitSlug;
+    unit = await apiRequest<UnitDetail>(`admin/universities/${id}/units/${unitId}`);
     } catch (error) {
         if (error instanceof ApiError && error.status === 404) notFound();
         throw error;
@@ -90,7 +96,7 @@ export default async function UnitDetailPage({
                     </span>
                 }
                 actions={
-                    <Link href={`/universities/${id}`} className={buttonVariants({ variant: "ghost" })}>
+                    <Link href={`/universities/${slug}`} className={buttonVariants({ variant: "ghost" })}>
                         <ArrowLeft className="size-4" />
                         Back to university
                     </Link>
@@ -100,7 +106,7 @@ export default async function UnitDetailPage({
             <div className="grid gap-5 lg:grid-cols-3">
                 <div className="lg:col-span-1">
                     <UnitEditForm
-                        universityId={id}
+                        universityId={slug}
                         unitId={unitId}
                         unit={unit}
                         siblings={siblings}

@@ -213,7 +213,7 @@ export default async function UniversitiesPage({ searchParams }: { searchParams:
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <Link
-                                                href={`/universities/${university.id}`}
+                                                href={`/universities/${university.name_en.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`}
                                                 className="text-sm text-primary hover:underline"
                                             >
                                                 Manage

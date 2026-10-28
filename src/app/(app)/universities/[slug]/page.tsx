@@ -18,12 +18,12 @@ import type { Status, UnitSummary, UniversityDetail, UniversitySummary } from "@
 export const metadata = { title: "University" };
 export const dynamic = "force-dynamic";
 
-export default async function UniversityDetailPage({ params }: { params: Promise<{ id: string }> }) {
-    const { id } = await params;
+export default async function UniversityDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+    const { slug } = await params;
 
     let university: UniversityDetail;
     try {
-        university = await apiRequest<UniversityDetail>(`admin/universities/${id}`);
+        university = await apiRequest<UniversityDetail>(`admin/universities/${slug}`);
     } catch (error) {
         if (error instanceof ApiError && error.status === 404) notFound();
         throw error;
@@ -44,7 +44,7 @@ export default async function UniversityDetailPage({ params }: { params: Promise
     // university is still a DRAFT, which would hide every unit.
     let units: UnitSummary[] = [];
     try {
-        units = await apiList<UnitSummary>(`admin/universities/${id}/units/`);
+        units = await apiList<UnitSummary>(`admin/universities/${university.id}/units/`);
     } catch {
         // API unreachable - units will render as empty state
     }
@@ -161,13 +161,13 @@ export default async function UniversityDetailPage({ params }: { params: Promise
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <ProgramManager universityId={university.id} programs={university.programs} units={units} />
+                    <ProgramManager universityId={slug} programs={university.programs} units={units} />
                 </CardContent>
             </Card>
 
             {!university.parent_id ? (
                 <CampusManager
-                    universityId={university.id}
+                    universityId={slug}
                     universityName={university.name_en}
                     universityType={university.type}
                     abbreviation={university.abbreviation}
@@ -186,7 +186,7 @@ export default async function UniversityDetailPage({ params }: { params: Promise
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <UnitManager universityId={university.id} units={units} />
+                    <UnitManager universityId={slug} units={units} />
                 </CardContent>
             </Card>
         </div>
