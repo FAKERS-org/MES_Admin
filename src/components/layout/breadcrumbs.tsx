@@ -64,7 +64,7 @@ export default function Breadcrumbs() {
                             setTitles(prev => ({ ...prev, [uniHref]: data.name_en }));
                         }
                     })
-                    .catch(() => {});
+                    .catch(() => { });
             }
         }
 
@@ -74,14 +74,17 @@ export default function Breadcrumbs() {
             const unitId = segments[3];
             const unitHref = `/universities/${uniId}/units/${unitId}`;
             if (!titleCache[unitHref]) {
-                apiRequest<{ name_en: string }>(`/api/admin/universities/${uniId}/units/${unitId}`)
+                apiRequest<{ id: number }>(`/api/admin/universities/${uniId}`)
+                    .then(uni => apiRequest<{ items?: { name_en: string; slug: string; id: number }[] }>(`/api/admin/universities/${uni.id}/units/`))
                     .then(data => {
-                        if (data?.name_en) {
-                            titleCache[unitHref] = data.name_en;
-                            setTitles(prev => ({ ...prev, [unitHref]: data.name_en }));
+                        const list = data?.items ?? [];
+                        const match = list.find(u => u.slug === unitId || String(u.id) === unitId);
+                        if (match?.name_en) {
+                            titleCache[unitHref] = match.name_en;
+                            setTitles(prev => ({ ...prev, [unitHref]: match.name_en }));
                         }
                     })
-                    .catch(() => {});
+                    .catch(() => { });
             }
         }
     }, [pathname]);
