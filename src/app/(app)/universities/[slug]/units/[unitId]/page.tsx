@@ -103,7 +103,7 @@ export default async function UnitDetailPage({
                 }
             />
 
-            <div className="grid gap-5 lg:grid-cols-3">
+            <div className="grid gap-5 lg:grid-cols-2">
                 <div className="lg:col-span-1">
                     <UnitEditForm
                         universityId={slug}
@@ -113,7 +113,7 @@ export default async function UnitDetailPage({
                     />
                 </div>
 
-                <div className="space-y-5 lg:col-span-2">
+                <div className="space-y-5 lg:col-span-1">
                     <Card>
                         <CardHeader className="flex flex-row items-center gap-2 space-y-0">
                             <BookOpen className="size-4 text-primary" />
