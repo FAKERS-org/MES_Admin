@@ -100,6 +100,10 @@ export interface UniversityDetail extends UniversitySummary {
     admissions_requirements_kh?: string | null;
     default_tuition_per_year?: number | null;
     default_tuition_female_per_year?: number | null;
+    tuition_model?: string | null;
+    tuition_min_per_year?: number | null;
+    tuition_max_per_year?: number | null;
+    has_female_tuition_discount?: boolean;
     programs: ProgramSummary[];
     campuses?: CampusSummary[];
 }
@@ -191,6 +195,7 @@ export interface UnitSummary {
     logo?: string | null;
     default_tuition_per_year?: number | null;
     default_tuition_female_per_year?: number | null;
+    position?: number;
 }
 
 export const UNIT_KINDS: UnitKind[] = ["FACULTY", "DEPARTMENT", "SUB_DEPARTMENT", "FOUNDATION"];
@@ -204,6 +209,7 @@ export interface UnitCreatePayload {
     category_en?: string;
     category_kh?: string | null;
     logo?: string | null;
+    position?: number;
     default_tuition_per_year?: number | null;
     default_tuition_female_per_year?: number | null;
 }

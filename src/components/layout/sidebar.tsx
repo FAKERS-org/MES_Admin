@@ -1,6 +1,6 @@
 "use client";
 
-import { Award, Building2, GraduationCap, LayoutDashboard, LogOut, Settings, Users, X } from "lucide-react";
+import { Award, Building2, GraduationCap, Handshake, LayoutDashboard, LogOut, Settings, Users, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -51,7 +51,6 @@ export default function Sidebar({ open, onClose }: { open: boolean; onClose: () 
                         width={2320}
                         height={670}
                         priority
-                        /* h-7 tall, 2320x670 intrinsic → ~97px wide */
                         sizes="97px"
                         className="h-7 w-auto object-contain"
                     />

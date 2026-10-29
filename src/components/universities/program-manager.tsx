@@ -21,6 +21,7 @@ import {
     type UnitSummary,
 } from "@/lib/types";
 import { cn, formatCurrency } from "@/lib/utils";
+import { resolveProgramTuition } from "@/lib/tuition";
 
 function raw(form: FormData, key: string): string {
     return String(form.get(key) ?? "").trim();
@@ -38,7 +39,15 @@ function numberOrNull(form: FormData, key: string): number | null {
 }
 
 /** Shared field layout for the create and edit program forms. */
-function ProgramFields({ defaultValue, units }: { defaultValue?: Partial<ProgramSummary>; units?: UnitSummary[] }) {
+function ProgramFields({
+    defaultValue,
+    units,
+    defaultTuitionPerYear,
+}: {
+    defaultValue?: Partial<ProgramSummary>;
+    units?: UnitSummary[];
+    defaultTuitionPerYear?: number | null;
+}) {
     return (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <Field label="Program name (English)" htmlFor="p-name" required className="lg:col-span-2">
@@ -110,6 +119,10 @@ function ProgramFields({ defaultValue, units }: { defaultValue?: Partial<Program
                     placeholder="e.g. 800"
                     defaultValue={defaultValue?.tuition_per_year ?? ""}
                 />
+                <p className="text-2xs text-muted-foreground mt-1">
+                    Leave blank to inherit from Unit or University (
+                    {defaultTuitionPerYear ? `$${defaultTuitionPerYear}/yr` : "none configured"}).
+                </p>
             </Field>
 
             <Field label="Tuition / year (Female incentive rate, optional)" htmlFor="p-tuition-female">
@@ -152,10 +165,14 @@ export default function ProgramManager({
     universityId,
     programs,
     units,
+    defaultTuitionPerYear,
+    defaultTuitionFemalePerYear,
 }: {
     universityId: string;
     programs: ProgramSummary[];
     units?: UnitSummary[];
+    defaultTuitionPerYear?: number | null;
+    defaultTuitionFemalePerYear?: number | null;
 }) {
     const router = useRouter();
     const [items, setItems] = useState<ProgramSummary[]>(programs);
@@ -322,7 +339,7 @@ export default function ProgramManager({
             {adding ? (
                 <form onSubmit={handleCreate} className="space-y-4 rounded-xl border bg-muted/30 p-4">
                     <p className="text-sm font-medium">New program</p>
-                    <ProgramFields units={units} />
+                    <ProgramFields units={units} defaultTuitionPerYear={defaultTuitionPerYear} />
                     <div className="flex gap-2">
                         <Button type="submit" size="sm" disabled={pending}>
                             {pending ? <Spinner className="size-3.5" /> : null}
@@ -384,81 +401,122 @@ export default function ProgramManager({
                     {displayedItems.length === 0 ? (
                         <p className="p-4 text-center text-xs text-muted-foreground">No matching programs found.</p>
                     ) : (
-                        displayedItems.map(program =>
-                            editingId === program.id ? (
+                        displayedItems.map(program => {
+                            const matchedUnit = units?.find(u => u.id === (program.unit_id ? String(program.unit_id) : ""));
+                            const resolved = resolveProgramTuition(
+                                program,
+                                matchedUnit,
+                                defaultTuitionPerYear,
+                                defaultTuitionFemalePerYear,
+                            );
+
+                            return editingId === program.id ? (
                                 <form
                                     key={program.id}
                                     onSubmit={handleUpdate(program)}
                                     className="space-y-4 bg-muted/30 p-4"
                                 >
-                                <p className="text-sm font-medium">Edit “{program.name_en}”</p>
-                                <ProgramFields defaultValue={program} units={units} />
-                                <div className="flex gap-2">
-                                    <Button type="submit" size="sm" disabled={pending}>
-                                        {pending ? <Spinner className="size-3.5" /> : null}
-                                        {pending ? "Saving…" : "Save program"}
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() => setEditingId(null)}
-                                        disabled={pending}
-                                    >
-                                        Cancel
-                                    </Button>
-                                </div>
-                            </form>
-                        ) : (
-                            <div key={program.id} className="flex flex-wrap items-center gap-3 p-3.5">
-                                <div className="min-w-0 flex-1">
-                                    <p className="truncate text-sm font-medium">
-                                        {program.name_en}
-                                        {program.name_kh ? (
-                                            <span className="ml-2 font-normal text-muted-foreground">
-                                                · {program.name_kh}
+                                    <p className="text-sm font-medium">Edit “{program.name_en}”</p>
+                                    <ProgramFields defaultValue={program} units={units} defaultTuitionPerYear={defaultTuitionPerYear} />
+                                    <div className="flex gap-2">
+                                        <Button type="submit" size="sm" disabled={pending}>
+                                            {pending ? <Spinner className="size-3.5" /> : null}
+                                            {pending ? "Saving…" : "Save program"}
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => setEditingId(null)}
+                                            disabled={pending}
+                                        >
+                                            Cancel
+                                        </Button>
+                                    </div>
+                                </form>
+                            ) : (
+                                <div key={program.id} className="flex flex-wrap items-center gap-3 p-3.5">
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate text-sm font-medium">
+                                            {program.name_en}
+                                            {program.name_kh ? (
+                                                <span className="ml-2 font-normal text-muted-foreground">
+                                                    · {program.name_kh}
+                                                </span>
+                                            ) : null}
+                                        </p>
+                                        <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                                            <span>
+                                                {[
+                                                    matchedUnit?.name_en ?? program.faculty ?? "No unit",
+                                                    `${program.duration_years ?? "—"} yr`,
+                                                ].join(" · ")}
                                             </span>
-                                        ) : null}
-                                    </p>
-                                    <p className={cn("mt-0.5 truncate text-xs text-muted-foreground")}>
-                                        {[program.faculty ?? "No faculty", `${program.duration_years ?? "—"} yr`].join(
-                                            " · ",
-                                        )}{" "}
-                                        · {formatCurrency(program.tuition_per_year, program.fee_currency)}
-                                        {program.tuition_female_per_year ? (
-                                            <span className="ml-1.5 text-rose-600 dark:text-rose-400 font-medium">
-                                                (♀ {formatCurrency(program.tuition_female_per_year, program.fee_currency)})
+                                            <span>·</span>
+                                            <span
+                                                className={cn(
+                                                    resolved.source === "program"
+                                                        ? "font-semibold text-foreground"
+                                                        : "text-muted-foreground",
+                                                )}
+                                            >
+                                                {formatCurrency(resolved.effectiveTuition, program.fee_currency)}/yr
                                             </span>
-                                        ) : null}
-                                    </p>
-                                </div>
+                                            <span
+                                                className={cn(
+                                                    "rounded px-1 text-2xs",
+                                                    resolved.source === "program"
+                                                        ? "bg-primary/10 text-primary border border-primary/20"
+                                                        : resolved.source === "unit"
+                                                          ? "bg-secondary text-secondary-foreground"
+                                                          : "bg-muted text-muted-foreground",
+                                                )}
+                                                title={resolved.sourceLabel}
+                                            >
+                                                {resolved.source === "program"
+                                                    ? "Custom"
+                                                    : resolved.source === "unit"
+                                                      ? `⮑ ${matchedUnit?.name_en ?? "Unit"}`
+                                                      : resolved.source === "university"
+                                                        ? "⮑ Univ default"
+                                                        : "Unset"}
+                                            </span>
+                                            {resolved.effectiveFemale ? (
+                                                <span className="text-rose-600 dark:text-rose-400 font-medium text-2xs">
+                                                    (♀ {formatCurrency(resolved.effectiveFemale, program.fee_currency)}
+                                                    {resolved.discountPercent ? ` · -${resolved.discountPercent}%` : ""})
+                                                </span>
+                                            ) : null}
+                                        </div>
+                                    </div>
 
-                                <Badge variant="outline">{program.degree_level}</Badge>
+                                    <Badge variant="outline">{program.degree_level}</Badge>
 
-                                <div className="flex items-center gap-1.5">
-                                    <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => {
-                                            setEditingId(program.id);
-                                            setAdding(false);
-                                        }}
-                                        aria-label={`Edit ${program.name_en}`}
-                                    >
-                                        <Pencil className="size-3.5" />
-                                        Edit
-                                    </Button>
-                                    <ConfirmButton
-                                        onConfirm={handleDelete(program)}
-                                        confirmLabel={`Delete “${program.name_en}”?`}
-                                    >
-                                        <Trash2 className="size-3.5" />
-                                        Delete
-                                    </ConfirmButton>
+                                    <div className="flex items-center gap-1.5">
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => {
+                                                setEditingId(program.id);
+                                                setAdding(false);
+                                            }}
+                                            aria-label={`Edit ${program.name_en}`}
+                                        >
+                                            <Pencil className="size-3.5" />
+                                            Edit
+                                        </Button>
+                                        <ConfirmButton
+                                            onConfirm={handleDelete(program)}
+                                            confirmLabel={`Delete “${program.name_en}”?`}
+                                        >
+                                            <Trash2 className="size-3.5" />
+                                            Delete
+                                        </ConfirmButton>
+                                    </div>
                                 </div>
-                            </div>
-                        ),
-                    ))}
+                            );
+                        })
+                    )}
                 </div>
             ) : null}
         </div>

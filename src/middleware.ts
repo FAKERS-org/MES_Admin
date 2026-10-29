@@ -14,6 +14,11 @@ export function middleware(req: NextRequest) {
   // Route handlers (/api/login, /api/logout, /api/admin/...) do their own auth.
   if (pathname.startsWith("/api/")) return NextResponse.next();
 
+  // Allow static assets through without auth check.
+  if (/\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js)$/i.test(pathname)) {
+    return NextResponse.next();
+  }
+
   const isLoginRoute = pathname === "/login" || pathname.startsWith("/login/");
 
   if (isLoginRoute) {

@@ -1,7 +1,8 @@
-import { ArrowLeft, ExternalLink, Folder, MapPin, Newspaper } from "lucide-react";
+import { ArrowLeft, CircleDollarSign, ExternalLink, FolderTree, MapPin, Newspaper } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/feedback";
@@ -14,6 +15,7 @@ import UnitManager from "@/components/universities/unit-manager";
 import UniversityEditForm from "@/components/universities/university-edit-form";
 import { ApiError, apiList, apiRequest } from "@/lib/server-api";
 import type { Status, UnitSummary, UniversityDetail, UniversitySummary } from "@/lib/types";
+import { formatCurrency } from "@/lib/utils";
 
 export const metadata = { title: "University" };
 export const dynamic = "force-dynamic";
@@ -140,6 +142,53 @@ export default async function UniversityDetailPage({ params }: { params: Promise
                         </CardContent>
                     </Card>
 
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="flex items-center gap-2 text-base">
+                                    <CircleDollarSign className="size-4 text-primary" />
+                                    Tuition Strategy
+                                </CardTitle>
+                                {university.tuition_model ? (
+                                    <Badge variant={university.tuition_model === "UNIFORM" ? "default" : "outline"} className="text-2xs">
+                                        {university.tuition_model}
+                                    </Badge>
+                                ) : null}
+                            </div>
+                            <CardDescription>
+                                Derived from university defaults, faculties, and programs.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-2.5 text-xs">
+                            <div className="flex items-center justify-between rounded-lg border px-3 py-2 bg-muted/20">
+                                <span className="text-muted-foreground">University default:</span>
+                                <span className="font-semibold text-foreground">
+                                    {university.default_tuition_per_year
+                                        ? `${formatCurrency(university.default_tuition_per_year)}/yr`
+                                        : "Not set"}
+                                </span>
+                            </div>
+                            {university.default_tuition_female_per_year ? (
+                                <div className="flex items-center justify-between rounded-lg border px-3 py-2 bg-rose-50/50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-300">
+                                    <span>♀ Female STEM incentive:</span>
+                                    <span className="font-semibold">
+                                        {formatCurrency(university.default_tuition_female_per_year)}/yr
+                                    </span>
+                                </div>
+                            ) : null}
+                            <div className="flex items-center justify-between rounded-lg border px-3 py-2 bg-muted/20">
+                                <span className="text-muted-foreground">Effective range:</span>
+                                <span className="font-semibold text-foreground">
+                                    {university.tuition_min_per_year !== null && university.tuition_min_per_year !== undefined
+                                        ? university.tuition_min_per_year === university.tuition_max_per_year
+                                            ? `${formatCurrency(university.tuition_min_per_year)}/yr`
+                                            : `${formatCurrency(university.tuition_min_per_year)} – ${formatCurrency(university.tuition_max_per_year)}/yr`
+                                        : "—"}
+                                </span>
+                            </div>
+                        </CardContent>
+                    </Card>
+
                     <Card className="border-destructive/40">
                         <CardHeader>
                             <CardTitle className="text-destructive">Danger zone</CardTitle>
@@ -152,43 +201,59 @@ export default async function UniversityDetailPage({ params }: { params: Promise
                 </div>
             </div>
 
+            {/* 1. Academic Units & Structure (Faculties, Departments, Programs with Drag-and-Drop) */}
+            <Card>
+                <CardHeader className="flex flex-row items-center gap-2 space-y-0">
+                    <FolderTree className="size-4 text-primary" />
+                    <div>
+                        <CardTitle>Academic Structure & Units</CardTitle>
+                        <CardDescription>
+                            Organize faculties, departments, and programs. Drag and drop to rearrange or assign majors.
+                        </CardDescription>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <UnitManager
+                        universityId={String(university.id)}
+                        universitySlug={slug}
+                        units={units}
+                        programs={university.programs}
+                        defaultTuitionPerYear={university.default_tuition_per_year}
+                        defaultTuitionFemalePerYear={university.default_tuition_female_per_year}
+                    />
+                </CardContent>
+            </Card>
+
+            {/* 2. Detailed Programs Directory */}
             <Card>
                 <CardHeader className="flex flex-row items-center gap-2 space-y-0">
                     <Newspaper className="size-4 text-primary" />
                     <div>
-                        <CardTitle>Programs</CardTitle>
-                        <CardDescription>Degree programs offered by this university.</CardDescription>
+                        <CardTitle>Programs Directory</CardTitle>
+                        <CardDescription>Manage degree details, duration, curriculum, and admissions requirements.</CardDescription>
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <ProgramManager universityId={slug} programs={university.programs} units={units} />
+                    <ProgramManager
+                        universityId={String(university.id)}
+                        programs={university.programs}
+                        units={units}
+                        defaultTuitionPerYear={university.default_tuition_per_year}
+                        defaultTuitionFemalePerYear={university.default_tuition_female_per_year}
+                    />
                 </CardContent>
             </Card>
 
+            {/* 3. Campuses */}
             {!university.parent_id ? (
                 <CampusManager
-                    universityId={slug}
+                    universityId={university.id}
                     universityName={university.name_en}
                     universityType={university.type}
                     abbreviation={university.abbreviation}
                     campuses={university.campuses ?? []}
                 />
             ) : null}
-
-            <Card>
-                <CardHeader className="flex flex-row items-center gap-2 space-y-0">
-                    <Folder className="size-4 text-primary" />
-                    <div>
-                        <CardTitle>Units</CardTitle>
-                        <CardDescription>
-                            Faculties, departments, and organizational units offered at this location.
-                        </CardDescription>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <UnitManager universityId={slug} units={units} />
-                </CardContent>
-            </Card>
         </div>
     );
 }

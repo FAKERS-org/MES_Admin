@@ -28,6 +28,7 @@ export function unitPayload(form: FormData): UnitCreatePayload {
         category_en: raw(form, "category_en"),
         category_kh: nullable(form, "category_kh"),
         logo: nullable(form, "logo"),
+        position: numberOrNull(form, "position") ?? 0,
         default_tuition_per_year: numberOrNull(form, "default_tuition_per_year"),
         default_tuition_female_per_year: numberOrNull(form, "default_tuition_female_per_year"),
     };
