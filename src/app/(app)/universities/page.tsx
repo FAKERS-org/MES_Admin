@@ -7,22 +7,23 @@ import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState, PageHeader } from "@/components/ui/feedback";
 import { Input, Select } from "@/components/ui/field";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { StatusBadge, TypeBadge } from "@/components/universities/badges";
+import { StatusBadge, TypeBadge, MinistryBadge } from "@/components/universities/badges";
 import { UniversityAvatar } from "@/components/universities/university-avatar";
 import { apiPage } from "@/lib/server-api";
-import type { UniversitySummary } from "@/lib/types";
+import { MINISTRIES, MINISTRY_LABELS, type UniversitySummary } from "@/lib/types";
 
 export const metadata = { title: "Universities" };
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 8;
 
-type Search = { q?: string; type?: string; status?: string; page?: string };
+type Search = { q?: string; type?: string; ministry?: string; status?: string; page?: string };
 
 function buildHref(params: Search, page: number) {
     const url = new URLSearchParams();
     if (params.q) url.set("q", params.q);
     if (params.type) url.set("type", params.type);
+    if (params.ministry) url.set("ministry", params.ministry);
     if (params.status) url.set("status", params.status);
     if (page > 1) url.set("page", String(page));
     const query = url.toString();
@@ -33,6 +34,7 @@ export default async function UniversitiesPage({ searchParams }: { searchParams:
     const params = await searchParams;
     const q = (params.q ?? "").trim();
     const type = params.type ?? "";
+    const ministry = params.ministry ?? "";
     const status = params.status ?? "";
     const requestedPage = Math.max(1, Number(params.page ?? 1));
 
@@ -41,6 +43,7 @@ export default async function UniversitiesPage({ searchParams }: { searchParams:
     apiParams.set("limit", String(PAGE_SIZE));
     if (q) apiParams.set("q", q);
     if (type) apiParams.set("type", type);
+    if (ministry) apiParams.set("ministry", ministry);
     if (status) apiParams.set("status", status);
 
     const pageData = await apiPage<UniversitySummary>(`admin/universities/?${apiParams.toString()}`);
@@ -53,7 +56,7 @@ export default async function UniversitiesPage({ searchParams }: { searchParams:
     const totalPages = Math.max(1, pageData?.total_pages ?? 1);
     const currentPage = pageData?.page ?? 1;
     const totalItems = pageData?.total_items ?? pageRows.length;
-    const hasFilters = Boolean(q || type || status);
+    const hasFilters = Boolean(q || type || ministry || status);
 
     return (
         <div className="space-y-5">
@@ -98,6 +101,20 @@ export default async function UniversitiesPage({ searchParams }: { searchParams:
                         <option value="">All types</option>
                         <option value="PUBLIC">Public</option>
                         <option value="PRIVATE">Private</option>
+                    </Select>
+                </div>
+
+                <div className="w-48 space-y-1.5">
+                    <label htmlFor="ministry" className="text-xs font-medium text-muted-foreground">
+                        Ministry
+                    </label>
+                    <Select id="ministry" name="ministry" defaultValue={ministry}>
+                        <option value="">All ministries</option>
+                        {MINISTRIES.map(m => (
+                            <option key={m} value={m}>
+                                {MINISTRY_LABELS[m].short} ({m})
+                            </option>
+                        ))}
                     </Select>
                 </div>
 
@@ -160,6 +177,7 @@ export default async function UniversitiesPage({ searchParams }: { searchParams:
                                 <TableRow>
                                     <TableHead>University</TableHead>
                                     <TableHead>Type</TableHead>
+                                    <TableHead>Ministry</TableHead>
                                     <TableHead>Province</TableHead>
                                     <TableHead>Established</TableHead>
                                     <TableHead>Status</TableHead>
@@ -203,6 +221,9 @@ export default async function UniversitiesPage({ searchParams }: { searchParams:
                                         </TableCell>
                                         <TableCell>
                                             <TypeBadge type={university.type} />
+                                        </TableCell>
+                                        <TableCell>
+                                            <MinistryBadge ministry={university.ministry} />
                                         </TableCell>
                                         <TableCell className="text-muted-foreground">{university.province}</TableCell>
                                         <TableCell className="text-muted-foreground">

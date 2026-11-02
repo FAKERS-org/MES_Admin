@@ -34,6 +34,13 @@ export function unitPayload(form: FormData): UnitCreatePayload {
     };
 }
 
+const UNIT_KIND_LABELS: Record<UnitKind, string> = {
+    FACULTY: "Faculty (មហាវិទ្យាល័យ)",
+    DEPARTMENT: "Department (ដេប៉ាតឺម៉ង់)",
+    SUB_DEPARTMENT: "Sub-Department / Lab (ដេប៉ាតឺម៉ង់រង / មន្ទីរពិសោធន៍)",
+    FOUNDATION: "Foundation Year / Tronc Commun (ថ្នាក់ឆ្នាំសិក្សាមូលដ្ឋាន)",
+};
+
 /**
  * Uncontrolled fields for creating/editing a unit - values are read from
  * FormData on submit, like the program forms on the university page.
@@ -72,7 +79,7 @@ export default function UnitFields({
                 <Select id="u-kind" name="kind" defaultValue={kind}>
                     {UNIT_KINDS.map(option => (
                         <option key={option} value={option}>
-                            {option.replace(/_/g, " ")}
+                            {UNIT_KIND_LABELS[option] ?? option.replace(/_/g, " ")}
                         </option>
                     ))}
                 </Select>

@@ -13,11 +13,14 @@ import { apiRequest } from "@/lib/api";
 import {
     CURRENCIES,
     DEGREE_LEVELS,
+    STUDY_SHIFTS,
+    STUDY_SHIFT_LABELS,
     type Currency,
     type DegreeLevel,
     type ProgramCreatePayload,
     type ProgramSummary,
     type ProgramUpdatePayload,
+    type StudyShift,
     type UnitSummary,
 } from "@/lib/types";
 import { cn, formatCurrency } from "@/lib/utils";
@@ -39,7 +42,7 @@ function numberOrNull(form: FormData, key: string): number | null {
 }
 
 /** Shared field layout for the create and edit program forms. */
-function ProgramFields({
+export function ProgramFields({
     defaultValue,
     units,
     defaultTuitionPerYear,
@@ -48,6 +51,10 @@ function ProgramFields({
     units?: UnitSummary[];
     defaultTuitionPerYear?: number | null;
 }) {
+    const [selectedUnit, setSelectedUnit] = useState<string>(
+        defaultValue?.unit_id ? String(defaultValue.unit_id) : "",
+    );
+
     return (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <Field label="Program name (English)" htmlFor="p-name" required className="lg:col-span-2">
@@ -65,18 +72,39 @@ function ProgramFields({
             </Field>
 
             {units && units.length > 0 ? (
-                <Field label="Belongs to Unit / Faculty" htmlFor="p-unit">
-                    <Select id="p-unit" name="unit_id" defaultValue={defaultValue?.unit_id ? String(defaultValue.unit_id) : ""}>
-                        <option value="">No unit (University-Wide / Standalone)</option>
-                        {units.map(u => (
-                            <option key={u.id} value={String(u.id)}>
-                                {u.name_en} ({u.kind})
-                            </option>
-                        ))}
-                    </Select>
-                </Field>
+                <>
+                    <Field label="Belongs to Unit / Faculty" htmlFor="p-unit">
+                        <Select
+                            id="p-unit"
+                            name="unit_id"
+                            value={selectedUnit}
+                            onChange={e => setSelectedUnit(e.target.value)}
+                        >
+                            <option value="">No unit (University-Wide / Standalone)</option>
+                            {units.map(u => {
+                                const parent = u.parent_id ? units.find(p => p.id === u.parent_id) : null;
+                                const label = parent ? `${parent.name_en} → ${u.name_en}` : u.name_en;
+                                return (
+                                    <option key={u.id} value={String(u.id)}>
+                                        {label} ({u.kind})
+                                    </option>
+                                );
+                            })}
+                        </Select>
+                    </Field>
+                    {!selectedUnit ? (
+                        <Field label="Faculty Label (Optional for standalone)" htmlFor="p-faculty">
+                            <Input
+                                id="p-faculty"
+                                name="faculty"
+                                placeholder="e.g. Faculty of Engineering"
+                                defaultValue={defaultValue?.faculty ?? ""}
+                            />
+                        </Field>
+                    ) : null}
+                </>
             ) : (
-                <Field label="Faculty" htmlFor="p-faculty">
+                <Field label="Faculty (Optional)" htmlFor="p-faculty">
                     <Input
                         id="p-faculty"
                         name="faculty"
@@ -157,6 +185,36 @@ function ProgramFields({
                     ))}
                 </Select>
             </Field>
+
+            <div className="sm:col-span-2 lg:col-span-3 space-y-2">
+                <label className="text-xs font-medium text-foreground">Study Shifts (វេនសិក្សា)</label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {STUDY_SHIFTS.map(shift => {
+                        const shiftInfo = STUDY_SHIFT_LABELS[shift];
+                        const isChecked = defaultValue?.shifts?.includes(shift);
+                        return (
+                            <label
+                                key={shift}
+                                className="flex items-start gap-2 rounded-lg border p-2 text-xs hover:bg-muted/40 cursor-pointer"
+                            >
+                                <input
+                                    type="checkbox"
+                                    name="shifts"
+                                    value={shift}
+                                    defaultChecked={isChecked}
+                                    className="mt-0.5 rounded border-input text-primary focus:ring-primary"
+                                />
+                                <div className="min-w-0">
+                                    <div className="font-medium text-foreground truncate">
+                                        {shiftInfo.kh} ({shiftInfo.en})
+                                    </div>
+                                    <div className="text-2xs text-muted-foreground">{shiftInfo.time}</div>
+                                </div>
+                            </label>
+                        );
+                    })}
+                </div>
+            </div>
         </div>
     );
 }
@@ -216,7 +274,17 @@ export default function ProgramManager({
         const unitIdRaw = raw(form, "unit_id");
         const unitId = unitIdRaw ? Number(unitIdRaw) : null;
         const selectedUnit = units?.find(u => String(u.id) === unitIdRaw);
-        const faculty = selectedUnit ? selectedUnit.name_en : nullable(form, "faculty");
+        let faculty = nullable(form, "faculty");
+        if (selectedUnit) {
+            if (selectedUnit.parent_id) {
+                const parent = units?.find(u => u.id === selectedUnit.parent_id);
+                faculty = parent ? parent.name_en : selectedUnit.name_en;
+            } else {
+                faculty = selectedUnit.name_en;
+            }
+        }
+
+        const shifts = form.getAll("shifts") as StudyShift[];
 
         const payload: ProgramCreatePayload = {
             name_en: nameEn,
@@ -229,6 +297,7 @@ export default function ProgramManager({
             tuition_female_per_year: numberOrNull(form, "tuition_female_per_year"),
             tuition_per_credit: numberOrNull(form, "tuition_per_credit"),
             fee_currency: form.get("fee_currency") as Currency,
+            shifts: shifts.length > 0 ? shifts : null,
         };
 
         startTransition(async () => {
@@ -260,7 +329,17 @@ export default function ProgramManager({
             const unitIdRaw = raw(form, "unit_id");
             const unitId = unitIdRaw ? Number(unitIdRaw) : null;
             const selectedUnit = units?.find(u => String(u.id) === unitIdRaw);
-            const faculty = selectedUnit ? selectedUnit.name_en : nullable(form, "faculty");
+            let faculty = nullable(form, "faculty");
+            if (selectedUnit) {
+                if (selectedUnit.parent_id) {
+                    const parent = units?.find(u => u.id === selectedUnit.parent_id);
+                    faculty = parent ? parent.name_en : selectedUnit.name_en;
+                } else {
+                    faculty = selectedUnit.name_en;
+                }
+            }
+
+            const shifts = form.getAll("shifts") as StudyShift[];
 
             const payload: ProgramUpdatePayload = {
                 name_en: nameEn,
@@ -270,6 +349,7 @@ export default function ProgramManager({
                 degree_level: form.get("degree_level") as DegreeLevel,
                 duration_years: Number(raw(form, "duration_years") || 1),
                 fee_currency: form.get("fee_currency") as Currency,
+                shifts,
             };
             // Only send tuition when the user typed one: an untouched field
             // must not overwrite the stored value.
@@ -312,25 +392,53 @@ export default function ProgramManager({
 
     return (
         <div className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                    <GraduationCap className="size-4 text-primary" />
-                    <h3 className="text-base font-semibold">Study programs</h3>
-                    <Badge variant="outline">{items.length}</Badge>
+            {/* Action Toolbar */}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-wrap items-center gap-2 flex-1 max-w-lg">
+                    <div className="relative min-w-48 flex-1">
+                        <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            placeholder="Filter programs or faculties…"
+                            className="h-8.5 pl-8.5 text-xs bg-background"
+                        />
+                    </div>
+                    <Select
+                        value={degreeFilter}
+                        onChange={e => setDegreeFilter(e.target.value)}
+                        className="h-8.5 w-36 text-xs bg-background"
+                    >
+                        <option value="">All degrees</option>
+                        {DEGREE_LEVELS.map(level => (
+                            <option key={level} value={level}>{level}</option>
+                        ))}
+                    </Select>
+                    {(search || degreeFilter) && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => { setSearch(""); setDegreeFilter(""); }}
+                            className="h-8.5 text-xs"
+                        >
+                            Reset
+                        </Button>
+                    )}
                 </div>
-                {!adding ? (
+
+                {!adding && (
                     <Button
                         size="sm"
-                        variant="outline"
+                        className="h-8.5 gap-1.5 text-xs shadow-2xs font-medium self-end sm:self-auto"
                         onClick={() => {
                             setAdding(true);
                             setEditingId(null);
                         }}
                     >
-                        <Plus className="size-4" />
-                        Add program
+                        <Plus className="size-3.5" />
+                        Add Program
                     </Button>
-                ) : null}
+                )}
             </div>
 
             {error ? <Alert>{error}</Alert> : null}
@@ -371,30 +479,6 @@ export default function ProgramManager({
                 />
             ) : null}
 
-            {items.length > 2 ? (
-                <div className="flex flex-wrap items-center gap-2.5">
-                    <div className="relative min-w-48 flex-1">
-                        <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                            placeholder="Filter programs…"
-                            className="h-8 pl-8 text-xs"
-                        />
-                    </div>
-                    <Select value={degreeFilter} onChange={e => setDegreeFilter(e.target.value)} className="h-8 w-36 text-xs">
-                        <option value="">All degrees</option>
-                        {DEGREE_LEVELS.map(level => (
-                            <option key={level} value={level}>{level}</option>
-                        ))}
-                    </Select>
-                    {(search || degreeFilter) && (
-                        <Button variant="ghost" size="sm" onClick={() => { setSearch(""); setDegreeFilter(""); }} className="h-8 text-xs">
-                            Reset
-                        </Button>
-                    )}
-                </div>
-            ) : null}
 
             {items.length > 0 ? (
                 <div className="divide-y rounded-xl border">
@@ -402,7 +486,11 @@ export default function ProgramManager({
                         <p className="p-4 text-center text-xs text-muted-foreground">No matching programs found.</p>
                     ) : (
                         displayedItems.map(program => {
-                            const matchedUnit = units?.find(u => u.id === (program.unit_id ? String(program.unit_id) : ""));
+                            const matchedUnit = units?.find(u =>
+                                program.unit_id
+                                    ? String(u.id) === String(program.unit_id)
+                                    : Boolean(program.faculty && u.name_en.toLowerCase() === program.faculty.toLowerCase()),
+                            );
                             const resolved = resolveProgramTuition(
                                 program,
                                 matchedUnit,
@@ -488,6 +576,22 @@ export default function ProgramManager({
                                                 </span>
                                             ) : null}
                                         </div>
+                                        {program.shifts && program.shifts.length > 0 ? (
+                                            <div className="mt-1 flex flex-wrap items-center gap-1">
+                                                {program.shifts.map(shift => {
+                                                    const shiftInfo = STUDY_SHIFT_LABELS[shift];
+                                                    return (
+                                                        <span
+                                                            key={shift}
+                                                            className="inline-flex items-center rounded bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 px-1.5 py-0.5 text-[10px] font-medium"
+                                                            title={shiftInfo ? `${shiftInfo.en} (${shiftInfo.time})` : shift}
+                                                        >
+                                                            {shiftInfo ? `${shiftInfo.kh}` : shift}
+                                                        </span>
+                                                    );
+                                                })}
+                                            </div>
+                                        ) : null}
                                     </div>
 
                                     <Badge variant="outline">{program.degree_level}</Badge>

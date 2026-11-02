@@ -1,16 +1,14 @@
 "use client";
 
 import {
-    ChevronDown,
+    Building2,
     ChevronRight,
-    CircleDollarSign,
-    CornerDownRight,
-    Folder,
+    ChevronsDownUp,
+    ChevronsUpDown,
+    Copy,
     FolderTree,
     GraduationCap,
-    GripVertical,
     Layers,
-    List,
     Pencil,
     Plus,
     Search,
@@ -18,25 +16,29 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, useTransition, type DragEvent, type FormEvent } from "react";
+import { useEffect, useMemo, useState, useTransition, type FormEvent } from "react";
 
 import { setBreadcrumbLabel } from "@/components/layout/breadcrumbs";
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants, Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import ConfirmButton from "@/components/ui/confirm-button";
 import { Alert, EmptyState, Spinner } from "@/components/ui/feedback";
-import { Input, Select } from "@/components/ui/field";
+import { Input } from "@/components/ui/field";
+import { Modal } from "@/components/ui/modal";
 import UnitFields, { unitPayload } from "@/components/units/unit-fields";
+import { ProgramFields } from "@/components/universities/program-manager";
 import { apiRequest } from "@/lib/api";
 import { resolveProgramTuition } from "@/lib/tuition";
-import { UNIT_KINDS, type ProgramSummary, type UnitSummary } from "@/lib/types";
+import type {
+    Currency,
+    DegreeLevel,
+    ProgramSummary,
+    ProgramUpdatePayload,
+    StudyShift,
+    UnitCreatePayload,
+    UnitSummary,
+} from "@/lib/types";
 import { cn, formatCurrency } from "@/lib/utils";
-
-interface DragPayload {
-    type: "unit" | "program";
-    id: string;
-    sourceUnitId?: string | null;
-}
 
 export default function UnitManager({
     universityId,
@@ -56,8 +58,8 @@ export default function UnitManager({
     const router = useRouter();
     const [items, setItems] = useState<UnitSummary[]>(units ?? []);
     const [localPrograms, setLocalPrograms] = useState<ProgramSummary[]>(programs ?? []);
+    const [editingProgram, setEditingProgram] = useState<ProgramSummary | null>(null);
 
-    const [viewMode, setViewMode] = useState<"tree" | "list">("tree");
     const [adding, setAdding] = useState(false);
     const [defaultParentForNew, setDefaultParentForNew] = useState<string | null>(null);
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -65,17 +67,9 @@ export default function UnitManager({
     const [saved, setSaved] = useState<string | null>(null);
     const [pending, startTransition] = useTransition();
 
-    // Drag and drop state
-    const [draggedItem, setDraggedItem] = useState<DragPayload | null>(null);
-    const [dragOverTarget, setDragOverTarget] = useState<string | null>(null);
-
-    // Collapsed branches in tree view
+    // Collapsed state: maps unit ID to boolean (false = open, true = collapsed)
     const [collapsedUnits, setCollapsedUnits] = useState<Record<string, boolean>>({});
-
-    // Filter/sort for list view
     const [search, setSearch] = useState("");
-    const [kindFilter, setKindFilter] = useState("");
-    const [sortBy, setSortBy] = useState("name_asc");
 
     // Sync from server props
     useEffect(() => {
@@ -109,124 +103,6 @@ export default function UnitManager({
             next[index] = unit;
             return next;
         });
-    }
-
-    // --- Drag and Drop Handlers ---
-
-    function handleDragStart(e: DragEvent, payload: DragPayload) {
-        setDraggedItem(payload);
-        e.dataTransfer.setData("application/json", JSON.stringify(payload));
-        e.dataTransfer.effectAllowed = "move";
-    }
-
-    function handleDragOver(e: DragEvent, targetKey: string) {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = "move";
-        if (dragOverTarget !== targetKey) {
-            setDragOverTarget(targetKey);
-        }
-    }
-
-    function handleDragLeave(e: DragEvent, targetKey: string) {
-        // Prevent clearing if entering child element
-        if (e.currentTarget.contains(e.relatedTarget as Node)) return;
-        if (dragOverTarget === targetKey) {
-            setDragOverTarget(null);
-        }
-    }
-
-    function handleDrop(e: DragEvent, targetUnitId: string | number | null) {
-        e.preventDefault();
-        setDragOverTarget(null);
-
-        let payload = draggedItem;
-        if (!payload) {
-            try {
-                payload = JSON.parse(e.dataTransfer.getData("application/json")) as DragPayload;
-            } catch {
-                return;
-            }
-        }
-        if (!payload) return;
-
-        if (payload.type === "program") {
-            const programId = String(payload.id);
-            const targetIdStr = targetUnitId !== null && targetUnitId !== undefined ? String(targetUnitId) : null;
-            const targetUnit = targetIdStr ? items.find(u => String(u.id) === targetIdStr) : null;
-            const targetName = targetUnit ? targetUnit.name_en : "Unassigned / University-wide";
-
-            // Optimistic update
-            setLocalPrograms(prev =>
-                prev.map(p =>
-                    String(p.id) === programId
-                        ? {
-                              ...p,
-                              unit_id: targetIdStr ? Number(targetIdStr) : null,
-                              faculty: targetUnit ? targetUnit.name_en : null,
-                          }
-                        : p,
-                ),
-            );
-
-            startTransition(async () => {
-                try {
-                    await apiRequest(`/api/admin/programs/${programId}`, {
-                        method: "PATCH",
-                        body: {
-                            unit_id: targetIdStr ? Number(targetIdStr) : null,
-                            faculty: targetUnit ? targetUnit.name_en : null,
-                        },
-                    });
-                    flash(`Moved program to ${targetName}.`);
-                    router.refresh();
-                } catch (caught) {
-                    setError(caught instanceof Error ? caught.message : "Failed to move program.");
-                    // Revert
-                    setLocalPrograms(programs);
-                }
-            });
-        } else if (payload.type === "unit") {
-            const unitId = String(payload.id);
-            const targetIdStr = targetUnitId !== null && targetUnitId !== undefined ? String(targetUnitId) : null;
-            if (unitId === targetIdStr) return; // cannot parent to self
-
-            // Disallow circular nesting: target cannot be a descendant of unitId
-            const isDescendant = (checkId: string | null): boolean => {
-                if (!checkId) return false;
-                if (String(checkId) === unitId) return true;
-                const parent = items.find(u => String(u.id) === String(checkId));
-                return parent?.parent_id ? isDescendant(String(parent.parent_id)) : false;
-            };
-
-            if (isDescendant(targetIdStr)) {
-                setError("Cannot move a unit under one of its own sub-units.");
-                return;
-            }
-
-            const targetParent = targetIdStr ? items.find(u => String(u.id) === targetIdStr) : null;
-            const targetName = targetParent ? `under ${targetParent.name_en}` : "to Top Level (Root)";
-
-            // Optimistic update
-            setItems(prev =>
-                prev.map(u => (String(u.id) === unitId ? { ...u, parent_id: targetIdStr } : u)),
-            );
-
-            startTransition(async () => {
-                try {
-                    await apiRequest(`/api/admin/universities/${universityId}/units/${unitId}`, {
-                        method: "PATCH",
-                        body: { parent_id: targetIdStr ? Number(targetIdStr) : null },
-                    });
-                    flash(`Moved unit ${targetName}.`);
-                    router.refresh();
-                } catch (caught) {
-                    setError(caught instanceof Error ? caught.message : "Failed to move unit.");
-                    setItems(units);
-                }
-            });
-        }
-
-        setDraggedItem(null);
     }
 
     // --- CRUD Handlers ---
@@ -297,14 +173,129 @@ export default function UnitManager({
         };
     }
 
+    function handleClone(unit: UnitSummary) {
+        startTransition(async () => {
+            try {
+                const payload: UnitCreatePayload = {
+                    name_en: `${unit.name_en} (Copy)`,
+                    name_kh: unit.name_kh ? `${unit.name_kh} (ចម្លង)` : null,
+                    kind: unit.kind,
+                    parent_id: unit.parent_id ? String(unit.parent_id) : null,
+                    category_en: unit.category_en ?? "",
+                    category_kh: unit.category_kh ?? null,
+                    logo: unit.logo ?? null,
+                    position: (unit.position ?? 0) + 1,
+                    default_tuition_per_year: unit.default_tuition_per_year ?? null,
+                    default_tuition_female_per_year: unit.default_tuition_female_per_year ?? null,
+                };
+
+                const created = await apiRequest<UnitSummary>(
+                    `/api/admin/universities/${universityId}/units`,
+                    { method: "POST", body: payload },
+                );
+
+                // If cloning a faculty, also clone its child departments
+                const children = !unit.parent_id ? (childUnitsMap[String(unit.id)] ?? []) : [];
+                const clonedChildren: UnitSummary[] = [];
+                for (const child of children) {
+                    const childPayload: UnitCreatePayload = {
+                        name_en: `${child.name_en} (Copy)`,
+                        name_kh: child.name_kh ? `${child.name_kh} (ចម្លង)` : null,
+                        kind: child.kind,
+                        parent_id: String(created.id),
+                        category_en: child.category_en ?? "",
+                        category_kh: child.category_kh ?? null,
+                        logo: child.logo ?? null,
+                        position: child.position ?? 0,
+                        default_tuition_per_year: child.default_tuition_per_year ?? null,
+                        default_tuition_female_per_year: child.default_tuition_female_per_year ?? null,
+                    };
+                    const clonedChild = await apiRequest<UnitSummary>(
+                        `/api/admin/universities/${universityId}/units`,
+                        { method: "POST", body: childPayload },
+                    );
+                    clonedChildren.push(clonedChild);
+                }
+
+                setItems(current => [...current, created, ...clonedChildren]);
+                flash(
+                    `“${created.name_en}” cloned${clonedChildren.length > 0 ? ` with ${clonedChildren.length} department${clonedChildren.length === 1 ? "" : "s"}` : ""}.`,
+                );
+                router.refresh();
+            } catch (caught) {
+                setError(caught instanceof Error ? caught.message : "Could not clone the unit.");
+            }
+        });
+    }
+
+    function handleUpdateProgram(program: ProgramSummary) {
+        return (event: FormEvent<HTMLFormElement>) => {
+            event.preventDefault();
+            const form = new FormData(event.currentTarget);
+            const nameEn = String(form.get("name_en") || "").trim();
+            if (!nameEn) {
+                setError("Program name (English) is required.");
+                return;
+            }
+
+            const unitIdRaw = String(form.get("unit_id") || "").trim();
+            const unitId = unitIdRaw ? Number(unitIdRaw) : null;
+            const selectedUnit = items.find(u => String(u.id) === unitIdRaw);
+            let faculty = String(form.get("faculty") || "").trim() || null;
+            if (selectedUnit) {
+                if (selectedUnit.parent_id) {
+                    const parent = items.find(u => u.id === selectedUnit.parent_id);
+                    faculty = parent ? parent.name_en : selectedUnit.name_en;
+                } else {
+                    faculty = selectedUnit.name_en;
+                }
+            }
+
+            const shifts = form.getAll("shifts") as StudyShift[];
+
+            const payload: ProgramUpdatePayload = {
+                name_en: nameEn,
+                name_kh: String(form.get("name_kh") || "").trim() || null,
+                faculty,
+                unit_id: unitId,
+                degree_level: form.get("degree_level") as DegreeLevel,
+                duration_years: Number(form.get("duration_years") || 1),
+                fee_currency: form.get("fee_currency") as Currency,
+                shifts,
+            };
+            const perYearRaw = String(form.get("tuition_per_year") || "").trim();
+            if (perYearRaw) payload.tuition_per_year = Number(perYearRaw);
+            const perYearFemaleRaw = String(form.get("tuition_female_per_year") || "").trim();
+            if (perYearFemaleRaw) payload.tuition_female_per_year = Number(perYearFemaleRaw);
+            const perCreditRaw = String(form.get("tuition_per_credit") || "").trim();
+            if (perCreditRaw) payload.tuition_per_credit = Number(perCreditRaw);
+
+            startTransition(async () => {
+                try {
+                    const updated = await apiRequest<ProgramSummary>(`/api/admin/programs/${program.id}`, {
+                        method: "PATCH",
+                        body: payload,
+                    });
+                    setLocalPrograms(current => current.map(item => (item.id === updated.id ? updated : item)));
+                    setEditingProgram(null);
+                    flash(`“${updated.name_en}” updated.`);
+                    router.refresh();
+                } catch (caught) {
+                    setError(caught instanceof Error ? caught.message : "Could not update the program.");
+                }
+            });
+        };
+    }
+
     // --- Tree Hierarchy Assembly ---
-    const { rootUnits, childUnitsMap, programsByUnitId, unassignedPrograms } = useMemo(() => {
+    const { rootUnits, childUnitsMap, programsByUnitId, unassignedPrograms, totalDepartmentsCount } = useMemo(() => {
         const root: UnitSummary[] = [];
         const childMap: Record<string, UnitSummary[]> = {};
         const progMap: Record<string, ProgramSummary[]> = {};
         const unassigned: ProgramSummary[] = [];
 
         // Group units
+        let depts = 0;
         for (const unit of items) {
             if (!unit.parent_id) {
                 root.push(unit);
@@ -312,6 +303,7 @@ export default function UnitManager({
                 const pId = String(unit.parent_id);
                 if (!childMap[pId]) childMap[pId] = [];
                 childMap[pId].push(unit);
+                depts++;
             }
         }
 
@@ -321,7 +313,7 @@ export default function UnitManager({
             childMap[pId].sort((a, b) => (a.position ?? 0) - (b.position ?? 0) || a.name_en.localeCompare(b.name_en));
         }
 
-        // Group programs
+        // Group programs by unit
         for (const prog of localPrograms) {
             if (prog.unit_id) {
                 const uidStr = String(prog.unit_id);
@@ -332,727 +324,658 @@ export default function UnitManager({
             }
         }
 
-        return { rootUnits: root, childUnitsMap: childMap, programsByUnitId: progMap, unassignedPrograms: unassigned };
+        return {
+            rootUnits: root,
+            childUnitsMap: childMap,
+            programsByUnitId: progMap,
+            unassignedPrograms: unassigned,
+            totalDepartmentsCount: depts,
+        };
     }, [items, localPrograms]);
 
-    // Filter for list view
-    const filteredList = items
-        .filter(u => {
-            if (kindFilter && u.kind !== kindFilter) return false;
-            if (search) {
-                const term = search.toLowerCase();
-                const text = `${u.name_en} ${u.name_kh ?? ""} ${u.category_en ?? ""}`.toLowerCase();
-                if (!text.includes(term)) return false;
+    // Expand / Collapse all toggle
+    const allExpanded = rootUnits.length > 0 && rootUnits.every(u => !collapsedUnits[String(u.id)]);
+    function toggleExpandAll() {
+        if (allExpanded) {
+            const next: Record<string, boolean> = {};
+            for (const u of rootUnits) next[String(u.id)] = true;
+            setCollapsedUnits(next);
+        } else {
+            setCollapsedUnits({});
+        }
+    }
+
+    // Search filter
+    const searchTerm = search.trim().toLowerCase();
+    const visibleRootUnits = useMemo(() => {
+        if (!searchTerm) return rootUnits;
+
+        return rootUnits.filter(unit => {
+            const uText = `${unit.name_en} ${unit.name_kh ?? ""} ${unit.kind}`.toLowerCase();
+            if (uText.includes(searchTerm)) return true;
+
+            const children = childUnitsMap[String(unit.id)] ?? [];
+            const hasMatchingChild = children.some(c =>
+                `${c.name_en} ${c.name_kh ?? ""}`.toLowerCase().includes(searchTerm),
+            );
+            if (hasMatchingChild) return true;
+
+            const unitPrograms = programsByUnitId[String(unit.id)] ?? [];
+            const hasMatchingProgram = unitPrograms.some(p =>
+                `${p.name_en} ${p.name_kh ?? ""}`.toLowerCase().includes(searchTerm),
+            );
+            if (hasMatchingProgram) return true;
+
+            // Check programs under child departments
+            for (const c of children) {
+                const cProgs = programsByUnitId[String(c.id)] ?? [];
+                if (cProgs.some(p => `${p.name_en} ${p.name_kh ?? ""}`.toLowerCase().includes(searchTerm))) {
+                    return true;
+                }
             }
-            return true;
-        })
-        .sort((a, b) => {
-            if (sortBy === "name_desc") return b.name_en.localeCompare(a.name_en);
-            if (sortBy === "id_desc") return Number(b.id) - Number(a.id);
-            if (sortBy === "id_asc") return Number(a.id) - Number(b.id);
-            return a.name_en.localeCompare(b.name_en);
+
+            return false;
         });
+    }, [rootUnits, childUnitsMap, programsByUnitId, searchTerm]);
 
     return (
-        <div className="space-y-4">
-            {/* Header with View Toggle and Actions */}
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b pb-3">
-                <div className="flex items-center gap-2">
-                    <FolderTree className="size-5 text-primary" />
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <h3 className="text-base font-semibold">Academic Units & Structure</h3>
-                            <Badge variant="outline">{items.length} units</Badge>
-                            <Badge variant="default">{localPrograms.length} programs</Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                            Drag & drop departments into faculties, or programs into units. Tuition cascades automatically.
-                        </p>
-                    </div>
+        <div className="space-y-5">
+            {/* Clean Action Toolbar */}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="relative flex-1 max-w-sm">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                        placeholder="Search faculties, departments, or majors…"
+                        className="h-8.5 pl-8.5 text-xs bg-background"
+                    />
                 </div>
 
-                <div className="flex items-center gap-2">
-                    {/* View Switcher */}
-                    <div className="flex items-center rounded-lg border bg-muted/40 p-0.5 text-xs">
-                        <button
+                <div className="flex items-center gap-2 self-end sm:self-auto">
+                    {rootUnits.length > 0 && (
+                        <Button
                             type="button"
-                            onClick={() => setViewMode("tree")}
-                            className={cn(
-                                "flex items-center gap-1.5 rounded-md px-2.5 py-1 font-medium transition-colors",
-                                viewMode === "tree"
-                                    ? "bg-background text-foreground shadow-xs"
-                                    : "text-muted-foreground hover:text-foreground",
-                            )}
+                            variant="outline"
+                            size="sm"
+                            className="h-8.5 px-3 text-xs gap-1.5"
+                            onClick={toggleExpandAll}
+                            title={allExpanded ? "Collapse all" : "Expand all"}
                         >
-                            <FolderTree className="size-3.5" />
-                            Hierarchy Tree
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setViewMode("list")}
-                            className={cn(
-                                "flex items-center gap-1.5 rounded-md px-2.5 py-1 font-medium transition-colors",
-                                viewMode === "list"
-                                    ? "bg-background text-foreground shadow-xs"
-                                    : "text-muted-foreground hover:text-foreground",
+                            {allExpanded ? (
+                                <>
+                                    <ChevronsDownUp className="size-3.5 text-muted-foreground" />
+                                    <span>Collapse all</span>
+                                </>
+                            ) : (
+                                <>
+                                    <ChevronsUpDown className="size-3.5 text-muted-foreground" />
+                                    <span>Expand all</span>
+                                </>
                             )}
-                        >
-                            <List className="size-3.5" />
-                            Directory List
-                        </button>
-                    </div>
+                        </Button>
+                    )}
 
-                    {!adding ? (
+                    {!adding && (
                         <Button
                             size="sm"
+                            className="h-8.5 gap-1.5 text-xs shadow-2xs font-medium"
                             onClick={() => {
                                 setAdding(true);
                                 setDefaultParentForNew(null);
                                 setEditingId(null);
                             }}
                         >
-                            <Plus className="size-4" />
-                            Add unit
+                            <Plus className="size-3.5" />
+                            Add Faculty
                         </Button>
-                    ) : null}
+                    )}
                 </div>
             </div>
 
-            {error ? <Alert>{error}</Alert> : null}
-            {saved && !error ? <Alert variant="success">{saved}</Alert> : null}
+            {error && <Alert>{error}</Alert>}
+            {saved && !error && <Alert variant="success">{saved}</Alert>}
 
             {/* Create unit form */}
-            {adding ? (
-                <form onSubmit={handleCreate} className="space-y-4 rounded-xl border bg-muted/30 p-4 shadow-xs">
-                    <div className="flex items-center justify-between">
-                        <p className="text-sm font-semibold">
-                            {defaultParentForNew
-                                ? `Add department under “${items.find(u => u.id === defaultParentForNew)?.name_en}”`
-                                : "New organizational unit"}
-                        </p>
-                        <Badge variant="outline">Create</Badge>
-                    </div>
-                    <UnitFields
-                        siblings={items}
-                        defaultValue={
-                            defaultParentForNew
-                                ? ({ parent_id: defaultParentForNew, kind: "DEPARTMENT" } as UnitSummary)
-                                : undefined
-                        }
-                    />
-                    <div className="flex gap-2">
-                        <Button type="submit" size="sm" disabled={pending}>
-                            {pending ? <Spinner className="size-3.5" /> : null}
-                            {pending ? "Adding…" : "Add unit"}
-                        </Button>
+            {adding && (
+                <div className="rounded-xl border bg-card p-4 shadow-sm space-y-4">
+                    <div className="flex items-center justify-between border-b pb-3">
+                        <div className="flex items-center gap-2.5">
+                            <Plus className="size-4.5 text-foreground shrink-0" />
+                            <div>
+                                <h4 className="text-sm font-semibold">
+                                    {defaultParentForNew
+                                        ? `Add department under “${items.find(u => u.id === defaultParentForNew)?.name_en}”`
+                                        : "New Faculty or Primary Unit"}
+                                </h4>
+                                <p className="text-2xs text-muted-foreground">
+                                    Units help organize academic programs and define default tuition fees.
+                                </p>
+                            </div>
+                        </div>
                         <Button
                             type="button"
                             size="sm"
                             variant="ghost"
+                            className="h-7 text-xs"
                             onClick={() => {
                                 setAdding(false);
                                 setDefaultParentForNew(null);
                             }}
-                            disabled={pending}
                         >
                             Cancel
                         </Button>
                     </div>
-                </form>
-            ) : null}
 
-            {items.length === 0 && !adding ? (
+                    <form onSubmit={handleCreate} className="space-y-4">
+                        <UnitFields
+                            siblings={items}
+                            defaultValue={
+                                defaultParentForNew
+                                    ? ({ parent_id: defaultParentForNew, kind: "DEPARTMENT" } as UnitSummary)
+                                    : undefined
+                            }
+                        />
+                        <div className="flex items-center justify-end gap-2 pt-2 border-t">
+                            <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                    setAdding(false);
+                                    setDefaultParentForNew(null);
+                                }}
+                                disabled={pending}
+                            >
+                                Cancel
+                            </Button>
+                            <Button type="submit" size="sm" disabled={pending}>
+                                {pending ? <Spinner className="size-3.5" /> : null}
+                                {pending ? "Adding…" : defaultParentForNew ? "Create Department" : "Create Faculty"}
+                            </Button>
+                        </div>
+                    </form>
+                </div>
+            )}
+
+            {/* Empty state when university has no units */}
+            {items.length === 0 && !adding && (
                 <EmptyState
-                    title="No units yet"
-                    description="Create faculties, colleges, or departments so academic programs can be organized with inheritances."
+                    title="No academic units yet"
+                    description="This university is currently configured as a flat institution. Add faculties or departments to organize degrees into an academic hierarchy."
                     action={
-                        <Button size="sm" onClick={() => setAdding(true)}>
+                        <Button
+                            size="sm"
+                            onClick={() => setAdding(true)}
+                            className="gap-1.5"
+                        >
                             <Plus className="size-4" />
-                            Add first unit
+                            Add first faculty
                         </Button>
                     }
                 />
-            ) : null}
+            )}
 
-            {/* TREE HIERARCHY VIEW WITH DRAG-AND-DROP */}
-            {items.length > 0 && viewMode === "tree" && (
-                <div className="space-y-4">
-                    {/* Root Level Dropzone */}
-                    <div
-                        onDragOver={e => handleDragOver(e, "root")}
-                        onDragLeave={e => handleDragLeave(e, "root")}
-                        onDrop={e => handleDrop(e, null)}
-                        className={cn(
-                            "rounded-lg border-2 border-dashed p-3 text-center transition-all",
-                            dragOverTarget === "root"
-                                ? "border-primary bg-primary/10 shadow-xs ring-2 ring-primary/40"
-                                : "border-muted-foreground/20 bg-muted/10 hover:border-muted-foreground/40",
-                        )}
-                    >
-                        <p className="text-xs text-muted-foreground">
-                            Top-level container · Drag a department here to un-nest it to Root
-                        </p>
-                    </div>
+            {/* FRIENDLY HIERARCHY ACCORDION */}
+            {visibleRootUnits.length > 0 && (
+                <div className="space-y-3.5">
+                    {visibleRootUnits.map(unit => {
+                        const unitIdStr = String(unit.id);
+                        const isEditing = String(editingId) === unitIdStr;
+                        const children = childUnitsMap[unitIdStr] ?? [];
+                        const unitPrograms = programsByUnitId[unitIdStr] ?? [];
+                        const isCollapsed = Boolean(collapsedUnits[unitIdStr]);
 
-                    {/* Faculties / Root Units */}
-                    <div className="space-y-4">
-                        {rootUnits.map(unit => {
-                            const unitIdStr = String(unit.id);
-                            const isEditing = String(editingId) === unitIdStr;
-                            const children = childUnitsMap[unitIdStr] ?? [];
-                            const unitPrograms = programsByUnitId[unitIdStr] ?? [];
-                            const isCollapsed = Boolean(collapsedUnits[unitIdStr]);
-                            const isTargeted = dragOverTarget === `unit-${unitIdStr}`;
+                        // Compute total programs under this faculty (direct + under departments)
+                        let totalPrograms = unitPrograms.length;
+                        for (const child of children) {
+                            totalPrograms += (programsByUnitId[String(child.id)] ?? []).length;
+                        }
 
-                            return isEditing ? (
-                                <form
-                                    key={unit.id}
-                                    onSubmit={handleUpdate(unit)}
-                                    className="space-y-4 rounded-xl border bg-muted/30 p-4 shadow-xs"
-                                >
-                                    <p className="text-sm font-semibold">Edit “{unit.name_en}”</p>
-                                    <UnitFields defaultValue={unit} siblings={items} />
-                                    <div className="flex gap-2">
-                                        <Button type="submit" size="sm" disabled={pending}>
-                                            {pending ? <Spinner className="size-3.5" /> : null}
-                                            {pending ? "Saving…" : "Save unit"}
-                                        </Button>
+                        if (isEditing) {
+                            return (
+                                <div key={unit.id} className="rounded-xl border border-primary/30 bg-card p-4 shadow-sm space-y-4">
+                                    <div className="flex items-center justify-between border-b pb-2">
+                                        <div className="flex items-center gap-2">
+                                            <Pencil className="size-4 text-muted-foreground" />
+                                            <h4 className="text-sm font-semibold">Edit “{unit.name_en}”</h4>
+                                        </div>
                                         <Button
                                             type="button"
                                             size="sm"
                                             variant="ghost"
+                                            className="h-7 text-xs"
                                             onClick={() => setEditingId(null)}
-                                            disabled={pending}
                                         >
                                             Cancel
                                         </Button>
                                     </div>
-                                </form>
-                            ) : (
-                                <div
-                                    key={unit.id}
-                                    onDragOver={e => handleDragOver(e, `unit-${unit.id}`)}
-                                    onDragLeave={e => handleDragLeave(e, `unit-${unit.id}`)}
-                                    onDrop={e => handleDrop(e, unit.id)}
-                                    className={cn(
-                                        "rounded-xl border bg-card transition-all shadow-xs",
-                                        isTargeted
-                                            ? "border-primary ring-2 ring-primary/40 bg-primary/5"
-                                            : "border-border hover:border-border/80",
-                                    )}
-                                >
-                                    {/* Faculty / Top-level Node Header */}
-                                    <div className="flex flex-wrap items-center justify-between gap-3 p-4">
-                                        <div className="flex items-center gap-3 min-w-0">
-                                            {/* Drag Handle */}
-                                            <div
-                                                draggable
-                                                onDragStart={e =>
-                                                    handleDragStart(e, { type: "unit", id: unit.id })
-                                                }
-                                                className="cursor-grab active:cursor-grabbing text-muted-foreground/60 hover:text-foreground"
-                                                title="Drag unit"
-                                            >
-                                                <GripVertical className="size-4" />
-                                            </div>
-
-                                            <button
-                                                type="button"
-                                                onClick={() => toggleCollapse(unit.id)}
-                                                className="text-muted-foreground hover:text-foreground"
-                                            >
-                                                {isCollapsed ? (
-                                                    <ChevronRight className="size-4" />
-                                                ) : (
-                                                    <ChevronDown className="size-4" />
-                                                )}
-                                            </button>
-
-                                            <div className="min-w-0">
-                                                <div className="flex flex-wrap items-center gap-2">
-                                                    <span className="font-semibold text-base text-foreground">
-                                                        {unit.name_en}
-                                                    </span>
-                                                    {unit.name_kh ? (
-                                                        <span className="text-xs text-muted-foreground">
-                                                            ({unit.name_kh})
-                                                        </span>
-                                                    ) : null}
-                                                    <Badge variant="outline" className="text-2xs uppercase">
-                                                        {unit.kind.replace(/_/g, " ")}
-                                                    </Badge>
-                                                    {unit.category_en ? (
-                                                        <span className="text-xs text-muted-foreground">
-                                                            · {unit.category_en}
-                                                        </span>
-                                                    ) : null}
-                                                </div>
-
-                                                {/* Tuition summary for this unit */}
-                                                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
-                                                    <div className="flex items-center gap-1 font-medium text-foreground/80">
-                                                        <CircleDollarSign className="size-3.5 text-primary" />
-                                                        {unit.default_tuition_per_year !== null &&
-                                                        unit.default_tuition_per_year !== undefined ? (
-                                                            <span>
-                                                                Default:{" "}
-                                                                <strong className="text-foreground">
-                                                                    {formatCurrency(unit.default_tuition_per_year)}
-                                                                </strong>
-                                                                /yr
-                                                            </span>
-                                                        ) : defaultTuitionPerYear !== null &&
-                                                          defaultTuitionPerYear !== undefined ? (
-                                                            <span className="text-muted-foreground">
-                                                                Inherits Univ Default (
-                                                                {formatCurrency(defaultTuitionPerYear)}/yr)
-                                                            </span>
-                                                        ) : (
-                                                            <span className="text-muted-foreground">
-                                                                No default rate set
-                                                            </span>
-                                                        )}
-                                                    </div>
-
-                                                    {unit.default_tuition_female_per_year ? (
-                                                        <span className="rounded bg-rose-50 px-1.5 py-0.5 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 font-medium text-2xs">
-                                                            ♀ {formatCurrency(unit.default_tuition_female_per_year)}/yr
-                                                            female incentive
-                                                        </span>
-                                                    ) : null}
-
-                                                    <span className="text-muted-foreground/60">·</span>
-                                                    <span className="text-muted-foreground">
-                                                        {children.length} {children.length === 1 ? "dept" : "depts"}
-                                                    </span>
-                                                    <span className="text-muted-foreground/60">·</span>
-                                                    <span className="text-muted-foreground">
-                                                        {unitPrograms.length}{" "}
-                                                        {unitPrograms.length === 1 ? "major" : "majors"}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Unit Actions */}
-                                        <div className="flex items-center gap-1.5">
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                className="h-7 px-2 text-xs"
-                                                onClick={() => {
-                                                    setDefaultParentForNew(unit.id);
-                                                    setAdding(true);
-                                                }}
-                                                title="Add department under this faculty"
-                                            >
-                                                <Plus className="size-3.5" />
-                                                Add Dept
-                                            </Button>
-                                            <Link
-                                                href={`/universities/${universitySlug ?? universityId}/units/${unit.slug}`}
-                                                className={buttonVariants({ variant: "outline", size: "sm", className: "h-7 px-2 text-xs" })}
-                                            >
-                                                <Layers className="size-3.5" />
-                                                Content
-                                            </Link>
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                className="h-7 px-2 text-xs"
-                                                onClick={() => setEditingId(unit.id)}
-                                            >
-                                                <Pencil className="size-3.5" />
-                                                Edit
-                                            </Button>
-                                            <ConfirmButton
-                                                onConfirm={handleDelete(unit)}
-                                                confirmLabel={`Delete “${unit.name_en}”?`}
-                                            >
-                                                <Trash2 className="size-3.5" />
-                                            </ConfirmButton>
-                                        </div>
-                                    </div>
-
-                                    {/* Children Departments & Programs Area */}
-                                    {!isCollapsed && (
-                                        <div className="border-t bg-muted/15 p-4 space-y-3">
-                                            {/* Sub-units (Departments) */}
-                                            {children.length > 0 ? (
-                                                <div className="space-y-2 pl-3 border-l-2 border-primary/20">
-                                                    <p className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                                        Departments & Centers ({children.length})
-                                                    </p>
-                                                    {children.map(child => {
-                                                        const childIdStr = String(child.id);
-                                                        const childPrograms = programsByUnitId[childIdStr] ?? [];
-                                                        const isChildTargeted =
-                                                            dragOverTarget === `unit-${childIdStr}`;
-
-                                                        return (
-                                                            <div
-                                                                key={child.id}
-                                                                onDragOver={e => {
-                                                                    e.stopPropagation();
-                                                                    handleDragOver(e, `unit-${child.id}`);
-                                                                }}
-                                                                onDragLeave={e => {
-                                                                    e.stopPropagation();
-                                                                    handleDragLeave(e, `unit-${child.id}`);
-                                                                }}
-                                                                onDrop={e => {
-                                                                    e.stopPropagation();
-                                                                    handleDrop(e, child.id);
-                                                                }}
-                                                                className={cn(
-                                                                    "rounded-lg border bg-card p-3 transition-all",
-                                                                    isChildTargeted
-                                                                        ? "border-primary ring-2 ring-primary/40 bg-primary/5"
-                                                                        : "border-border/60 hover:border-border",
-                                                                )}
-                                                            >
-                                                                <div className="flex flex-wrap items-center justify-between gap-2">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <div
-                                                                            draggable
-                                                                            onDragStart={e =>
-                                                                                handleDragStart(e, {
-                                                                                    type: "unit",
-                                                                                    id: child.id,
-                                                                                })
-                                                                            }
-                                                                            className="cursor-grab active:cursor-grabbing text-muted-foreground/60 hover:text-foreground"
-                                                                            title="Drag department to move to another faculty or top-level"
-                                                                        >
-                                                                            <GripVertical className="size-3.5" />
-                                                                        </div>
-                                                                        <CornerDownRight className="size-3.5 text-muted-foreground" />
-                                                                        <div>
-                                                                            <div className="flex items-center gap-2">
-                                                                                <span className="text-sm font-medium">
-                                                                                    {child.name_en}
-                                                                                </span>
-                                                                                <Badge
-                                                                                    variant="outline"
-                                                                                    className="text-2xs"
-                                                                                >
-                                                                                    {child.kind.replace(/_/g, " ")}
-                                                                                </Badge>
-                                                                            </div>
-                                                                            <div className="flex items-center gap-2 text-2xs text-muted-foreground">
-                                                                                <span>
-                                                                                    {child.default_tuition_per_year
-                                                                                        ? `Default: ${formatCurrency(child.default_tuition_per_year)}/yr`
-                                                                                        : `Inheriting faculty rate (${formatCurrency(unit.default_tuition_per_year ?? defaultTuitionPerYear)}/yr)`}
-                                                                                </span>
-                                                                                <span>·</span>
-                                                                                <span>
-                                                                                    {childPrograms.length} majors
-                                                                                </span>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-
-                                                                    <div className="flex items-center gap-1">
-                                                                        <Link
-                                                                            href={`/universities/${universitySlug ?? universityId}/units/${child.slug}`}
-                                                                            className={buttonVariants({
-                                                                                variant: "ghost",
-                                                                                size: "sm",
-                                                                                className: "h-6 px-1.5 text-xs",
-                                                                            })}
-                                                                        >
-                                                                            <Layers className="size-3" />
-                                                                            Content
-                                                                        </Link>
-                                                                        <Button
-                                                                            size="sm"
-                                                                            variant="ghost"
-                                                                            className="h-6 px-1.5 text-xs"
-                                                                            onClick={() => setEditingId(child.id)}
-                                                                        >
-                                                                            <Pencil className="size-3" />
-                                                                        </Button>
-                                                                        <ConfirmButton
-                                                                            onConfirm={handleDelete(child)}
-                                                                            confirmLabel={`Delete department “${child.name_en}”?`}
-                                                                        >
-                                                                            <Trash2 className="size-3" />
-                                                                        </ConfirmButton>
-                                                                    </div>
-                                                                </div>
-
-                                                                {/* Programs inside this child department */}
-                                                                <div className="mt-2.5 space-y-1.5 pl-5 border-l border-muted-foreground/20">
-                                                                    {childPrograms.length === 0 ? (
-                                                                        <p className="text-2xs text-muted-foreground/70 italic py-1">
-                                                                            No majors yet. Drag a program card here.
-                                                                        </p>
-                                                                    ) : (
-                                                                        childPrograms.map(prog => (
-                                                                            <ProgramDraggableItem
-                                                                                key={prog.id}
-                                                                                program={prog}
-                                                                                unit={child}
-                                                                                defaultTuitionPerYear={
-                                                                                    defaultTuitionPerYear
-                                                                                }
-                                                                                defaultTuitionFemalePerYear={
-                                                                                    defaultTuitionFemalePerYear
-                                                                                }
-                                                                                onDragStart={e =>
-                                                                                    handleDragStart(e, {
-                                                                                        type: "program",
-                                                                                        id: prog.id,
-                                                                                        sourceUnitId: child.id,
-                                                                                    })
-                                                                                }
-                                                                            />
-                                                                        ))
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            ) : null}
-
-                                            {/* Programs directly under this faculty */}
-                                            <div className="space-y-1.5">
-                                                <p className="text-2xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                                    Programs directly under {unit.name_en} ({unitPrograms.length})
-                                                </p>
-                                                {unitPrograms.length === 0 && children.length === 0 ? (
-                                                    <p className="text-2xs text-muted-foreground/70 italic py-1">
-                                                        Drop any program card here to assign it to this faculty.
-                                                    </p>
-                                                ) : (
-                                                    unitPrograms.map(prog => (
-                                                        <ProgramDraggableItem
-                                                            key={prog.id}
-                                                            program={prog}
-                                                            unit={unit}
-                                                            defaultTuitionPerYear={defaultTuitionPerYear}
-                                                            defaultTuitionFemalePerYear={defaultTuitionFemalePerYear}
-                                                            onDragStart={e =>
-                                                                handleDragStart(e, {
-                                                                    type: "program",
-                                                                    id: prog.id,
-                                                                    sourceUnitId: unit.id,
-                                                                })
-                                                            }
-                                                        />
-                                                    ))
-                                                )}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
-
-                    {/* Standalone / Unassigned Programs Tray */}
-                    <div
-                        onDragOver={e => handleDragOver(e, "unassigned")}
-                        onDragLeave={e => handleDragLeave(e, "unassigned")}
-                        onDrop={e => handleDrop(e, null)}
-                        className={cn(
-                            "rounded-xl border p-4 transition-all shadow-xs",
-                            dragOverTarget === "unassigned"
-                                ? "border-primary ring-2 ring-primary/40 bg-primary/5"
-                                : "border-border/80 bg-muted/20",
-                        )}
-                    >
-                        <div className="flex items-center justify-between gap-2 border-b pb-2 mb-3">
-                            <div className="flex items-center gap-2">
-                                <GraduationCap className="size-4 text-muted-foreground" />
-                                <h4 className="text-sm font-semibold">
-                                    Unassigned / University-Wide Programs ({unassignedPrograms.length})
-                                </h4>
-                            </div>
-                            <span className="text-xs text-muted-foreground">
-                                Drag any program here to clear faculty assignment
-                            </span>
-                        </div>
-
-                        {unassignedPrograms.length === 0 ? (
-                            <p className="py-2 text-center text-xs text-muted-foreground">
-                                All programs are currently assigned to academic units.
-                            </p>
-                        ) : (
-                            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                                {unassignedPrograms.map(prog => (
-                                    <ProgramDraggableItem
-                                        key={prog.id}
-                                        program={prog}
-                                        unit={null}
-                                        defaultTuitionPerYear={defaultTuitionPerYear}
-                                        defaultTuitionFemalePerYear={defaultTuitionFemalePerYear}
-                                        onDragStart={e =>
-                                            handleDragStart(e, {
-                                                type: "program",
-                                                id: prog.id,
-                                                sourceUnitId: null,
-                                            })
-                                        }
-                                    />
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
-
-            {/* DIRECTORY LIST VIEW (Standard Table/List for filtering/searching) */}
-            {items.length > 0 && viewMode === "list" && (
-                <div className="space-y-3">
-                    <div className="flex flex-wrap items-center gap-3">
-                        <div className="min-w-44 flex-1">
-                            <div className="relative">
-                                <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                                <Input
-                                    value={search}
-                                    onChange={e => setSearch(e.target.value)}
-                                    placeholder="Search units…"
-                                    className="pl-8"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="w-40">
-                            <Select value={kindFilter} onChange={e => setKindFilter(e.target.value)}>
-                                <option value="">All kinds</option>
-                                {UNIT_KINDS.map(k => (
-                                    <option key={k} value={k}>
-                                        {k.replace(/_/g, " ")}
-                                    </option>
-                                ))}
-                            </Select>
-                        </div>
-
-                        <div className="w-44">
-                            <Select value={sortBy} onChange={e => setSortBy(e.target.value)}>
-                                <option value="name_asc">Name (A-Z)</option>
-                                <option value="name_desc">Name (Z-A)</option>
-                                <option value="id_desc">Newest first</option>
-                                <option value="id_asc">Oldest first</option>
-                            </Select>
-                        </div>
-                    </div>
-
-                    {filteredList.length === 0 ? (
-                        <p className="py-6 text-center text-sm text-muted-foreground">
-                            No units match your search or filter.
-                        </p>
-                    ) : (
-                        <div className="divide-y rounded-xl border">
-                            {filteredList.map(unit => {
-                                const parent = items.find(item => item.id === unit.parent_id);
-                                const isEditing = editingId === unit.id;
-
-                                return isEditing ? (
-                                    <form
-                                        key={unit.id}
-                                        onSubmit={handleUpdate(unit)}
-                                        className="space-y-4 bg-muted/30 p-4"
-                                    >
-                                        <p className="text-sm font-medium">Edit “{unit.name_en}”</p>
+                                    <form onSubmit={handleUpdate(unit)} className="space-y-4">
                                         <UnitFields defaultValue={unit} siblings={items} />
-                                        <div className="flex gap-2">
-                                            <Button type="submit" size="sm" disabled={pending}>
-                                                {pending ? <Spinner className="size-3.5" /> : null}
-                                                {pending ? "Saving…" : "Save unit"}
-                                            </Button>
+                                        <div className="flex items-center justify-end gap-2 pt-2 border-t">
                                             <Button
                                                 type="button"
                                                 size="sm"
-                                                variant="ghost"
+                                                variant="outline"
                                                 onClick={() => setEditingId(null)}
                                                 disabled={pending}
                                             >
                                                 Cancel
                                             </Button>
+                                            <Button type="submit" size="sm" disabled={pending}>
+                                                {pending ? <Spinner className="size-3.5" /> : null}
+                                                {pending ? "Saving…" : "Save changes"}
+                                            </Button>
                                         </div>
                                     </form>
-                                ) : (
-                                    <div key={unit.id} className="flex flex-wrap items-center gap-3 p-3.5">
-                                        <div className="min-w-0 flex-1">
-                                            <p className="truncate text-sm font-medium">
-                                                {unit.name_en}
-                                                {unit.name_kh ? (
-                                                    <span className="ml-2 font-normal text-muted-foreground">
-                                                        · {unit.name_kh}
+                                </div>
+                            );
+                        }
+
+                        return (
+                            <div
+                                key={unit.id}
+                                className="rounded-xl border border-border/80 bg-card shadow-2xs hover:border-border transition-colors overflow-hidden"
+                            >
+                                {/* Faculty Header Row */}
+                                <div
+                                    onClick={() => toggleCollapse(unit.id)}
+                                    className="flex flex-wrap items-center justify-between gap-3 p-4 bg-muted/15 cursor-pointer select-none hover:bg-muted/25 transition-colors"
+                                >
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        {/* Expand / Collapse Button */}
+                                        <button
+                                            type="button"
+                                            onClick={e => {
+                                                e.stopPropagation();
+                                                toggleCollapse(unit.id);
+                                            }}
+                                            className="size-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer shrink-0"
+                                            aria-label={isCollapsed ? "Expand" : "Collapse"}
+                                        >
+                                            <ChevronRight
+                                                className={cn(
+                                                    "size-4.5 transition-transform duration-200 ease-out",
+                                                    isCollapsed ? "rotate-0 text-muted-foreground" : "rotate-90 text-foreground",
+                                                )}
+                                            />
+                                        </button>
+
+                                        {/* Faculty Icon */}
+                                        <Building2 className="size-5 text-foreground shrink-0" />
+
+                                        {/* Titles & Metadata */}
+                                        <div className="min-w-0 space-y-0.5">
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <span className="font-semibold text-sm sm:text-base text-foreground">
+                                                    {unit.name_en}
+                                                </span>
+                                                {unit.name_kh && (
+                                                    <span className="text-xs text-muted-foreground font-khmer">
+                                                        ({unit.name_kh})
+                                                    </span>
+                                                )}
+                                                <Badge variant="outline" className="text-3xs uppercase tracking-wide px-1.5 py-0">
+                                                    {unit.kind.replace(/_/g, " ")}
+                                                </Badge>
+                                            </div>
+                                            <div className="flex flex-wrap items-center gap-2.5 text-xs text-muted-foreground">
+                                                <span>
+                                                    {children.length} {children.length === 1 ? "department" : "departments"} ·{" "}
+                                                    {totalPrograms} {totalPrograms === 1 ? "program" : "programs"}
+                                                </span>
+                                                {unit.default_tuition_per_year ? (
+                                                    <span className="text-2xs font-medium text-primary bg-primary/10 border border-primary/20 px-2 py-0.2 rounded-full">
+                                                        Default: ${unit.default_tuition_per_year.toLocaleString()}/yr
                                                     </span>
                                                 ) : null}
-                                            </p>
-                                            <p className={cn("mt-0.5 truncate text-xs text-muted-foreground")}>
-                                                {[
-                                                    parent ? `Under ${parent.name_en}` : "Top-level unit",
-                                                    unit.category_en || null,
-                                                    unit.default_tuition_per_year
-                                                        ? `Tuition: ${formatCurrency(unit.default_tuition_per_year)}/yr`
-                                                        : null,
-                                                ]
-                                                    .filter(Boolean)
-                                                    .join(" · ")}
-                                            </p>
-                                        </div>
-
-                                        <Badge variant="outline">{unit.kind.replace(/_/g, " ")}</Badge>
-
-                                        <div className="flex items-center gap-1.5">
-                                            <Link
-                                                href={`/universities/${universitySlug ?? universityId}/units/${unit.slug}`}
-                                                className={buttonVariants({ variant: "outline", size: "sm" })}
-                                            >
-                                                <Layers className="size-3.5" />
-                                                Content
-                                            </Link>
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                onClick={() => {
-                                                    setEditingId(unit.id);
-                                                    setAdding(false);
-                                                }}
-                                                aria-label={`Edit ${unit.name_en}`}
-                                            >
-                                                <Pencil className="size-3.5" />
-                                                Edit
-                                            </Button>
-                                            <ConfirmButton
-                                                onConfirm={handleDelete(unit)}
-                                                confirmLabel={`Delete “${unit.name_en}” and its content?`}
-                                            >
-                                                <Trash2 className="size-3.5" />
-                                                Delete
-                                            </ConfirmButton>
+                                            </div>
                                         </div>
                                     </div>
-                                );
-                            })}
-                        </div>
-                    )}
+
+                                    {/* Action Buttons */}
+                                    <div
+                                        onClick={e => e.stopPropagation()}
+                                        className="flex items-center gap-1.5 shrink-0 ml-auto sm:ml-0"
+                                    >
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="h-7 px-2.5 text-xs font-medium gap-1 rounded-md"
+                                            onClick={() => {
+                                                setDefaultParentForNew(unit.id);
+                                                setAdding(true);
+                                            }}
+                                            title="Add department under this faculty"
+                                        >
+                                            <Plus className="size-3.5" />
+                                            <span>Add Dept</span>
+                                        </Button>
+
+                                        <Link
+                                            href={`/universities/${universitySlug ?? universityId}/units/${unit.slug ?? unit.id}`}
+                                            className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                                            title="View unit details page"
+                                        >
+                                            <Layers className="size-3.5" />
+                                        </Link>
+
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            className="size-7 p-0 rounded-md text-muted-foreground hover:text-foreground"
+                                            onClick={() => handleClone(unit)}
+                                            disabled={pending}
+                                            title={`Clone “${unit.name_en}”`}
+                                        >
+                                            <Copy className="size-3.5" />
+                                        </Button>
+
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            className="size-7 p-0 rounded-md text-muted-foreground hover:text-foreground"
+                                            onClick={() => setEditingId(unit.id)}
+                                            title="Edit faculty"
+                                        >
+                                            <Pencil className="size-3.5" />
+                                        </Button>
+
+                                        <ConfirmButton
+                                            onConfirm={handleDelete(unit)}
+                                            confirmLabel={`Delete “${unit.name_en}”?`}
+                                        >
+                                            <Trash2 className="size-3.5 text-muted-foreground hover:text-destructive" />
+                                        </ConfirmButton>
+                                    </div>
+                                </div>
+
+                                {/* Expanded Hierarchy Content with Smooth Dropdown Animation */}
+                                <div
+                                    className={cn(
+                                        "grid transition-[grid-template-rows] duration-200 ease-out",
+                                        isCollapsed
+                                            ? "grid-rows-[0fr] pointer-events-none"
+                                            : "grid-rows-[1fr]",
+                                    )}
+                                >
+                                    <div className="overflow-hidden min-h-0">
+                                        <div className="p-4 border-t bg-muted/5 space-y-4">
+                                            {/* Child Departments */}
+                                            {children.length > 0 && (
+                                                <div className="space-y-3">
+                                                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                                        <FolderTree className="size-3.5 text-muted-foreground" />
+                                                        <span>Departments ({children.length})</span>
+                                                    </div>
+
+                                                    <div className="grid gap-3 sm:grid-cols-1">
+                                                        {children.map(child => {
+                                                            const childIdStr = String(child.id);
+                                                            const childPrograms = programsByUnitId[childIdStr] ?? [];
+                                                            const isChildEditing = String(editingId) === childIdStr;
+
+                                                            if (isChildEditing) {
+                                                                return (
+                                                                    <div key={child.id} className="p-3.5 bg-card rounded-xl border border-primary/30 shadow-2xs space-y-3">
+                                                                        <div className="flex items-center justify-between">
+                                                                            <p className="text-xs font-semibold">Edit “{child.name_en}”</p>
+                                                                            <Button
+                                                                                type="button"
+                                                                                size="sm"
+                                                                                variant="ghost"
+                                                                                className="h-6 text-xs"
+                                                                                onClick={() => setEditingId(null)}
+                                                                            >
+                                                                                Cancel
+                                                                            </Button>
+                                                                        </div>
+                                                                        <form onSubmit={handleUpdate(child)} className="space-y-3">
+                                                                            <UnitFields defaultValue={child} siblings={items} />
+                                                                            <div className="flex justify-end gap-2 pt-2 border-t">
+                                                                                <Button
+                                                                                    type="button"
+                                                                                    size="sm"
+                                                                                    variant="outline"
+                                                                                    onClick={() => setEditingId(null)}
+                                                                                >
+                                                                                    Cancel
+                                                                                </Button>
+                                                                                <Button type="submit" size="sm" disabled={pending}>
+                                                                                    {pending ? <Spinner className="size-3" /> : null}
+                                                                                    Save
+                                                                                </Button>
+                                                                            </div>
+                                                                        </form>
+                                                                    </div>
+                                                                );
+                                                            }
+
+                                                            return (
+                                                                <div
+                                                                    key={child.id}
+                                                                    className="rounded-xl border border-border/70 bg-card p-3.5 space-y-2.5 shadow-2xs hover:border-border transition-colors"
+                                                                >
+                                                                    {/* Department Header */}
+                                                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                                                        <div className="flex items-center gap-2.5 min-w-0">
+                                                                            <FolderTree className="size-4 text-foreground/80 shrink-0" />
+                                                                            <div className="min-w-0">
+                                                                                <div className="flex flex-wrap items-center gap-2">
+                                                                                    <span className="font-medium text-xs sm:text-sm text-foreground">
+                                                                                        {child.name_en}
+                                                                                    </span>
+                                                                                    {child.name_kh && (
+                                                                                        <span className="text-xs text-muted-foreground font-khmer">
+                                                                                            ({child.name_kh})
+                                                                                        </span>
+                                                                                    )}
+                                                                                </div>
+                                                                                <p className="text-2xs text-muted-foreground">
+                                                                                    {childPrograms.length} {childPrograms.length === 1 ? "degree program" : "degree programs"}
+                                                                                </p>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <div className="flex items-center gap-1 shrink-0">
+                                                                            <Link
+                                                                                href={`/universities/${universitySlug ?? universityId}/units/${child.slug ?? child.id}`}
+                                                                                className="inline-flex size-6 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                                                                                title="View department details page"
+                                                                            >
+                                                                                <Layers className="size-3" />
+                                                                            </Link>
+                                                                            <Button
+                                                                                size="sm"
+                                                                                variant="ghost"
+                                                                                className="size-6 p-0 rounded-md text-muted-foreground hover:text-foreground"
+                                                                                onClick={() => handleClone(child)}
+                                                                                disabled={pending}
+                                                                                title={`Clone “${child.name_en}”`}
+                                                                            >
+                                                                                <Copy className="size-3" />
+                                                                            </Button>
+                                                                            <Button
+                                                                                size="sm"
+                                                                                variant="ghost"
+                                                                                className="size-6 p-0 rounded-md text-muted-foreground hover:text-foreground"
+                                                                                onClick={() => setEditingId(child.id)}
+                                                                                title="Edit department"
+                                                                            >
+                                                                                <Pencil className="size-3" />
+                                                                            </Button>
+                                                                            <ConfirmButton
+                                                                                onConfirm={handleDelete(child)}
+                                                                                confirmLabel={`Delete “${child.name_en}”?`}
+                                                                            >
+                                                                                <Trash2 className="size-3 text-muted-foreground hover:text-destructive" />
+                                                                            </ConfirmButton>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {/* Department Programs */}
+                                                                    {childPrograms.length > 0 ? (
+                                                                        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 pt-1">
+                                                                            {childPrograms.map(prog => (
+                                                                                <ProgramChip
+                                                                                    key={prog.id}
+                                                                                    program={prog}
+                                                                                    unit={child}
+                                                                                    defaultTuitionPerYear={defaultTuitionPerYear}
+                                                                                    defaultTuitionFemalePerYear={defaultTuitionFemalePerYear}
+                                                                                    onEdit={setEditingProgram}
+                                                                                />
+                                                                            ))}
+                                                                        </div>
+                                                                    ) : (
+                                                                        <p className="text-2xs text-muted-foreground italic px-1">
+                                                                            No degree programs under this department yet.
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Direct Programs under Faculty (Common in Cambodia) */}
+                                            {unitPrograms.length > 0 && (
+                                                <div className="space-y-2.5">
+                                                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                                        <GraduationCap className="size-3.5 text-muted-foreground" />
+                                                        <span>
+                                                             {children.length > 0 ? "Direct Faculty Programs" : "Degree Programs"} ({unitPrograms.length})
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                                                        {unitPrograms.map(prog => (
+                                                            <ProgramChip
+                                                                key={prog.id}
+                                                                program={prog}
+                                                                unit={unit}
+                                                                defaultTuitionPerYear={defaultTuitionPerYear}
+                                                                defaultTuitionFemalePerYear={defaultTuitionFemalePerYear}
+                                                                onEdit={setEditingProgram}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Empty state for leaf faculty with no departments and no programs */}
+                                            {children.length === 0 && unitPrograms.length === 0 && (
+                                                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 rounded-xl border border-dashed bg-muted/20 text-xs text-muted-foreground">
+                                                    <span>No departments or degree programs assigned to this faculty yet.</span>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="h-7 text-xs gap-1"
+                                                        onClick={() => {
+                                                            setDefaultParentForNew(unit.id);
+                                                            setAdding(true);
+                                                        }}
+                                                    >
+                                                        <Plus className="size-3" />
+                                                        Add Department
+                                                    </Button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
                 </div>
             )}
+
+            {/* UNASSIGNED INSTITUTIONAL PROGRAMS (Direct under University) */}
+            {unassignedPrograms.length > 0 && (
+                <div className="rounded-xl border bg-muted/15 p-4 space-y-3">
+                    <div className="flex items-center gap-2.5">
+                        <GraduationCap className="size-5 text-foreground shrink-0" />
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h4 className="text-sm font-semibold text-foreground">
+                                    Direct Institutional Programs
+                                </h4>
+                                <Badge variant="outline" className="text-3xs">
+                                    {unassignedPrograms.length} programs
+                                </Badge>
+                            </div>
+                            <p className="text-2xs text-muted-foreground">
+                                Programs offered directly at the institution level without a specific faculty.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 pt-1">
+                        {unassignedPrograms.map(prog => (
+                            <ProgramChip
+                                key={prog.id}
+                                program={prog}
+                                unit={null}
+                                defaultTuitionPerYear={defaultTuitionPerYear}
+                                defaultTuitionFemalePerYear={defaultTuitionFemalePerYear}
+                                onEdit={setEditingProgram}
+                            />
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Degree Program Modal */}
+            <Modal
+                isOpen={Boolean(editingProgram)}
+                onClose={() => setEditingProgram(null)}
+                title={editingProgram ? `Edit “${editingProgram.name_en}”` : "Edit Program"}
+                icon={<Pencil className="size-4 text-muted-foreground" />}
+                maxWidth="max-w-2xl"
+            >
+                {editingProgram && (
+                    <form onSubmit={handleUpdateProgram(editingProgram)} className="space-y-4">
+                        <ProgramFields
+                            defaultValue={editingProgram}
+                            units={items}
+                            defaultTuitionPerYear={defaultTuitionPerYear}
+                        />
+                        <div className="flex items-center justify-end gap-2 pt-3 border-t">
+                            <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setEditingProgram(null)}
+                                disabled={pending}
+                            >
+                                Cancel
+                            </Button>
+                            <Button type="submit" size="sm" disabled={pending}>
+                                {pending ? <Spinner className="size-3.5" /> : null}
+                                {pending ? "Saving…" : "Save program"}
+                            </Button>
+                        </div>
+                    </form>
+                )}
+            </Modal>
         </div>
     );
 }
 
-/** Individual draggable program card displaying resolved effective tuition and source pill */
-function ProgramDraggableItem({
+/** Clean, friendly program chip with degree badge and tuition */
+function ProgramChip({
     program,
     unit,
     defaultTuitionPerYear,
     defaultTuitionFemalePerYear,
-    onDragStart,
+    onEdit,
 }: {
     program: ProgramSummary;
     unit: UnitSummary | null;
     defaultTuitionPerYear?: number | null;
     defaultTuitionFemalePerYear?: number | null;
-    onDragStart: (e: DragEvent) => void;
+    onEdit?: (program: ProgramSummary) => void;
 }) {
     const resolved = resolveProgramTuition(
         program,
@@ -1062,65 +985,53 @@ function ProgramDraggableItem({
     );
 
     return (
-        <div
-            draggable
-            onDragStart={onDragStart}
-            className="group flex items-center justify-between gap-2 rounded-lg border bg-background/80 p-2 shadow-2xs hover:border-primary/50 hover:shadow-xs transition-all cursor-grab active:cursor-grabbing"
-            title="Drag program to reassign unit"
-        >
+        <div className="group flex items-center justify-between gap-2.5 p-2.5 rounded-lg border bg-card hover:bg-muted/30 transition-colors shadow-2xs">
             <div className="flex items-center gap-2 min-w-0">
-                <GripVertical className="size-3.5 text-muted-foreground/40 group-hover:text-muted-foreground shrink-0" />
+                <GraduationCap className="size-4 text-foreground/80 shrink-0" />
                 <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                        <span className="truncate text-xs font-medium text-foreground">
-                            {program.name_en}
-                        </span>
-                        <span className="rounded bg-muted px-1 py-0.2 text-3xs font-semibold uppercase text-muted-foreground shrink-0">
-                            {program.degree_level}
-                        </span>
-                    </div>
+                    <p className="font-medium text-xs text-foreground truncate" title={program.name_en}>
+                        {program.name_en}
+                    </p>
+                    {program.name_kh && (
+                        <p className="text-3xs text-muted-foreground font-khmer truncate">
+                            {program.name_kh}
+                        </p>
+                    )}
+                </div>
+            </div>
 
-                    {/* Tuition and Source Tag */}
-                    <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-2xs">
-                        <span
-                            className={cn(
-                                "font-medium",
-                                resolved.source === "program"
-                                    ? "text-primary"
-                                    : resolved.source === "unit"
-                                      ? "text-foreground/90"
-                                      : "text-muted-foreground",
-                            )}
-                        >
+            <div className="flex items-center gap-2 shrink-0">
+                <div className="flex flex-col items-end">
+                    <div className="flex items-center gap-1.5">
+                        <Badge variant="outline" className="text-3xs uppercase font-medium px-1.5 py-0">
+                            {program.degree_level}
+                        </Badge>
+                        <span className="font-semibold text-xs text-foreground">
                             {formatCurrency(resolved.effectiveTuition, program.fee_currency)}/yr
                         </span>
-
-                        <span
-                            className={cn(
-                                "rounded px-1 text-3xs font-normal",
-                                resolved.source === "program"
-                                    ? "bg-primary/10 text-primary border border-primary/20"
-                                    : resolved.source === "unit"
-                                      ? "bg-secondary text-secondary-foreground"
-                                      : "bg-muted text-muted-foreground",
-                            )}
-                            title={resolved.sourceLabel}
-                        >
-                            {resolved.source === "program"
-                                ? "Custom"
-                                : resolved.source === "unit"
-                                  ? `⮑ ${unit?.name_en ?? "Unit"}`
-                                  : "⮑ Univ"}
-                        </span>
-
-                        {resolved.effectiveFemale ? (
-                            <span className="text-rose-600 dark:text-rose-400 font-medium text-3xs">
-                                ♀ {formatCurrency(resolved.effectiveFemale, program.fee_currency)}
-                                {resolved.discountPercent ? ` (-${resolved.discountPercent}%)` : ""}
-                            </span>
-                        ) : null}
                     </div>
+                    {resolved.effectiveFemale && (
+                        <span className="text-rose-600 dark:text-rose-400 font-medium text-3xs">
+                            ♀ {formatCurrency(resolved.effectiveFemale, program.fee_currency)}
+                        </span>
+                    )}
                 </div>
+
+                {onEdit && (
+                    <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="size-6 p-0 rounded-md text-muted-foreground hover:text-foreground opacity-60 group-hover:opacity-100 transition-opacity"
+                        onClick={e => {
+                            e.stopPropagation();
+                            onEdit(program);
+                        }}
+                        title={`Edit ${program.name_en}`}
+                    >
+                        <Pencil className="size-3" />
+                    </Button>
+                )}
             </div>
         </div>
     );

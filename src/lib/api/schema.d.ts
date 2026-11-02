@@ -916,7 +916,7 @@ export interface components {
          * DegreeLevel
          * @enum {string}
          */
-        DegreeLevel: "DIPLOMA" | "ASSOCIATE" | "BACHELOR" | "MASTER" | "PHD";
+        DegreeLevel: "DIPLOMA" | "ASSOCIATE" | "BACHELOR" | "ENGINEERING" | "MASTER" | "PHD";
         /**
          * Facilities
          * @description A lab or centre of a unit.
@@ -1009,6 +1009,11 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /**
+         * Ministry
+         * @enum {string}
+         */
+        Ministry: "MOEYS" | "MLVT" | "MOH" | "MAFF" | "MPTC" | "MCFA" | "MEF" | "OTHER";
         /** Page[ProgramListItem] */
         Page_ProgramListItem_: {
             /**
@@ -1229,6 +1234,8 @@ export interface components {
             tuition_per_credit?: number | null;
             /** @default USD */
             fee_currency: components["schemas"]["Currency"];
+            /** Shifts */
+            shifts?: string[] | null;
         };
         /**
          * ProgramListItem
@@ -1273,10 +1280,14 @@ export interface components {
             admission_req_en?: string | null;
             /** Admission Req Kh */
             admission_req_kh?: string | null;
+            /** Shifts */
+            shifts?: string[] | null;
             /** University Name */
             university_name?: string | null;
             /** University Abbreviation */
             university_abbreviation?: string | null;
+            /** Curriculum Sections */
+            curriculum_sections?: components["schemas"]["CurriculumSection"][];
         };
         /**
          * ProgramSummary
@@ -1321,6 +1332,10 @@ export interface components {
             admission_req_en?: string | null;
             /** Admission Req Kh */
             admission_req_kh?: string | null;
+            /** Shifts */
+            shifts?: string[] | null;
+            /** Curriculum Sections */
+            curriculum_sections?: components["schemas"]["CurriculumSection"][];
         };
         /**
          * ProgramUpdate
@@ -1353,6 +1368,8 @@ export interface components {
             admission_req_en?: string | null;
             /** Admission Req Kh */
             admission_req_kh?: string | null;
+            /** Shifts */
+            shifts?: string[] | null;
         };
         /** RoleRead */
         RoleRead: {
@@ -1732,6 +1749,8 @@ export interface components {
             /** Abbreviation */
             abbreviation: string;
             type: components["schemas"]["UniversityType"];
+            /** @default MOEYS */
+            ministry: components["schemas"]["Ministry"];
             /** @default DRAFT */
             status: components["schemas"]["Status"];
             /** Province */
@@ -1765,6 +1784,8 @@ export interface components {
             /** Abbreviation */
             abbreviation?: string | null;
             type: components["schemas"]["UniversityType"];
+            /** @default MOEYS */
+            ministry: components["schemas"]["Ministry"];
             /** @default DRAFT */
             status: components["schemas"]["Status"];
             /** Province */
@@ -1884,6 +1905,8 @@ export interface components {
             /** Abbreviation */
             abbreviation?: string | null;
             type: components["schemas"]["UniversityType"];
+            /** @default MOEYS */
+            ministry: components["schemas"]["Ministry"];
             /** @default DRAFT */
             status: components["schemas"]["Status"];
             /** Province */
@@ -1925,6 +1948,7 @@ export interface components {
             /** Abbreviation */
             abbreviation?: string | null;
             type?: components["schemas"]["UniversityType"] | null;
+            ministry?: components["schemas"]["Ministry"] | null;
             status?: components["schemas"]["Status"] | null;
             /** Moeys Accredited */
             moeys_accredited?: boolean | null;
@@ -2251,6 +2275,8 @@ export interface operations {
                 province?: string | null;
                 /** @description Filter by type, PUBLIC or PRIVATE */
                 type?: string | null;
+                /** @description Filter by ministry (MOEYS, MLVT, MOH, MAFF, MPTC, MCFA, MEF, OTHER) */
+                ministry?: string | null;
                 /** @description Page number */
                 page?: number;
                 /** @description Items per page (capped at MAX_PAGE_SIZE) */
@@ -2402,6 +2428,8 @@ export interface operations {
                 q?: string | null;
                 /** @description Filter by type (PUBLIC / PRIVATE) */
                 type?: string | null;
+                /** @description Filter by ministry (MOEYS, MLVT, MOH, MAFF, MPTC, MCFA, MEF, OTHER) */
+                ministry?: string | null;
                 /** @description Filter by status (PUBLISHED / DRAFT / ARCHIVED) */
                 status?: string | null;
                 /** @description Filter by province */
@@ -2484,7 +2512,7 @@ export interface operations {
             };
             header?: never;
             path: {
-                university_id: number;
+                university_id: string;
             };
             cookie?: never;
         };
@@ -2610,7 +2638,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                university_id: number;
+                university_id: string;
             };
             cookie?: never;
         };
@@ -2655,6 +2683,8 @@ export interface operations {
                 university_id?: number | null;
                 /** @description Filter by faculty */
                 faculty?: string | null;
+                /** @description Filter by shift: MORNING, AFTERNOON, EVENING, WEEKEND */
+                shift?: string | null;
                 /** @description Admin filter: set to true to include soft-deleted records */
                 include_deleted?: boolean;
             };
@@ -2835,7 +2865,7 @@ export interface operations {
             };
             header?: never;
             path: {
-                university_id: number;
+                university_id: string;
             };
             cookie?: never;
         };
@@ -2866,7 +2896,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                university_id: number;
+                university_id: string;
             };
             cookie?: never;
         };
@@ -2904,7 +2934,7 @@ export interface operations {
             };
             header?: never;
             path: {
-                university_id: number;
+                university_id: string;
                 unit_id: number;
             };
             cookie?: never;
@@ -2936,7 +2966,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                university_id: number;
+                university_id: string;
                 unit_id: number;
             };
             cookie?: never;
@@ -2966,7 +2996,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                university_id: number;
+                university_id: string;
                 unit_id: number;
             };
             cookie?: never;
@@ -3002,7 +3032,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                university_id: number;
+                university_id: string;
                 unit_id: number;
             };
             cookie?: never;

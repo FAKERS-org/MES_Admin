@@ -6,12 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/feedback";
-import { AccreditedBadge, StatusBadge, TypeBadge } from "@/components/universities/badges";
+import AcademicManager from "@/components/universities/academic-manager";
+import { AccreditedBadge, MinistryBadge, StatusBadge, TypeBadge } from "@/components/universities/badges";
 import CampusManager from "@/components/universities/campus-manager";
 import DeleteUniversity from "@/components/universities/delete-university";
-import ProgramManager from "@/components/universities/program-manager";
 import PublishToggle from "@/components/universities/publish-toggle";
-import UnitManager from "@/components/universities/unit-manager";
 import UniversityEditForm from "@/components/universities/university-edit-form";
 import { ApiError, apiList, apiRequest } from "@/lib/server-api";
 import type { Status, UnitSummary, UniversityDetail, UniversitySummary } from "@/lib/types";
@@ -79,6 +78,7 @@ export default async function UniversityDetailPage({ params }: { params: Promise
                         </h1>
                         <StatusBadge status={status} />
                         <TypeBadge type={university.type} />
+                        <MinistryBadge ministry={university.ministry} />
                         <AccreditedBadge accredited={university.moeys_accredited} />
                     </>
                 }
@@ -201,50 +201,17 @@ export default async function UniversityDetailPage({ params }: { params: Promise
                 </div>
             </div>
 
-            {/* 1. Academic Units & Structure (Faculties, Departments, Programs with Drag-and-Drop) */}
-            <Card>
-                <CardHeader className="flex flex-row items-center gap-2 space-y-0">
-                    <FolderTree className="size-4 text-primary" />
-                    <div>
-                        <CardTitle>Academic Structure & Units</CardTitle>
-                        <CardDescription>
-                            Organize faculties, departments, and programs. Drag and drop to rearrange or assign majors.
-                        </CardDescription>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <UnitManager
-                        universityId={String(university.id)}
-                        universitySlug={slug}
-                        units={units}
-                        programs={university.programs}
-                        defaultTuitionPerYear={university.default_tuition_per_year}
-                        defaultTuitionFemalePerYear={university.default_tuition_female_per_year}
-                    />
-                </CardContent>
-            </Card>
+            {/* Academic Offerings & Structure (Adaptive Dual-Mode Manager) */}
+            <AcademicManager
+                universityId={String(university.id)}
+                universitySlug={slug}
+                units={units}
+                programs={university.programs}
+                defaultTuitionPerYear={university.default_tuition_per_year}
+                defaultTuitionFemalePerYear={university.default_tuition_female_per_year}
+            />
 
-            {/* 2. Detailed Programs Directory */}
-            <Card>
-                <CardHeader className="flex flex-row items-center gap-2 space-y-0">
-                    <Newspaper className="size-4 text-primary" />
-                    <div>
-                        <CardTitle>Programs Directory</CardTitle>
-                        <CardDescription>Manage degree details, duration, curriculum, and admissions requirements.</CardDescription>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <ProgramManager
-                        universityId={String(university.id)}
-                        programs={university.programs}
-                        units={units}
-                        defaultTuitionPerYear={university.default_tuition_per_year}
-                        defaultTuitionFemalePerYear={university.default_tuition_female_per_year}
-                    />
-                </CardContent>
-            </Card>
-
-            {/* 3. Campuses */}
+            {/* Campuses */}
             {!university.parent_id ? (
                 <CampusManager
                     universityId={university.id}

@@ -11,7 +11,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, PageHeader, Spinner } from "@/components/ui/feedback";
 import { Checkbox, Field, Input, Select } from "@/components/ui/field";
 import { apiRequest } from "@/lib/api";
-import { PROVINCES, type UniversityCreatePayload, type UniversitySummary, type UniversityType } from "@/lib/types";
+import {
+    MINISTRIES,
+    MINISTRY_LABELS,
+    PROVINCES,
+    type Ministry,
+    type UniversityCreatePayload,
+    type UniversitySummary,
+    type UniversityType,
+} from "@/lib/types";
 
 export default function UniversityCreateForm() {
     const router = useRouter();
@@ -36,6 +44,7 @@ export default function UniversityCreateForm() {
             name_kh: String(form.get("name_kh") ?? "").trim() || null,
             abbreviation: String(form.get("abbreviation") ?? "").trim() || null,
             type: form.get("type") as UniversityType,
+            ministry: (form.get("ministry") as Ministry) || "MOEYS",
             province,
             campus_name: String(form.get("campus_name") ?? "").trim() || null,
             is_main_campus: form.get("is_main_campus") === "on",
@@ -102,6 +111,19 @@ export default function UniversityCreateForm() {
                                 <Select id="type" name="type" defaultValue="PUBLIC">
                                     <option value="PUBLIC">Public</option>
                                     <option value="PRIVATE">Private</option>
+                                </Select>
+                            </Field>
+
+                            <Field label="Supervising Ministry" htmlFor="ministry" required>
+                                <Select id="ministry" name="ministry" defaultValue="MOEYS">
+                                    {MINISTRIES.map(m => {
+                                        const label = MINISTRY_LABELS[m];
+                                        return (
+                                            <option key={m} value={m}>
+                                                {label.short} — {label.kh} ({label.en})
+                                            </option>
+                                        );
+                                    })}
                                 </Select>
                             </Field>
 

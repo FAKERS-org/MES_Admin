@@ -13,14 +13,97 @@
 
 export type UniversityType = "PUBLIC" | "PRIVATE";
 export type Status = "DRAFT" | "PUBLISHED";
-export type DegreeLevel = "DIPLOMA" | "ASSOCIATE" | "BACHELOR" | "MASTER" | "PHD";
+export type DegreeLevel = "DIPLOMA" | "ASSOCIATE" | "BACHELOR" | "ENGINEERING" | "MASTER" | "PHD";
 export type Currency = "USD" | "KHR";
+
+export type Ministry = "MOEYS" | "MLVT" | "MOH" | "MAFF" | "MPTC" | "MCFA" | "MEF" | "OTHER";
+
+export const MINISTRIES: Ministry[] = [
+    "MOEYS",
+    "MLVT",
+    "MOH",
+    "MAFF",
+    "MPTC",
+    "MCFA",
+    "MEF",
+    "OTHER",
+];
+
+export const MINISTRY_LABELS: Record<Ministry, { en: string; kh: string; short: string }> = {
+    MOEYS: {
+        short: "MoEYS",
+        en: "Ministry of Education, Youth and Sport",
+        kh: "ក្រសួងអប់រំ យុវជន និងកីឡា",
+    },
+    MLVT: {
+        short: "MLVT",
+        en: "Ministry of Labour and Vocational Training",
+        kh: "ក្រសួងការងារ និងបណ្តុះបណ្តាលវិជ្ជាជីវៈ",
+    },
+    MOH: {
+        short: "MOH",
+        en: "Ministry of Health",
+        kh: "ក្រសួងសុខាភិបាល",
+    },
+    MAFF: {
+        short: "MAFF",
+        en: "Ministry of Agriculture, Forestry and Fisheries",
+        kh: "ក្រសួងកសិកម្ម រុក្ខាប្រមាញ់ និងនេសាទ",
+    },
+    MPTC: {
+        short: "MPTC",
+        en: "Ministry of Post and Telecommunications",
+        kh: "ក្រសួងប្រៃសណីយ៍ និងទូរគមនាគមន៍",
+    },
+    MCFA: {
+        short: "MCFA",
+        en: "Ministry of Culture and Fine Arts",
+        kh: "ក្រសួងវប្បធម៌ និងវិចិត្រសិល្បៈ",
+    },
+    MEF: {
+        short: "MEF",
+        en: "Ministry of Economy and Finance",
+        kh: "ក្រសួងសេដ្ឋកិច្ច និងហិរញ្ញវត្ថុ",
+    },
+    OTHER: {
+        short: "Other",
+        en: "Other / Private Independent",
+        kh: "ផ្សេងៗ",
+    },
+};
+
+export type StudyShift = "MORNING" | "AFTERNOON" | "EVENING" | "WEEKEND";
+
+export const STUDY_SHIFTS: StudyShift[] = ["MORNING", "AFTERNOON", "EVENING", "WEEKEND"];
+
+export const STUDY_SHIFT_LABELS: Record<StudyShift, { en: string; kh: string; time: string }> = {
+    MORNING: {
+        en: "Morning",
+        kh: "ព្រឹក",
+        time: "07:30 - 11:00",
+    },
+    AFTERNOON: {
+        en: "Afternoon",
+        kh: "រសៀល",
+        time: "13:30 - 17:00",
+    },
+    EVENING: {
+        en: "Evening",
+        kh: "យប់",
+        time: "17:30 - 20:30",
+    },
+    WEEKEND: {
+        en: "Weekend",
+        kh: "ចុងសប្តាហ៍",
+        time: "Sat PM + Sun",
+    },
+};
 
 export type UnitKind = "FACULTY" | "DEPARTMENT" | "SUB_DEPARTMENT" | "FOUNDATION";
 
 export const UNIVERSITY_TYPES: UniversityType[] = ["PUBLIC", "PRIVATE"];
 export const STATUSES: Status[] = ["DRAFT", "PUBLISHED"];
-export const DEGREE_LEVELS: DegreeLevel[] = ["DIPLOMA", "ASSOCIATE", "BACHELOR", "MASTER", "PHD"];
+export const DEGREE_LEVELS: DegreeLevel[] = ["DIPLOMA", "ASSOCIATE", "BACHELOR", "ENGINEERING", "MASTER", "PHD"];
 export const CURRENCIES: Currency[] = ["USD", "KHR"];
 
 /** Cambodian provinces, for the location dropdown. */
@@ -69,6 +152,7 @@ export interface UniversitySummary {
     name_kh: string | null;
     abbreviation: string | null;
     type: UniversityType;
+    ministry: Ministry;
     status?: Status;
     province: string;
     logo_url: string | null;
@@ -114,6 +198,7 @@ export interface UniversityCreatePayload {
     name_kh?: string | null;
     abbreviation?: string | null;
     type: UniversityType;
+    ministry?: Ministry;
     status?: Status;
     province: string;
     parent_id?: number | null;
@@ -135,6 +220,7 @@ export interface UniversityUpdatePayload {
     name_kh?: string | null;
     abbreviation?: string | null;
     type?: UniversityType;
+    ministry?: Ministry;
     status?: Status;
     moeys_accredited?: boolean;
     province?: string;
@@ -168,6 +254,7 @@ export interface UniversityUpdatePayload {
 export interface ProgramSummary {
     id: string;
     unit_id?: number | null;
+    unit_name?: string | null;
     name_en: string;
     name_kh: string | null;
     faculty: string | null;
@@ -180,6 +267,8 @@ export interface ProgramSummary {
     effective_tuition_female_per_year?: number | null;
     tuition_discount_percent?: number | null;
     fee_currency: Currency;
+    shifts?: StudyShift[] | null;
+    curriculum_sections?: CurriculumSection[] | null;
 }
 
 /** `UnitSummary` item, from `GET /api/v1/admin/universities/{university_id}/units`. */
@@ -256,10 +345,11 @@ export interface CurriculumBlock {
     special_badge?: string | null;
 }
 
-/** One curriculum section row of a unit. */
+/** One curriculum section row of a unit or program. */
 export interface CurriculumSection {
     id: string;
-    unit_id: string;
+    unit_id?: string | null;
+    program_id?: string | null;
     heading_en: string;
     heading_kh: string;
     banner_text: string | null;
@@ -267,7 +357,7 @@ export interface CurriculumSection {
     position: number;
 }
 
-export type CurriculumSectionCreatePayload = Omit<CurriculumSection, "id" | "unit_id">;
+export type CurriculumSectionCreatePayload = Omit<CurriculumSection, "id" | "unit_id" | "program_id">;
 
 /**
  * `UnitDetail` from `GET /api/v1/admin/universities/{id}/units/{unit_id}`.
@@ -295,6 +385,8 @@ export interface ProgramCreatePayload {
     tuition_female_per_year?: number | null;
     tuition_per_credit?: number | null;
     fee_currency: Currency;
+    shifts?: StudyShift[] | null;
+    curriculum_sections?: CurriculumSection[] | null;
 }
 
 /** `PATCH /api/v1/admin/programs/{id}` body. */
@@ -309,6 +401,7 @@ export interface ProgramUpdatePayload {
     tuition_female_per_year?: number | null;
     tuition_per_credit?: number | null;
     fee_currency?: Currency;
+    shifts?: StudyShift[] | null;
     overview_en?: string | null;
     overview_kh?: string | null;
     admission_req_en?: string | null;

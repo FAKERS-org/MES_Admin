@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition, type FormEvent } from "react";
+import { useEffect, useMemo, useState, useTransition, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { GraduationCap, Pencil, Plus, Search } from "lucide-react";
@@ -17,11 +17,16 @@ import { apiRequest } from "@/lib/api";
 import {
     CURRENCIES,
     DEGREE_LEVELS,
+    STUDY_SHIFTS,
+    STUDY_SHIFT_LABELS,
     type Currency,
     type DegreeLevel,
+    type Page,
     type ProgramCreatePayload,
     type ProgramListItem,
     type ProgramUpdatePayload,
+    type StudyShift,
+    type UnitSummary,
     type UniversitySummary,
 } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
@@ -53,6 +58,7 @@ export function ProgramsManager({
 
     const [search, setSearch] = useState("");
     const [degreeFilter, setDegreeFilter] = useState("");
+    const [shiftFilter, setShiftFilter] = useState("");
     const [uniFilter, setUniFilter] = useState("");
     const [facultyFilter, setFacultyFilter] = useState("");
     const [tuitionFilter, setTuitionFilter] = useState("");
@@ -60,6 +66,41 @@ export function ProgramsManager({
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [editingProgram, setEditingProgram] = useState<ProgramListItem | null>(null);
     const [error, setError] = useState<string | null>(null);
+
+    const [createUniId, setCreateUniId] = useState("");
+    const [createUnitId, setCreateUnitId] = useState("");
+    const [editUnitId, setEditUnitId] = useState("");
+    const [unitsCache, setUnitsCache] = useState<Record<string, UnitSummary[]>>({});
+    const [loadingUnits, setLoadingUnits] = useState(false);
+
+    const fetchUnits = async (uniId: string | number) => {
+        const key = String(uniId);
+        if (!key || unitsCache[key]) return;
+        setLoadingUnits(true);
+        try {
+            const res = await apiRequest<Page<UnitSummary> | UnitSummary[]>(
+                `/api/admin/universities/${key}/units?limit=100`
+            );
+            const list = Array.isArray(res) ? res : (res?.items ?? []);
+            setUnitsCache((prev) => ({ ...prev, [key]: list }));
+        } catch {
+            setUnitsCache((prev) => ({ ...prev, [key]: [] }));
+        } finally {
+            setLoadingUnits(false);
+        }
+    };
+
+    useEffect(() => {
+        if (editingProgram) {
+            setEditUnitId(editingProgram.unit_id ? String(editingProgram.unit_id) : "");
+            if (editingProgram.university_id) {
+                fetchUnits(editingProgram.university_id);
+            }
+        }
+    }, [editingProgram]);
+
+    const createUnits = createUniId ? unitsCache[createUniId] ?? [] : [];
+    const editUnits = editingProgram?.university_id ? unitsCache[String(editingProgram.university_id)] ?? [] : [];
 
     const availableFaculties = useMemo(() => {
         const set = new Set<string>();
@@ -71,6 +112,7 @@ export function ProgramsManager({
 
     const filtered = initialPrograms.filter((p) => {
         if (degreeFilter && p.degree_level !== degreeFilter) return false;
+        if (shiftFilter && !p.shifts?.includes(shiftFilter as StudyShift)) return false;
         if (uniFilter && String(p.university_id) !== uniFilter) return false;
         if (facultyFilter && p.faculty !== facultyFilter) return false;
         if (tuitionFilter === "DISCOUNT" && !p.tuition_female_per_year) return false;
@@ -81,7 +123,7 @@ export function ProgramsManager({
 
         if (search) {
             const term = search.toLowerCase();
-            const text = `${p.name_en} ${p.name_kh ?? ""} ${p.faculty ?? ""} ${p.university_name ?? ""}`.toLowerCase();
+            const text = `${p.name_en} ${p.name_kh ?? ""} ${p.faculty ?? ""} ${p.unit_name ?? ""} ${p.university_name ?? ""}`.toLowerCase();
             if (!text.includes(term)) return false;
         }
         return true;
@@ -98,16 +140,33 @@ export function ProgramsManager({
             return;
         }
 
+        const unitIdRaw = raw(form, "unit_id");
+        const unitId = unitIdRaw ? Number(unitIdRaw) : null;
+        const selectedUnit = createUnits.find((u) => String(u.id) === unitIdRaw);
+        let faculty = nullable(form, "faculty");
+        if (selectedUnit) {
+            if (selectedUnit.parent_id) {
+                const parent = createUnits.find((u) => u.id === selectedUnit.parent_id);
+                faculty = parent ? parent.name_en : selectedUnit.name_en;
+            } else {
+                faculty = selectedUnit.name_en;
+            }
+        }
+
+        const shifts = form.getAll("shifts") as StudyShift[];
+
         const payload: ProgramCreatePayload = {
             name_en: raw(form, "name_en"),
             name_kh: nullable(form, "name_kh"),
-            faculty: nullable(form, "faculty"),
+            faculty,
+            unit_id: unitId,
             degree_level: raw(form, "degree_level") as DegreeLevel,
             duration_years: Number(raw(form, "duration_years")) || 4,
             tuition_per_year: numberOrNull(form, "tuition_per_year"),
             tuition_female_per_year: numberOrNull(form, "tuition_female_per_year"),
             tuition_per_credit: numberOrNull(form, "tuition_per_credit"),
             fee_currency: (raw(form, "fee_currency") as Currency) || "USD",
+            shifts: shifts.length > 0 ? shifts : null,
         };
 
         try {
@@ -116,6 +175,8 @@ export function ProgramsManager({
                 body: payload,
             });
             setIsCreateOpen(false);
+            setCreateUniId("");
+            setCreateUnitId("");
             startTransition(() => router.refresh());
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : "Failed to create program");
@@ -128,16 +189,33 @@ export function ProgramsManager({
         setError(null);
         const form = new FormData(e.currentTarget);
 
+        const unitIdRaw = raw(form, "unit_id");
+        const unitId = unitIdRaw ? Number(unitIdRaw) : null;
+        const selectedUnit = editUnits.find((u) => String(u.id) === unitIdRaw);
+        let faculty = nullable(form, "faculty");
+        if (selectedUnit) {
+            if (selectedUnit.parent_id) {
+                const parent = editUnits.find((u) => u.id === selectedUnit.parent_id);
+                faculty = parent ? parent.name_en : selectedUnit.name_en;
+            } else {
+                faculty = selectedUnit.name_en;
+            }
+        }
+
+        const shifts = form.getAll("shifts") as StudyShift[];
+
         const payload: ProgramUpdatePayload = {
             name_en: raw(form, "name_en"),
             name_kh: nullable(form, "name_kh"),
-            faculty: nullable(form, "faculty"),
+            faculty,
+            unit_id: unitId,
             degree_level: raw(form, "degree_level") as DegreeLevel,
             duration_years: Number(raw(form, "duration_years")) || 4,
             tuition_per_year: numberOrNull(form, "tuition_per_year"),
             tuition_female_per_year: numberOrNull(form, "tuition_female_per_year"),
             tuition_per_credit: numberOrNull(form, "tuition_per_credit"),
             fee_currency: (raw(form, "fee_currency") as Currency) || "USD",
+            shifts,
         };
 
         try {
@@ -220,6 +298,18 @@ export function ProgramsManager({
                     </Select>
                 </div>
 
+                <div className="w-44 space-y-1.5">
+                    <label htmlFor="p-shift" className="text-xs font-medium text-muted-foreground">Study Shift</label>
+                    <Select id="p-shift" value={shiftFilter} onChange={(e) => setShiftFilter(e.target.value)}>
+                        <option value="">All shifts</option>
+                        {STUDY_SHIFTS.map((shift) => (
+                            <option key={shift} value={shift}>
+                                {STUDY_SHIFT_LABELS[shift].kh} ({STUDY_SHIFT_LABELS[shift].en})
+                            </option>
+                        ))}
+                    </Select>
+                </div>
+
                 {availableFaculties.length > 0 && (
                     <div className="w-48 space-y-1.5">
                         <label htmlFor="p-fac" className="text-xs font-medium text-muted-foreground">Faculty</label>
@@ -244,8 +334,8 @@ export function ProgramsManager({
                     </Select>
                 </div>
 
-                {(search || degreeFilter || uniFilter || facultyFilter || tuitionFilter) ? (
-                    <Button variant="ghost" onClick={() => { setSearch(""); setDegreeFilter(""); setUniFilter(""); setFacultyFilter(""); setTuitionFilter(""); }}>
+                {(search || degreeFilter || shiftFilter || uniFilter || facultyFilter || tuitionFilter) ? (
+                    <Button variant="ghost" onClick={() => { setSearch(""); setDegreeFilter(""); setShiftFilter(""); setUniFilter(""); setFacultyFilter(""); setTuitionFilter(""); }}>
                         Reset
                     </Button>
                 ) : null}
@@ -287,8 +377,25 @@ export function ProgramsManager({
                                             {program.name_kh ? (
                                                 <div className="text-xs text-muted-foreground">{program.name_kh}</div>
                                             ) : null}
-                                            {program.faculty ? (
+                                            {program.unit_name ? (
+                                                <div className="text-xs text-muted-foreground mt-0.5">
+                                                    Unit: {program.unit_name} {program.faculty && program.faculty !== program.unit_name ? `(${program.faculty})` : ""}
+                                                </div>
+                                            ) : program.faculty ? (
                                                 <div className="text-xs text-muted-foreground/80 mt-0.5">Faculty: {program.faculty}</div>
+                                            ) : null}
+                                            {program.shifts && program.shifts.length > 0 ? (
+                                                <div className="flex flex-wrap items-center gap-1 mt-1">
+                                                    {program.shifts.map((s) => (
+                                                        <span
+                                                            key={s}
+                                                            className="inline-flex items-center rounded bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800 px-1 py-0.2 text-[10px] font-medium"
+                                                            title={STUDY_SHIFT_LABELS[s]?.time}
+                                                        >
+                                                            {STUDY_SHIFT_LABELS[s]?.kh ?? s}
+                                                        </span>
+                                                    ))}
+                                                </div>
                                             ) : null}
                                         </TableCell>
                                         <TableCell>
@@ -334,16 +441,50 @@ export function ProgramsManager({
             </Card>
 
             {/* Create Program Modal */}
-            <Modal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} title="New Academic Program" icon={<GraduationCap className="size-5 text-primary" />}>
+            <Modal isOpen={isCreateOpen} onClose={() => { setIsCreateOpen(false); setCreateUniId(""); setCreateUnitId(""); }} title="New Academic Program" icon={<GraduationCap className="size-5 text-primary" />}>
                 <form onSubmit={handleCreate} className="space-y-4">
                     <Field label="University" htmlFor="create-uni" required>
-                        <Select id="create-uni" name="university_id" required>
+                        <Select
+                            id="create-uni"
+                            name="university_id"
+                            required
+                            value={createUniId}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                setCreateUniId(val);
+                                setCreateUnitId("");
+                                if (val) fetchUnits(val);
+                            }}
+                        >
                             <option value="">Select University…</option>
                             {universities.map((u) => (
                                 <option key={u.id} value={String(u.id)}>{u.name_en}</option>
                             ))}
                         </Select>
                     </Field>
+
+                    {createUniId ? (
+                        <Field label="Belongs to Unit / Faculty" htmlFor="create-unit">
+                            <Select
+                                id="create-unit"
+                                name="unit_id"
+                                value={createUnitId}
+                                onChange={(e) => setCreateUnitId(e.target.value)}
+                                disabled={loadingUnits}
+                            >
+                                <option value="">No unit (University-Wide / Standalone)</option>
+                                {createUnits.map((u) => {
+                                    const parent = u.parent_id ? createUnits.find((p) => p.id === u.parent_id) : null;
+                                    const label = parent ? `${parent.name_en} → ${u.name_en}` : u.name_en;
+                                    return (
+                                        <option key={u.id} value={String(u.id)}>
+                                            {label} ({u.kind})
+                                        </option>
+                                    );
+                                })}
+                            </Select>
+                        </Field>
+                    ) : null}
 
                     <div className="grid gap-4 sm:grid-cols-2">
                         <Field label="Program Name (EN)" htmlFor="create-name-en" required>
@@ -355,9 +496,27 @@ export function ProgramsManager({
                     </div>
 
                     <div className="grid gap-4 sm:grid-cols-2">
-                        <Field label="Faculty" htmlFor="create-faculty">
-                            <Input id="create-faculty" name="faculty" placeholder="Faculty of Science" />
-                        </Field>
+                        {!createUnitId ? (
+                            <Field label="Faculty" htmlFor="create-faculty">
+                                <Input id="create-faculty" name="faculty" placeholder="Faculty of Science" />
+                            </Field>
+                        ) : (
+                            <Field label="Faculty (Inferred from unit)">
+                                <Input
+                                    disabled
+                                    value={(() => {
+                                        const selected = createUnits.find((u) => String(u.id) === createUnitId);
+                                        if (!selected) return "";
+                                        if (selected.parent_id) {
+                                            const parent = createUnits.find((u) => u.id === selected.parent_id);
+                                            return parent ? parent.name_en : selected.name_en;
+                                        }
+                                        return selected.name_en;
+                                    })()}
+                                    className="bg-muted text-muted-foreground"
+                                />
+                            </Field>
+                        )}
                         <Field label="Degree Level" htmlFor="create-degree" required>
                             <Select id="create-degree" name="degree_level" defaultValue="BACHELOR">
                                 {DEGREE_LEVELS.map((lvl) => (
@@ -389,6 +548,29 @@ export function ProgramsManager({
                         </Field>
                     </div>
 
+                    <div className="space-y-2">
+                        <label className="text-xs font-medium text-foreground">Study Shifts (វេនសិក្សា)</label>
+                        <div className="grid grid-cols-2 gap-2">
+                            {STUDY_SHIFTS.map((shift) => {
+                                const info = STUDY_SHIFT_LABELS[shift];
+                                return (
+                                    <label key={shift} className="flex items-start gap-2 rounded-lg border p-2 text-xs hover:bg-muted/40 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            name="shifts"
+                                            value={shift}
+                                            className="mt-0.5 rounded border-input text-primary focus:ring-primary"
+                                        />
+                                        <div>
+                                            <div className="font-medium">{info.kh} ({info.en})</div>
+                                            <div className="text-2xs text-muted-foreground">{info.time}</div>
+                                        </div>
+                                    </label>
+                                );
+                            })}
+                        </div>
+                    </div>
+
                     <div className="flex justify-end gap-2 pt-4 border-t">
                         <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
                         <Button type="submit">Create Program</Button>
@@ -409,10 +591,51 @@ export function ProgramsManager({
                             </Field>
                         </div>
 
-                        <div className="grid gap-4 sm:grid-cols-2">
-                            <Field label="Faculty" htmlFor="edit-faculty">
-                                <Input id="edit-faculty" name="faculty" defaultValue={editingProgram.faculty ?? ""} />
+                        {editUnits.length > 0 ? (
+                            <Field label="Belongs to Unit / Faculty" htmlFor="edit-unit">
+                                <Select
+                                    id="edit-unit"
+                                    name="unit_id"
+                                    value={editUnitId}
+                                    onChange={(e) => setEditUnitId(e.target.value)}
+                                    disabled={loadingUnits}
+                                >
+                                    <option value="">No unit (University-Wide / Standalone)</option>
+                                    {editUnits.map((u) => {
+                                        const parent = u.parent_id ? editUnits.find((p) => p.id === u.parent_id) : null;
+                                        const label = parent ? `${parent.name_en} → ${u.name_en}` : u.name_en;
+                                        return (
+                                            <option key={u.id} value={String(u.id)}>
+                                                {label} ({u.kind})
+                                            </option>
+                                        );
+                                    })}
+                                </Select>
                             </Field>
+                        ) : null}
+
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            {!editUnitId ? (
+                                <Field label="Faculty" htmlFor="edit-faculty">
+                                    <Input id="edit-faculty" name="faculty" defaultValue={editingProgram.faculty ?? ""} />
+                                </Field>
+                            ) : (
+                                <Field label="Faculty (Inferred from unit)">
+                                    <Input
+                                        disabled
+                                        value={(() => {
+                                            const selected = editUnits.find((u) => String(u.id) === editUnitId);
+                                            if (!selected) return editingProgram.faculty ?? "";
+                                            if (selected.parent_id) {
+                                                const parent = editUnits.find((u) => u.id === selected.parent_id);
+                                                return parent ? parent.name_en : selected.name_en;
+                                            }
+                                            return selected.name_en;
+                                        })()}
+                                        className="bg-muted text-muted-foreground"
+                                    />
+                                </Field>
+                            )}
                             <Field label="Degree Level" htmlFor="edit-degree" required>
                                 <Select id="edit-degree" name="degree_level" defaultValue={editingProgram.degree_level}>
                                     {DEGREE_LEVELS.map((lvl) => (
@@ -442,6 +665,31 @@ export function ProgramsManager({
                             <Field label="Tuition / Year (Female Discount)" htmlFor="edit-tuition-female">
                                 <Input id="edit-tuition-female" name="tuition_female_per_year" type="number" defaultValue={editingProgram.tuition_female_per_year ?? ""} />
                             </Field>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-xs font-medium text-foreground">Study Shifts (វេនសិក្សា)</label>
+                            <div className="grid grid-cols-2 gap-2">
+                                {STUDY_SHIFTS.map((shift) => {
+                                    const info = STUDY_SHIFT_LABELS[shift];
+                                    const isChecked = editingProgram.shifts?.includes(shift);
+                                    return (
+                                        <label key={shift} className="flex items-start gap-2 rounded-lg border p-2 text-xs hover:bg-muted/40 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                name="shifts"
+                                                value={shift}
+                                                defaultChecked={isChecked}
+                                                className="mt-0.5 rounded border-input text-primary focus:ring-primary"
+                                            />
+                                            <div>
+                                                <div className="font-medium">{info.kh} ({info.en})</div>
+                                                <div className="text-2xs text-muted-foreground">{info.time}</div>
+                                            </div>
+                                        </label>
+                                    );
+                                })}
+                            </div>
                         </div>
 
                         <div className="flex justify-end gap-2 pt-4 border-t">

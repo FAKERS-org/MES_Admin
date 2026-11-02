@@ -10,7 +10,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, Spinner } from "@/components/ui/feedback";
 import { Checkbox, Field, Input, Select, Textarea } from "@/components/ui/field";
 import { apiRequest } from "@/lib/api";
-import { PROVINCES, type UniversityDetail, type UniversityType, type UniversityUpdatePayload } from "@/lib/types";
+import {
+    MINISTRIES,
+    MINISTRY_LABELS,
+    PROVINCES,
+    type Ministry,
+    type UniversityDetail,
+    type UniversityType,
+    type UniversityUpdatePayload,
+} from "@/lib/types";
 import { ImageUploader } from "../admin/image-uploader";
 
 function raw(form: FormData, key: string): string {
@@ -61,6 +69,7 @@ export default function UniversityEditForm({ university }: { university: Univers
             name_kh: nullable(form, "name_kh"),
             abbreviation: nullable(form, "abbreviation"),
             type: form.get("type") as UniversityType,
+            ministry: (form.get("ministry") as Ministry) || undefined,
             province,
             address: nullable(form, "address"),
             website: nullable(form, "website"),
@@ -146,6 +155,18 @@ export default function UniversityEditForm({ university }: { university: Univers
                                 <Select id="type" name="type" defaultValue={university.type}>
                                     <option value="PUBLIC">Public</option>
                                     <option value="PRIVATE">Private</option>
+                                </Select>
+                            </Field>
+                            <Field label="Supervising Ministry" htmlFor="ministry" required>
+                                <Select id="ministry" name="ministry" defaultValue={university.ministry ?? "MOEYS"}>
+                                    {MINISTRIES.map(m => {
+                                        const label = MINISTRY_LABELS[m];
+                                        return (
+                                            <option key={m} value={m}>
+                                                {label.short} — {label.kh} ({label.en})
+                                            </option>
+                                        );
+                                    })}
                                 </Select>
                             </Field>
                             <Field label="Campus Name" htmlFor="campus_name">
