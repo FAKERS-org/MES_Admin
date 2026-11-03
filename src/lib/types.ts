@@ -275,6 +275,7 @@ export interface ProgramSummary {
 export interface UnitSummary {
     id: string;
     slug: string;
+    university_id?: string | number | null;
     parent_id?: string | null;
     kind: UnitKind;
     name_en: string;
@@ -285,6 +286,13 @@ export interface UnitSummary {
     default_tuition_per_year?: number | null;
     default_tuition_female_per_year?: number | null;
     position?: number;
+}
+
+export interface UnitListItem extends UnitSummary {
+    university_name?: string | null;
+    university_abbreviation?: string | null;
+    parent_name?: string | null;
+    programs_count?: number;
 }
 
 export const UNIT_KINDS: UnitKind[] = ["FACULTY", "DEPARTMENT", "SUB_DEPARTMENT", "FOUNDATION"];
@@ -301,6 +309,10 @@ export interface UnitCreatePayload {
     position?: number;
     default_tuition_per_year?: number | null;
     default_tuition_female_per_year?: number | null;
+}
+
+export interface UnitCreateDirectPayload extends UnitCreatePayload {
+    university_id: number;
 }
 
 /** `PATCH /api/v1/admin/universities/{university_id}/units/{unit_id}` body. */

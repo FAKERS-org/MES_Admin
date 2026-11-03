@@ -1,6 +1,6 @@
 "use client";
 
-import { Award, Building2, GraduationCap, Handshake, LayoutDashboard, LogOut, Settings, Users, X } from "lucide-react";
+import { Award, Building2, FolderTree, GraduationCap, Handshake, LayoutDashboard, LogOut, Settings, Users, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -17,6 +17,7 @@ const navSections = [
         label: "Manage",
         items: [
             { href: "/universities", label: "Universities", icon: Building2 },
+            { href: "/units", label: "Units", icon: FolderTree },
             { href: "/programs", label: "Programs", icon: GraduationCap },
             { href: "/scholarships", label: "Scholarships", icon: Award },
             { href: "/users", label: "Users", icon: Users },
