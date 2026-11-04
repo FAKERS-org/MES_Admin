@@ -26,6 +26,9 @@ import ConfirmButton from "@/components/ui/confirm-button";
 import { Alert, EmptyState, Spinner } from "@/components/ui/feedback";
 import { Input } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
+import DepartmentCard from "@/components/universities/department-card";
+import FacultyCard from "@/components/universities/faculty-card";
+import ProgramChip from "@/components/universities/program-chip";
 import UnitFields, { unitPayload } from "@/components/units/unit-fields";
 import { BatchProgramModal } from "@/components/programs/batch-program-modal";
 import ProgramFields, { programPayload } from "@/components/programs/program-fields";
@@ -602,523 +605,47 @@ export default function UnitManager({
             {/* FRIENDLY HIERARCHY ACCORDION */}
             {visibleRootUnits.length > 0 && (
                 <div className="space-y-3.5">
-                    {visibleRootUnits.map(unit => {
-                        const unitIdStr = String(unit.id);
-                        const isEditing = String(editingId) === unitIdStr;
-                        const children = childUnitsMap[unitIdStr] ?? [];
-                        const unitPrograms = programsByUnitId[unitIdStr] ?? [];
-                        const isCollapsed = Boolean(collapsedUnits[unitIdStr]);
-
-                        // Compute total programs under this faculty (direct + under departments)
-                        let totalPrograms = unitPrograms.length;
-                        for (const child of children) {
-                            totalPrograms += (programsByUnitId[String(child.id)] ?? []).length;
-                        }
-
-                        if (isEditing) {
-                            return (
-                                <div key={unit.id} className="rounded-xl border border-primary/30 bg-card p-4 shadow-sm space-y-4">
-                                    <div className="flex items-center justify-between border-b pb-2">
-                                        <div className="flex items-center gap-2">
-                                            <Pencil className="size-4 text-muted-foreground" />
-                                            <h4 className="text-sm font-semibold">Edit “{unit.name_en}”</h4>
-                                        </div>
-                                        <Button
-                                            type="button"
-                                            size="sm"
-                                            variant="ghost"
-                                            className="h-7 text-xs"
-                                            onClick={() => setEditingId(null)}
-                                        >
-                                            Cancel
-                                        </Button>
-                                    </div>
-                                    <form onSubmit={handleUpdate(unit)} className="space-y-4">
-                                        <UnitFields defaultValue={unit} siblings={items} />
-                                        <div className="flex items-center justify-end gap-2 pt-2 border-t">
-                                            <Button
-                                                type="button"
-                                                size="sm"
-                                                variant="outline"
-                                                onClick={() => setEditingId(null)}
-                                                disabled={pending}
-                                            >
-                                                Cancel
-                                            </Button>
-                                            <Button type="submit" size="sm" disabled={pending}>
-                                                {pending ? <Spinner className="size-3.5" /> : null}
-                                                {pending ? "Saving…" : "Save changes"}
-                                            </Button>
-                                        </div>
-                                    </form>
-                                </div>
-                            );
-                        }
-
-                        return (
-                            <div
-                                key={unit.id}
-                                className="rounded-xl border border-border/80 bg-card shadow-2xs hover:border-border transition-colors overflow-hidden"
-                            >
-                                {/* Faculty Header Row */}
-                                <div
-                                    onClick={() => toggleCollapse(unit.id)}
-                                    className="flex flex-wrap items-center justify-between gap-3 p-4 bg-muted/15 cursor-pointer select-none hover:bg-muted/25 transition-colors"
-                                >
-                                    <div className="flex items-center gap-3 min-w-0">
-                                        {/* Expand / Collapse Button */}
-                                        <button
-                                            type="button"
-                                            onClick={e => {
-                                                e.stopPropagation();
-                                                toggleCollapse(unit.id);
-                                            }}
-                                            className="size-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer shrink-0"
-                                            aria-label={isCollapsed ? "Expand" : "Collapse"}
-                                        >
-                                            <ChevronRight
-                                                className={cn(
-                                                    "size-4.5 transition-transform duration-200 ease-out",
-                                                    isCollapsed ? "rotate-0 text-muted-foreground" : "rotate-90 text-foreground",
-                                                )}
-                                            />
-                                        </button>
-
-                                        {/* Faculty Icon */}
-                                        <Building2 className="size-5 text-foreground shrink-0" />
-
-                                        {/* Titles & Metadata */}
-                                        <div className="min-w-0 space-y-0.5">
-                                            <div className="flex flex-wrap items-center gap-2">
-                                                <span className="font-semibold text-sm sm:text-base text-foreground">
-                                                    {unit.name_en}
-                                                </span>
-                                                {unit.name_kh && (
-                                                    <span className="text-xs text-muted-foreground font-khmer">
-                                                        ({unit.name_kh})
-                                                    </span>
-                                                )}
-                                                <Badge variant="outline" className="text-3xs uppercase tracking-wide px-1.5 py-0">
-                                                    {unit.kind.replace(/_/g, " ")}
-                                                </Badge>
-                                            </div>
-                                            <div className="flex flex-wrap items-center gap-2.5 text-xs text-muted-foreground">
-                                                <span>
-                                                    {children.length} {children.length === 1 ? "department" : "departments"} ·{" "}
-                                                    {totalPrograms} {totalPrograms === 1 ? "program" : "programs"}
-                                                </span>
-                                                {unit.default_tuition_per_year ? (
-                                                    <span className="text-2xs font-medium text-primary bg-primary/10 border border-primary/20 px-2 py-0.2 rounded-full">
-                                                        Default: ${unit.default_tuition_per_year.toLocaleString()}/yr
-                                                    </span>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Action Buttons */}
-                                    <div
-                                        onClick={e => e.stopPropagation()}
-                                        className="flex items-center gap-1.5 shrink-0 ml-auto sm:ml-0"
-                                    >
-                                        <Button
-                                            size="sm"
-                                            variant="outline"
-                                            className="h-7 px-2.5 text-xs font-medium gap-1 rounded-md"
-                                            onClick={() => {
-                                                setQuickAddUnit(unit);
-                                                setCloningProgram(null);
-                                            }}
-                                            title="Add degree program to this faculty"
-                                        >
-                                            <Plus className="size-3.5" />
-                                            <span>Add Program</span>
-                                        </Button>
-
-                                        <Button
-                                            size="sm"
-                                            variant="outline"
-                                            className="h-7 px-2 text-xs font-medium gap-1 rounded-md text-primary hover:text-primary bg-primary/5 hover:bg-primary/10 border-primary/20"
-                                            onClick={() => {
-                                                setBatchTargetUnit(unit);
-                                                setIsBatchOpen(true);
-                                            }}
-                                            title="Batch add multiple programs from a list"
-                                        >
-                                            <Sparkles className="size-3" />
-                                            <span>Batch</span>
-                                        </Button>
-
-                                        <Button
-                                            size="sm"
-                                            variant="outline"
-                                            className="h-7 px-2.5 text-xs font-medium gap-1 rounded-md"
-                                            onClick={() => {
-                                                setDefaultParentForNew(unit.id);
-                                                setAdding(true);
-                                            }}
-                                            title="Add department under this faculty"
-                                        >
-                                            <Plus className="size-3.5" />
-                                            <span>Add Dept</span>
-                                        </Button>
-
-                                        <Link
-                                            href={`/universities/${universitySlug ?? universityId}/units/${unit.slug ?? unit.id}`}
-                                            className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                                            title="View unit details page"
-                                        >
-                                            <Layers className="size-3.5" />
-                                        </Link>
-
-                                        <Button
-                                            size="sm"
-                                            variant="ghost"
-                                            className="size-7 p-0 rounded-md text-muted-foreground hover:text-foreground"
-                                            onClick={() => handleClone(unit)}
-                                            disabled={pending}
-                                            title={`Clone “${unit.name_en}”`}
-                                        >
-                                            <Copy className="size-3.5" />
-                                        </Button>
-
-                                        <Button
-                                            size="sm"
-                                            variant="ghost"
-                                            className="size-7 p-0 rounded-md text-muted-foreground hover:text-foreground"
-                                            onClick={() => setEditingId(unit.id)}
-                                            title="Edit faculty"
-                                        >
-                                            <Pencil className="size-3.5" />
-                                        </Button>
-
-                                        <ConfirmButton
-                                            onConfirm={handleDelete(unit)}
-                                            confirmLabel={`Delete “${unit.name_en}”?`}
-                                            title={`Delete “${unit.name_en}”`}
-                                            className="size-7 p-0 rounded-md"
-                                        >
-                                            <Trash2 className="size-3.5" />
-                                        </ConfirmButton>
-                                    </div>
-                                </div>
-
-                                {/* Expanded Hierarchy Content with Smooth Dropdown Animation */}
-                                <div
-                                    className={cn(
-                                        "grid transition-[grid-template-rows] duration-200 ease-out",
-                                        isCollapsed
-                                            ? "grid-rows-[0fr] pointer-events-none"
-                                            : "grid-rows-[1fr]",
-                                    )}
-                                >
-                                    <div className="overflow-hidden min-h-0">
-                                        <div className="p-4 border-t bg-muted/5 space-y-4">
-                                            {/* Child Departments */}
-                                            {children.length > 0 && (
-                                                <div className="space-y-3">
-                                                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                                        <FolderTree className="size-3.5 text-muted-foreground" />
-                                                        <span>Departments ({children.length})</span>
-                                                    </div>
-
-                                                    <div className="grid gap-3 sm:grid-cols-1">
-                                                        {children.map(child => {
-                                                            const childIdStr = String(child.id);
-                                                            const childPrograms = programsByUnitId[childIdStr] ?? [];
-                                                            const isChildEditing = String(editingId) === childIdStr;
-
-                                                            if (isChildEditing) {
-                                                                return (
-                                                                    <div key={child.id} className="p-3.5 bg-card rounded-xl border border-primary/30 shadow-2xs space-y-3">
-                                                                        <div className="flex items-center justify-between">
-                                                                            <p className="text-xs font-semibold">Edit “{child.name_en}”</p>
-                                                                            <Button
-                                                                                type="button"
-                                                                                size="sm"
-                                                                                variant="ghost"
-                                                                                className="h-6 text-xs"
-                                                                                onClick={() => setEditingId(null)}
-                                                                            >
-                                                                                Cancel
-                                                                            </Button>
-                                                                        </div>
-                                                                        <form onSubmit={handleUpdate(child)} className="space-y-3">
-                                                                            <UnitFields defaultValue={child} siblings={items} />
-                                                                            <div className="flex justify-end gap-2 pt-2 border-t">
-                                                                                <Button
-                                                                                    type="button"
-                                                                                    size="sm"
-                                                                                    variant="outline"
-                                                                                    onClick={() => setEditingId(null)}
-                                                                                >
-                                                                                    Cancel
-                                                                                </Button>
-                                                                                <Button type="submit" size="sm" disabled={pending}>
-                                                                                    {pending ? <Spinner className="size-3" /> : null}
-                                                                                    Save
-                                                                                </Button>
-                                                                            </div>
-                                                                        </form>
-                                                                    </div>
-                                                                );
-                                                            }
-
-                                                            return (
-                                                                <div
-                                                                    key={child.id}
-                                                                    className="rounded-xl border border-border/70 bg-card p-3.5 space-y-2.5 shadow-2xs hover:border-border transition-colors"
-                                                                >
-                                                                    {/* Department Header */}
-                                                                    <div className="flex flex-wrap items-center justify-between gap-2">
-                                                                        <div className="flex items-center gap-2.5 min-w-0">
-                                                                            <FolderTree className="size-4 text-foreground/80 shrink-0" />
-                                                                            <div className="min-w-0">
-                                                                                <div className="flex flex-wrap items-center gap-2">
-                                                                                    <span className="font-medium text-xs sm:text-sm text-foreground">
-                                                                                        {child.name_en}
-                                                                                    </span>
-                                                                                    {child.name_kh && (
-                                                                                        <span className="text-xs text-muted-foreground font-khmer">
-                                                                                            ({child.name_kh})
-                                                                                        </span>
-                                                                                    )}
-                                                                                </div>
-                                                                                <p className="text-2xs text-muted-foreground">
-                                                                                    {childPrograms.length} {childPrograms.length === 1 ? "degree program" : "degree programs"}
-                                                                                </p>
-                                                                            </div>
-                                                                        </div>
-
-                                                                        <div className="flex items-center gap-1 shrink-0">
-                                                                            <Button
-                                                                                size="sm"
-                                                                                variant="outline"
-                                                                                className="h-6 px-2 text-2xs font-medium gap-1 rounded-md"
-                                                                                onClick={() => {
-                                                                                    setQuickAddUnit(child);
-                                                                                    setCloningProgram(null);
-                                                                                }}
-                                                                                title="Add degree program under this department"
-                                                                            >
-                                                                                <Plus className="size-3" />
-                                                                                <span>Add Program</span>
-                                                                            </Button>
-                                                                            <Button
-                                                                                size="sm"
-                                                                                variant="outline"
-                                                                                className="h-6 px-1.5 text-2xs font-medium gap-1 rounded-md text-primary hover:text-primary bg-primary/5 hover:bg-primary/10 border-primary/20"
-                                                                                onClick={() => {
-                                                                                    setBatchTargetUnit(child);
-                                                                                    setIsBatchOpen(true);
-                                                                                }}
-                                                                                title="Batch add multiple programs from a list"
-                                                                            >
-                                                                                <Sparkles className="size-3" />
-                                                                                <span>Batch</span>
-                                                                            </Button>
-                                                                            <Link
-                                                                                href={`/universities/${universitySlug ?? universityId}/units/${child.slug ?? child.id}`}
-                                                                                className="inline-flex size-6 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                                                                                title="View department details page"
-                                                                            >
-                                                                                <Layers className="size-3" />
-                                                                            </Link>
-                                                                            <Button
-                                                                                size="sm"
-                                                                                variant="ghost"
-                                                                                className="size-6 p-0 rounded-md text-muted-foreground hover:text-foreground"
-                                                                                onClick={() => handleClone(child)}
-                                                                                disabled={pending}
-                                                                                title={`Clone “${child.name_en}”`}
-                                                                            >
-                                                                                <Copy className="size-3" />
-                                                                            </Button>
-                                                                            <Button
-                                                                                size="sm"
-                                                                                variant="ghost"
-                                                                                className="size-6 p-0 rounded-md text-muted-foreground hover:text-foreground"
-                                                                                onClick={() => setEditingId(child.id)}
-                                                                                title="Edit department"
-                                                                            >
-                                                                                <Pencil className="size-3" />
-                                                                            </Button>
-                                                                            <ConfirmButton
-                                                                                onConfirm={handleDelete(child)}
-                                                                                confirmLabel={`Delete “${child.name_en}”?`}
-                                                                                title={`Delete “${child.name_en}”`}
-                                                                                className="size-6 p-0 rounded-md"
-                                                                            >
-                                                                                <Trash2 className="size-3" />
-                                                                            </ConfirmButton>
-                                                                        </div>
-                                                                    </div>
-
-                                                                    {/* Department Programs */}
-                                                                    {childPrograms.length > 0 ? (
-                                                                        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 pt-1">
-                                                                            {childPrograms.map(prog => (
-                                                                                <ProgramChip
-                                                                                    key={prog.id}
-                                                                                    program={prog}
-                                                                                    unit={child}
-                                                                                    defaultTuitionPerYear={defaultTuitionPerYear}
-                                                                                    defaultTuitionFemalePerYear={defaultTuitionFemalePerYear}
-                                                                                    onEdit={setEditingProgram}
-                                                                                    onClone={p => {
-                                                                                        setCloningProgram(p);
-                                                                                        setQuickAddUnit(child);
-                                                                                    }}
-                                                                                    onDelete={handleDeleteProgram(prog)}
-                                                                                />
-                                                                            ))}
-                                                                        </div>
-                                                                    ) : (
-                                                                        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 p-2 rounded-lg border border-dashed bg-muted/20 text-2xs text-muted-foreground">
-                                                                            <span>No degree programs under this department yet.</span>
-                                                                            <div className="flex items-center gap-1">
-                                                                                <Button
-                                                                                    size="sm"
-                                                                                    variant="outline"
-                                                                                    className="h-6 text-3xs gap-1"
-                                                                                    onClick={() => {
-                                                                                        setQuickAddUnit(child);
-                                                                                        setCloningProgram(null);
-                                                                                    }}
-                                                                                >
-                                                                                    <Plus className="size-2.5" />
-                                                                                    Add Program
-                                                                                </Button>
-                                                                                <Button
-                                                                                    size="sm"
-                                                                                    variant="outline"
-                                                                                    className="h-6 text-3xs gap-1 text-primary border-primary/20 bg-primary/5 hover:bg-primary/10"
-                                                                                    onClick={() => {
-                                                                                        setBatchTargetUnit(child);
-                                                                                        setIsBatchOpen(true);
-                                                                                    }}
-                                                                                >
-                                                                                    <Sparkles className="size-2.5" />
-                                                                                    Batch
-                                                                                </Button>
-                                                                            </div>
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {/* Direct Programs under Faculty (Common in Cambodia) */}
-                                            {unitPrograms.length > 0 && (
-                                                <div className="space-y-2.5">
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                                            <GraduationCap className="size-3.5 text-muted-foreground" />
-                                                            <span>
-                                                                {children.length > 0 ? "Direct Faculty Programs" : "Degree Programs"} ({unitPrograms.length})
-                                                            </span>
-                                                        </div>
-                                                        <div className="flex items-center gap-1.5">
-                                                            <Button
-                                                                size="sm"
-                                                                variant="outline"
-                                                                className="h-6 px-2 text-2xs font-medium gap-1"
-                                                                onClick={() => {
-                                                                    setQuickAddUnit(unit);
-                                                                    setCloningProgram(null);
-                                                                }}
-                                                            >
-                                                                <Plus className="size-3" />
-                                                                <span>Add Program</span>
-                                                            </Button>
-                                                            <Button
-                                                                size="sm"
-                                                                variant="outline"
-                                                                className="h-6 px-1.5 text-2xs font-medium gap-1 text-primary hover:text-primary bg-primary/5 hover:bg-primary/10 border-primary/20"
-                                                                onClick={() => {
-                                                                    setBatchTargetUnit(unit);
-                                                                    setIsBatchOpen(true);
-                                                                }}
-                                                            >
-                                                                <Sparkles className="size-3" />
-                                                                <span>Batch</span>
-                                                            </Button>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                                                        {unitPrograms.map(prog => (
-                                                            <ProgramChip
-                                                                key={prog.id}
-                                                                program={prog}
-                                                                unit={unit}
-                                                                defaultTuitionPerYear={defaultTuitionPerYear}
-                                                                defaultTuitionFemalePerYear={defaultTuitionFemalePerYear}
-                                                                onEdit={setEditingProgram}
-                                                                onClone={p => {
-                                                                    setCloningProgram(p);
-                                                                    setQuickAddUnit(unit);
-                                                                }}
-                                                                onDelete={handleDeleteProgram(prog)}
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {/* Empty state for leaf faculty with no departments and no programs */}
-                                            {children.length === 0 && unitPrograms.length === 0 && (
-                                                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 rounded-xl border border-dashed bg-muted/20 text-xs text-muted-foreground">
-                                                    <span>No departments or degree programs assigned to this faculty yet.</span>
-                                                    <div className="flex items-center gap-1.5">
-                                                        <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            className="h-7 text-xs gap-1"
-                                                            onClick={() => {
-                                                                setQuickAddUnit(unit);
-                                                                setCloningProgram(null);
-                                                            }}
-                                                        >
-                                                            <Plus className="size-3" />
-                                                            Add Program
-                                                        </Button>
-                                                        <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            className="h-7 text-xs gap-1 text-primary border-primary/20 bg-primary/5 hover:bg-primary/10"
-                                                            onClick={() => {
-                                                                setBatchTargetUnit(unit);
-                                                                setIsBatchOpen(true);
-                                                            }}
-                                                        >
-                                                            <Sparkles className="size-3" />
-                                                            Batch
-                                                        </Button>
-                                                        <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            className="h-7 text-xs gap-1"
-                                                            onClick={() => {
-                                                                setDefaultParentForNew(unit.id);
-                                                                setAdding(true);
-                                                            }}
-                                                        >
-                                                            <Plus className="size-3" />
-                                                            Add Dept
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })}
+                    {visibleRootUnits.map(unit => (
+                        <FacultyCard
+                            key={unit.id}
+                            unit={unit}
+                            childrenUnits={childUnitsMap[String(unit.id)] ?? []}
+                            unitPrograms={programsByUnitId[String(unit.id)] ?? []}
+                            programsByUnitId={programsByUnitId}
+                            universityId={universityId}
+                            universitySlug={universitySlug}
+                            defaultTuitionPerYear={defaultTuitionPerYear}
+                            defaultTuitionFemalePerYear={defaultTuitionFemalePerYear}
+                            isCollapsed={Boolean(collapsedUnits[String(unit.id)])}
+                            isEditing={String(editingId) === String(unit.id)}
+                            pending={pending}
+                            allUnits={items}
+                            onToggleCollapse={toggleCollapse}
+                            onStartEdit={setEditingId}
+                            onCancelEdit={() => setEditingId(null)}
+                            onUpdate={handleUpdate}
+                            onClone={handleClone}
+                            onDelete={handleDelete}
+                            onQuickAdd={u => {
+                                setQuickAddUnit(u);
+                                setCloningProgram(null);
+                            }}
+                            onBatchAdd={u => {
+                                setBatchTargetUnit(u);
+                                setIsBatchOpen(true);
+                            }}
+                            onAddDepartment={u => {
+                                setDefaultParentForNew(u.id);
+                                setAdding(true);
+                            }}
+                            onEditProgram={setEditingProgram}
+                            onCloneProgram={p => {
+                                setCloningProgram(p);
+                                setQuickAddUnit(unit);
+                            }}
+                            onDeleteProgram={handleDeleteProgram}
+                        />
+                    ))}
                 </div>
             )}
 
@@ -1183,14 +710,14 @@ export default function UnitManager({
                             defaultValue={
                                 cloningProgram
                                     ? {
-                                          ...cloningProgram,
-                                          name_en: `${cloningProgram.name_en} (Copy)`,
-                                          name_kh: cloningProgram.name_kh ? `${cloningProgram.name_kh} (ចម្លង)` : null,
-                                          unit_id: quickAddUnit?.id ? Number(quickAddUnit.id) : (cloningProgram.unit_id ? Number(cloningProgram.unit_id) : null),
-                                      }
+                                        ...cloningProgram,
+                                        name_en: `${cloningProgram.name_en} (Copy)`,
+                                        name_kh: cloningProgram.name_kh ? `${cloningProgram.name_kh} (ចម្លង)` : null,
+                                        unit_id: quickAddUnit?.id ? Number(quickAddUnit.id) : (cloningProgram.unit_id ? Number(cloningProgram.unit_id) : null),
+                                    }
                                     : {
-                                          unit_id: quickAddUnit?.id ? Number(quickAddUnit.id) : null,
-                                      }
+                                        unit_id: quickAddUnit?.id ? Number(quickAddUnit.id) : null,
+                                    }
                             }
                             units={items}
                             defaultTuitionPerYear={
@@ -1283,109 +810,3 @@ export default function UnitManager({
     );
 }
 
-/** Clean, friendly program chip with degree badge and tuition */
-function ProgramChip({
-    program,
-    unit,
-    defaultTuitionPerYear,
-    defaultTuitionFemalePerYear,
-    onEdit,
-    onClone,
-    onDelete,
-}: {
-    program: ProgramSummary;
-    unit: UnitSummary | null;
-    defaultTuitionPerYear?: number | null;
-    defaultTuitionFemalePerYear?: number | null;
-    onEdit?: (program: ProgramSummary) => void;
-    onClone?: (program: ProgramSummary) => void;
-    onDelete?: () => void;
-}) {
-    const resolved = resolveProgramTuition(
-        program,
-        unit,
-        defaultTuitionPerYear,
-        defaultTuitionFemalePerYear,
-    );
-
-    return (
-        <div className="group flex items-center justify-between gap-2.5 p-2.5 rounded-lg border bg-card hover:bg-muted/30 transition-colors shadow-2xs">
-            <div className="flex items-center gap-2 min-w-0">
-                <GraduationCap className="size-4 text-foreground/80 shrink-0" />
-                <div className="min-w-0">
-                    <p className="font-medium text-xs text-foreground truncate" title={program.name_en}>
-                        {program.name_en}
-                    </p>
-                    {program.name_kh && (
-                        <p className="text-3xs text-muted-foreground font-khmer truncate">
-                            {program.name_kh}
-                        </p>
-                    )}
-                </div>
-            </div>
-
-            <div className="flex items-center gap-1.5 shrink-0">
-                <div className="flex flex-col items-end">
-                    <div className="flex items-center gap-1.5">
-                        <Badge variant="outline" className="text-3xs uppercase font-medium px-1.5 py-0">
-                            {program.degree_level}
-                        </Badge>
-                        <span className="font-semibold text-xs text-foreground">
-                            {formatCurrency(resolved.effectiveTuition, program.fee_currency)}/yr
-                        </span>
-                    </div>
-                    {resolved.effectiveFemale && (
-                        <span className="text-rose-600 dark:text-rose-400 font-medium text-3xs">
-                            ♀ {formatCurrency(resolved.effectiveFemale, program.fee_currency)}
-                        </span>
-                    )}
-                </div>
-
-                <div className="flex items-center gap-0.5">
-                    {onClone && (
-                        <Button
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            className="size-6 p-0 rounded-md text-muted-foreground hover:text-foreground opacity-60 group-hover:opacity-100 transition-opacity"
-                            onClick={e => {
-                                e.stopPropagation();
-                                onClone(program);
-                            }}
-                            title={`Duplicate ${program.name_en}`}
-                        >
-                            <Copy className="size-3" />
-                        </Button>
-                    )}
-
-                    {onEdit && (
-                        <Button
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            className="size-6 p-0 rounded-md text-muted-foreground hover:text-foreground opacity-60 group-hover:opacity-100 transition-opacity"
-                            onClick={e => {
-                                e.stopPropagation();
-                                onEdit(program);
-                            }}
-                            title={`Edit ${program.name_en}`}
-                        >
-                            <Pencil className="size-3" />
-                        </Button>
-                    )}
-
-                    {onDelete && (
-                        <ConfirmButton
-                            onConfirm={onDelete}
-                            confirmLabel={`Delete “${program.name_en}”?`}
-                            title={`Delete “${program.name_en}”`}
-                            className="size-6 p-0 rounded-md"
-                        >
-                            <Trash2 className="size-3" />
-                        </ConfirmButton>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
-}
