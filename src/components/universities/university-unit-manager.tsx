@@ -26,8 +26,8 @@ import ConfirmButton from "@/components/ui/confirm-button";
 import { Alert, EmptyState, Spinner } from "@/components/ui/feedback";
 import { Input } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
-import DepartmentCard from "@/components/universities/department-card";
-import FacultyCard from "@/components/universities/faculty-card";
+import ChildUnitCard from "@/components/universities/child-unit-card";
+import ParentUnitCard from "@/components/universities/parent-unit-card";
 import ProgramChip from "@/components/universities/program-chip";
 import UnitFields, { unitPayload } from "@/components/units/unit-fields";
 import { BatchProgramModal } from "@/components/programs/batch-program-modal";
@@ -46,7 +46,7 @@ import type {
 } from "@/lib/types";
 import { cn, formatCurrency } from "@/lib/utils";
 
-export default function UnitManager({
+export function UniversityUnitManager({
     universityId,
     universitySlug,
     units,
@@ -606,7 +606,7 @@ export default function UnitManager({
             {visibleRootUnits.length > 0 && (
                 <div className="space-y-3.5">
                     {visibleRootUnits.map(unit => (
-                        <FacultyCard
+                        <ParentUnitCard
                             key={unit.id}
                             unit={unit}
                             childrenUnits={childUnitsMap[String(unit.id)] ?? []}
@@ -809,4 +809,7 @@ export default function UnitManager({
         </div>
     );
 }
+
+export { UniversityUnitManager as UnitManager };
+export default UniversityUnitManager;
 

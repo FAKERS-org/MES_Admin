@@ -9,7 +9,7 @@ import Link from "next/link";
 import type { FormEvent } from "react";
 import ProgramChip from "./program-chip";
 
-export interface DepartmentCardProps {
+export interface ChildUnitCardProps {
     child: UnitSummary;
     childPrograms: ProgramSummary[];
     universityId: string;
@@ -31,7 +31,9 @@ export interface DepartmentCardProps {
     onDeleteProgram: (program: ProgramSummary) => () => Promise<void>;
 }
 
-export function DepartmentCard({
+export type DepartmentCardProps = ChildUnitCardProps;
+
+export function ChildUnitCard({
     child,
     childPrograms,
     universityId,
@@ -213,4 +215,5 @@ export function DepartmentCard({
     );
 }
 
-export default DepartmentCard;
+export { ChildUnitCard as DepartmentCard };
+export default ChildUnitCard;

@@ -21,10 +21,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import type { FormEvent } from "react";
-import DepartmentCard from "./department-card";
+import ChildUnitCard from "./child-unit-card";
 import ProgramChip from "./program-chip";
 
-export interface FacultyCardProps {
+export interface ParentUnitCardProps {
     unit: UnitSummary;
     childrenUnits: UnitSummary[];
     unitPrograms: ProgramSummary[];
@@ -51,7 +51,9 @@ export interface FacultyCardProps {
     onDeleteProgram: (program: ProgramSummary) => () => Promise<void>;
 }
 
-export function FacultyCard({
+export type FacultyCardProps = ParentUnitCardProps;
+
+export function ParentUnitCard({
     unit,
     childrenUnits,
     unitPrograms,
@@ -274,7 +276,7 @@ export function FacultyCard({
 
                                 <div className="grid gap-3 sm:grid-cols-1">
                                     {childrenUnits.map(child => (
-                                        <DepartmentCard
+                                        <ChildUnitCard
                                             key={child.id}
                                             child={child}
                                             childPrograms={programsByUnitId[String(child.id)] ?? []}
@@ -392,4 +394,5 @@ export function FacultyCard({
     );
 }
 
-export default FacultyCard;
+export { ParentUnitCard as FacultyCard };
+export default ParentUnitCard;

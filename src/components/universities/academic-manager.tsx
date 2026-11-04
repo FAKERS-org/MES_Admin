@@ -6,7 +6,7 @@ import { FolderTree, GraduationCap } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import ProgramManager from "@/components/universities/program-manager";
-import UnitManager from "@/components/universities/unit-manager";
+import UniversityUnitManager from "@/components/universities/university-unit-manager";
 import type { ProgramSummary, UnitSummary } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -110,7 +110,7 @@ export default function AcademicManager({
 
             <CardContent className="p-5">
                 {activeTab === "units" ? (
-                    <UnitManager
+                    <UniversityUnitManager
                         universityId={universityId}
                         universitySlug={universitySlug}
                         units={units}
