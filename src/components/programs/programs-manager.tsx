@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, useTransition, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { GraduationCap, Pencil, Plus, Search } from "lucide-react";
+import { Copy, GraduationCap, Pencil, Plus, Search, Sparkles } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { Alert, EmptyState, PageHeader } from "@/components/ui/feedback";
 import { Field, Input, Select } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { BatchProgramModal } from "@/components/programs/batch-program-modal";
 import { apiRequest } from "@/lib/api";
 import {
     CURRENCIES,
@@ -65,7 +66,10 @@ export function ProgramsManager({
 
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [editingProgram, setEditingProgram] = useState<ProgramListItem | null>(null);
+    const [cloningProgram, setCloningProgram] = useState<ProgramListItem | null>(null);
+    const [isBatchOpen, setIsBatchOpen] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [createSuccess, setCreateSuccess] = useState<string | null>(null);
 
     const [createUniId, setCreateUniId] = useState("");
     const [createUnitId, setCreateUnitId] = useState("");
@@ -132,11 +136,20 @@ export function ProgramsManager({
     const handleCreate = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError(null);
-        const form = new FormData(e.currentTarget);
+        setCreateSuccess(null);
+        const formElem = e.currentTarget;
+        const isAddAnother = (e.nativeEvent as SubmitEvent)?.submitter?.getAttribute("value") === "another";
+        const form = new FormData(formElem);
         const universityId = raw(form, "university_id");
 
         if (!universityId) {
             setError("Please select a university.");
+            return;
+        }
+
+        const nameEn = raw(form, "name_en");
+        if (!nameEn) {
+            setError("Program name (English) is required.");
             return;
         }
 
@@ -156,7 +169,7 @@ export function ProgramsManager({
         const shifts = form.getAll("shifts") as StudyShift[];
 
         const payload: ProgramCreatePayload = {
-            name_en: raw(form, "name_en"),
+            name_en: nameEn,
             name_kh: nullable(form, "name_kh"),
             faculty,
             unit_id: unitId,
@@ -174,10 +187,23 @@ export function ProgramsManager({
                 method: "POST",
                 body: payload,
             });
-            setIsCreateOpen(false);
-            setCreateUniId("");
-            setCreateUnitId("");
             startTransition(() => router.refresh());
+
+            if (isAddAnother) {
+                setCreateSuccess(`“${payload.name_en}” created successfully! Add another below.`);
+                const nameEnInput = formElem.querySelector<HTMLInputElement>("#create-name-en");
+                const nameKhInput = formElem.querySelector<HTMLInputElement>("#create-name-kh");
+                if (nameEnInput) {
+                    nameEnInput.value = "";
+                    nameEnInput.focus();
+                }
+                if (nameKhInput) nameKhInput.value = "";
+            } else {
+                setIsCreateOpen(false);
+                setCloningProgram(null);
+                setCreateUniId("");
+                setCreateUnitId("");
+            }
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : "Failed to create program");
         }
@@ -246,10 +272,27 @@ export function ProgramsManager({
                 title={<h1 className="text-2xl font-semibold tracking-tight">Academic Programs</h1>}
                 subtitle={`${filtered.length} of ${initialPrograms.length} programs match the current filters.`}
                 actions={
-                    <Button onClick={() => setIsCreateOpen(true)}>
-                        <Plus className="size-4" />
-                        New program
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            className="gap-1.5 text-primary bg-primary/5 hover:bg-primary/10 border-primary/20 shadow-2xs"
+                            onClick={() => setIsBatchOpen(true)}
+                        >
+                            <Sparkles className="size-4" />
+                            Batch Add
+                        </Button>
+                        <Button
+                            onClick={() => {
+                                setCloningProgram(null);
+                                setCreateSuccess(null);
+                                setIsCreateOpen(true);
+                            }}
+                            className="gap-1.5"
+                        >
+                            <Plus className="size-4" />
+                            New program
+                        </Button>
+                    </div>
                 }
             />
 
@@ -424,7 +467,23 @@ export function ProgramsManager({
                                             )}
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <div className="flex items-center justify-end gap-2">
+                                            <div className="flex items-center justify-end gap-1">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        setCloningProgram(program);
+                                                        setCreateUniId(String(program.university_id));
+                                                        setCreateUnitId(program.unit_id ? String(program.unit_id) : "");
+                                                        fetchUnits(program.university_id);
+                                                        setCreateSuccess(null);
+                                                        setIsCreateOpen(true);
+                                                    }}
+                                                    title={`Duplicate ${program.name_en}`}
+                                                >
+                                                    <Copy className="size-3.5" />
+                                                    Duplicate
+                                                </Button>
                                                 <Button variant="ghost" size="sm" onClick={() => setEditingProgram(program)}>
                                                     <Pencil className="size-3.5" />
                                                     Edit
@@ -441,8 +500,21 @@ export function ProgramsManager({
             </Card>
 
             {/* Create Program Modal */}
-            <Modal isOpen={isCreateOpen} onClose={() => { setIsCreateOpen(false); setCreateUniId(""); setCreateUnitId(""); }} title="New Academic Program" icon={<GraduationCap className="size-5 text-primary" />}>
+            <Modal
+                isOpen={isCreateOpen}
+                onClose={() => {
+                    setIsCreateOpen(false);
+                    setCloningProgram(null);
+                    setCreateSuccess(null);
+                    setCreateUniId("");
+                    setCreateUnitId("");
+                }}
+                title={cloningProgram ? `Duplicate “${cloningProgram.name_en}”` : "New Academic Program"}
+                icon={<GraduationCap className="size-5 text-primary" />}
+            >
                 <form onSubmit={handleCreate} className="space-y-4">
+                    {createSuccess ? <Alert variant="success">{createSuccess}</Alert> : null}
+
                     <Field label="University" htmlFor="create-uni" required>
                         <Select
                             id="create-uni"
@@ -488,17 +560,33 @@ export function ProgramsManager({
 
                     <div className="grid gap-4 sm:grid-cols-2">
                         <Field label="Program Name (EN)" htmlFor="create-name-en" required>
-                            <Input id="create-name-en" name="name_en" required placeholder="Computer Science" />
+                            <Input
+                                id="create-name-en"
+                                name="name_en"
+                                required
+                                placeholder="Computer Science"
+                                defaultValue={cloningProgram ? `${cloningProgram.name_en} (Copy)` : ""}
+                            />
                         </Field>
                         <Field label="Program Name (KH)" htmlFor="create-name-kh">
-                            <Input id="create-name-kh" name="name_kh" placeholder="វិទ្យាសាស្ត្រកុំព្យូទ័រ" />
+                            <Input
+                                id="create-name-kh"
+                                name="name_kh"
+                                placeholder="វិទ្យាសាស្ត្រកុំព្យូទ័រ"
+                                defaultValue={cloningProgram?.name_kh ? `${cloningProgram.name_kh} (ចម្លង)` : ""}
+                            />
                         </Field>
                     </div>
 
                     <div className="grid gap-4 sm:grid-cols-2">
                         {!createUnitId ? (
                             <Field label="Faculty" htmlFor="create-faculty">
-                                <Input id="create-faculty" name="faculty" placeholder="Faculty of Science" />
+                                <Input
+                                    id="create-faculty"
+                                    name="faculty"
+                                    placeholder="Faculty of Science"
+                                    defaultValue={cloningProgram?.faculty ?? ""}
+                                />
                             </Field>
                         ) : (
                             <Field label="Faculty (Inferred from unit)">
@@ -506,7 +594,7 @@ export function ProgramsManager({
                                     disabled
                                     value={(() => {
                                         const selected = createUnits.find((u) => String(u.id) === createUnitId);
-                                        if (!selected) return "";
+                                        if (!selected) return cloningProgram?.faculty ?? "";
                                         if (selected.parent_id) {
                                             const parent = createUnits.find((u) => u.id === selected.parent_id);
                                             return parent ? parent.name_en : selected.name_en;
@@ -518,7 +606,7 @@ export function ProgramsManager({
                             </Field>
                         )}
                         <Field label="Degree Level" htmlFor="create-degree" required>
-                            <Select id="create-degree" name="degree_level" defaultValue="BACHELOR">
+                            <Select id="create-degree" name="degree_level" defaultValue={cloningProgram?.degree_level ?? "BACHELOR"}>
                                 {DEGREE_LEVELS.map((lvl) => (
                                     <option key={lvl} value={lvl}>{lvl}</option>
                                 ))}
@@ -528,10 +616,17 @@ export function ProgramsManager({
 
                     <div className="grid gap-4 sm:grid-cols-2">
                         <Field label="Duration (years)" htmlFor="create-duration" required>
-                            <Input id="create-duration" name="duration_years" type="number" step="0.5" defaultValue="4" required />
+                            <Input
+                                id="create-duration"
+                                name="duration_years"
+                                type="number"
+                                step="0.5"
+                                defaultValue={cloningProgram?.duration_years ?? 4}
+                                required
+                            />
                         </Field>
                         <Field label="Currency" htmlFor="create-currency">
-                            <Select id="create-currency" name="fee_currency" defaultValue="USD">
+                            <Select id="create-currency" name="fee_currency" defaultValue={cloningProgram?.fee_currency ?? "USD"}>
                                 {CURRENCIES.map((c) => (
                                     <option key={c} value={c}>{c}</option>
                                 ))}
@@ -541,10 +636,22 @@ export function ProgramsManager({
 
                     <div className="grid gap-4 sm:grid-cols-2">
                         <Field label="Tuition / Year (Standard)" htmlFor="create-tuition">
-                            <Input id="create-tuition" name="tuition_per_year" type="number" placeholder="1000" />
+                            <Input
+                                id="create-tuition"
+                                name="tuition_per_year"
+                                type="number"
+                                placeholder="1000"
+                                defaultValue={cloningProgram?.tuition_per_year ?? ""}
+                            />
                         </Field>
                         <Field label="Tuition / Year (Female Discount)" htmlFor="create-tuition-female">
-                            <Input id="create-tuition-female" name="tuition_female_per_year" type="number" placeholder="e.g. 500" />
+                            <Input
+                                id="create-tuition-female"
+                                name="tuition_female_per_year"
+                                type="number"
+                                placeholder="e.g. 500"
+                                defaultValue={cloningProgram?.tuition_female_per_year ?? ""}
+                            />
                         </Field>
                     </div>
 
@@ -553,12 +660,14 @@ export function ProgramsManager({
                         <div className="grid grid-cols-2 gap-2">
                             {STUDY_SHIFTS.map((shift) => {
                                 const info = STUDY_SHIFT_LABELS[shift];
+                                const isChecked = cloningProgram?.shifts?.includes(shift);
                                 return (
                                     <label key={shift} className="flex items-start gap-2 rounded-lg border p-2 text-xs hover:bg-muted/40 cursor-pointer">
                                         <input
                                             type="checkbox"
                                             name="shifts"
                                             value={shift}
+                                            defaultChecked={isChecked}
                                             className="mt-0.5 rounded border-input text-primary focus:ring-primary"
                                         />
                                         <div>
@@ -571,9 +680,24 @@ export function ProgramsManager({
                         </div>
                     </div>
 
-                    <div className="flex justify-end gap-2 pt-4 border-t">
-                        <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
-                        <Button type="submit">Create Program</Button>
+                    <div className="flex items-center justify-end gap-2 pt-4 border-t">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                                setIsCreateOpen(false);
+                                setCloningProgram(null);
+                                setCreateSuccess(null);
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button type="submit" variant="outline" value="another">
+                            Save & Add Another
+                        </Button>
+                        <Button type="submit" value="save">
+                            Create Program
+                        </Button>
                     </div>
                 </form>
             </Modal>
@@ -699,6 +823,19 @@ export function ProgramsManager({
                     </form>
                 ) : null}
             </Modal>
+
+            {/* Batch Program Modal */}
+            <BatchProgramModal
+                isOpen={isBatchOpen}
+                onClose={() => setIsBatchOpen(false)}
+                universities={universities}
+                universityId={uniFilter || undefined}
+                units={uniFilter ? unitsCache[uniFilter] : undefined}
+                onSuccess={newPrograms => {
+                    setIsBatchOpen(false);
+                    startTransition(() => router.refresh());
+                }}
+            />
         </div>
     );
 }

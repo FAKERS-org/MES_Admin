@@ -161,6 +161,7 @@ export interface UniversitySummary {
     parent_id?: number | null;
     campus_name?: string | null;
     is_main_campus?: boolean;
+    metadata_json?: Record<string, unknown> | null;
 }
 
 /** `GET /api/v1/admin/universities/{id}` response. */
@@ -188,6 +189,7 @@ export interface UniversityDetail extends UniversitySummary {
     tuition_min_per_year?: number | null;
     tuition_max_per_year?: number | null;
     has_female_tuition_discount?: boolean;
+    metadata_json?: Record<string, unknown> | null;
     programs: ProgramSummary[];
     campuses?: CampusSummary[];
 }
@@ -212,6 +214,7 @@ export interface UniversityCreatePayload {
     advisor_avatar_url?: string | null;
     admissions_requirements_en?: string | null;
     admissions_requirements_kh?: string | null;
+    metadata_json?: Record<string, unknown> | null;
 }
 
 /** `PATCH /api/v1/admin/universities/{id}` body (field names as the API accepts them). */
@@ -248,6 +251,7 @@ export interface UniversityUpdatePayload {
     parent_id?: number | null;
     campus_name?: string | null;
     is_main_campus?: boolean;
+    metadata_json?: Record<string, unknown> | null;
 }
 
 /** `ProgramSummary` item, embedded in `UniversityDetail.programs`. */
@@ -269,6 +273,7 @@ export interface ProgramSummary {
     fee_currency: Currency;
     shifts?: StudyShift[] | null;
     curriculum_sections?: CurriculumSection[] | null;
+    metadata_json?: Record<string, unknown> | null;
 }
 
 /** `UnitSummary` item, from `GET /api/v1/admin/universities/{university_id}/units`. */
@@ -286,6 +291,7 @@ export interface UnitSummary {
     default_tuition_per_year?: number | null;
     default_tuition_female_per_year?: number | null;
     position?: number;
+    metadata_json?: Record<string, unknown> | null;
 }
 
 export interface UnitListItem extends UnitSummary {
@@ -309,6 +315,7 @@ export interface UnitCreatePayload {
     position?: number;
     default_tuition_per_year?: number | null;
     default_tuition_female_per_year?: number | null;
+    metadata_json?: Record<string, unknown> | null;
 }
 
 export interface UnitCreateDirectPayload extends UnitCreatePayload {
@@ -399,6 +406,7 @@ export interface ProgramCreatePayload {
     fee_currency: Currency;
     shifts?: StudyShift[] | null;
     curriculum_sections?: CurriculumSection[] | null;
+    metadata_json?: Record<string, unknown> | null;
 }
 
 /** `PATCH /api/v1/admin/programs/{id}` body. */
@@ -418,6 +426,7 @@ export interface ProgramUpdatePayload {
     overview_kh?: string | null;
     admission_req_en?: string | null;
     admission_req_kh?: string | null;
+    metadata_json?: Record<string, unknown> | null;
 }
 
 /** `GET /health` response. */

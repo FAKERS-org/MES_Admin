@@ -1,6 +1,6 @@
 "use client";
 
-import { GraduationCap, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { Copy, GraduationCap, Pencil, Plus, Search, Sparkles, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition, type FormEvent } from "react";
 
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import ConfirmButton from "@/components/ui/confirm-button";
 import { Alert, EmptyState, Spinner } from "@/components/ui/feedback";
 import { Field, Input, Select } from "@/components/ui/field";
+import { BatchProgramModal } from "@/components/programs/batch-program-modal";
 import { apiRequest } from "@/lib/api";
 import {
     CURRENCIES,
@@ -238,6 +239,8 @@ export default function ProgramManager({
     const [degreeFilter, setDegreeFilter] = useState("");
     const [adding, setAdding] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
+    const [cloningProgram, setCloningProgram] = useState<ProgramSummary | null>(null);
+    const [isBatchOpen, setIsBatchOpen] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [saved, setSaved] = useState<string | null>(null);
     const [pending, startTransition] = useTransition();
@@ -264,7 +267,9 @@ export default function ProgramManager({
 
     function handleCreate(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-        const form = new FormData(event.currentTarget);
+        const formElem = event.currentTarget;
+        const form = new FormData(formElem);
+        const isAddAnother = (event.nativeEvent as SubmitEvent)?.submitter?.getAttribute("value") === "another";
         const nameEn = raw(form, "name_en");
         if (!nameEn) {
             setError("Program name (English) is required.");
@@ -307,9 +312,21 @@ export default function ProgramManager({
                     body: payload,
                 });
                 setItems(current => [...current, created]);
-                setAdding(false);
-                flash(`“${created.name_en}” added.`);
+                flash(`“${created.name_en}” added.${isAddAnother ? " You can add another below." : ""}`);
                 router.refresh();
+
+                if (isAddAnother) {
+                    const nameEnInput = formElem.querySelector<HTMLInputElement>("#p-name");
+                    const nameKhInput = formElem.querySelector<HTMLInputElement>("#p-name-kh");
+                    if (nameEnInput) {
+                        nameEnInput.value = "";
+                        nameEnInput.focus();
+                    }
+                    if (nameKhInput) nameKhInput.value = "";
+                } else {
+                    setAdding(false);
+                    setCloningProgram(null);
+                }
             } catch (caught) {
                 setError(caught instanceof Error ? caught.message : "Could not add the program.");
             }
@@ -427,17 +444,29 @@ export default function ProgramManager({
                 </div>
 
                 {!adding && (
-                    <Button
-                        size="sm"
-                        className="h-8.5 gap-1.5 text-xs shadow-2xs font-medium self-end sm:self-auto"
-                        onClick={() => {
-                            setAdding(true);
-                            setEditingId(null);
-                        }}
-                    >
-                        <Plus className="size-3.5" />
-                        Add Program
-                    </Button>
+                    <div className="flex items-center gap-2 self-end sm:self-auto">
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8.5 gap-1.5 text-xs font-medium text-primary bg-primary/5 hover:bg-primary/10 border-primary/20 shadow-2xs"
+                            onClick={() => setIsBatchOpen(true)}
+                        >
+                            <Sparkles className="size-3.5" />
+                            Batch Add
+                        </Button>
+                        <Button
+                            size="sm"
+                            className="h-8.5 gap-1.5 text-xs shadow-2xs font-medium"
+                            onClick={() => {
+                                setAdding(true);
+                                setEditingId(null);
+                                setCloningProgram(null);
+                            }}
+                        >
+                            <Plus className="size-3.5" />
+                            Add Program
+                        </Button>
+                    </div>
                 )}
             </div>
 
@@ -446,21 +475,62 @@ export default function ProgramManager({
 
             {adding ? (
                 <form onSubmit={handleCreate} className="space-y-4 rounded-xl border bg-muted/30 p-4">
-                    <p className="text-sm font-medium">New program</p>
-                    <ProgramFields units={units} defaultTuitionPerYear={defaultTuitionPerYear} />
-                    <div className="flex gap-2">
-                        <Button type="submit" size="sm" disabled={pending}>
-                            {pending ? <Spinner className="size-3.5" /> : null}
-                            {pending ? "Adding…" : "Add program"}
-                        </Button>
+                    <div className="flex items-center justify-between border-b pb-2">
+                        <p className="text-sm font-semibold">
+                            {cloningProgram ? `Duplicate program based on “${cloningProgram.name_en}”` : "New degree program"}
+                        </p>
                         <Button
                             type="button"
                             size="sm"
                             variant="ghost"
-                            onClick={() => setAdding(false)}
+                            className="h-7 text-xs"
+                            onClick={() => {
+                                setAdding(false);
+                                setCloningProgram(null);
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                    </div>
+                    <ProgramFields
+                        defaultValue={
+                            cloningProgram
+                                ? {
+                                      ...cloningProgram,
+                                      name_en: `${cloningProgram.name_en} (Copy)`,
+                                      name_kh: cloningProgram.name_kh ? `${cloningProgram.name_kh} (ចម្លង)` : null,
+                                  }
+                                : undefined
+                        }
+                        units={units}
+                        defaultTuitionPerYear={defaultTuitionPerYear}
+                    />
+                    <div className="flex flex-wrap items-center justify-end gap-2 pt-2 border-t">
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                                setAdding(false);
+                                setCloningProgram(null);
+                            }}
                             disabled={pending}
                         >
                             Cancel
+                        </Button>
+                        <Button
+                            type="submit"
+                            size="sm"
+                            variant="outline"
+                            value="another"
+                            disabled={pending}
+                        >
+                            {pending ? <Spinner className="size-3.5" /> : null}
+                            Save & Add Another
+                        </Button>
+                        <Button type="submit" size="sm" value="save" disabled={pending}>
+                            {pending ? <Spinner className="size-3.5" /> : null}
+                            {pending ? "Adding…" : "Add program"}
                         </Button>
                     </div>
                 </form>
@@ -599,10 +669,26 @@ export default function ProgramManager({
                                     <div className="flex items-center gap-1.5">
                                         <Button
                                             size="sm"
+                                            variant="ghost"
+                                            className="h-8 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground"
+                                            onClick={() => {
+                                                setCloningProgram(program);
+                                                setAdding(true);
+                                                setEditingId(null);
+                                                window.scrollTo({ top: 0, behavior: "smooth" });
+                                            }}
+                                            title={`Duplicate ${program.name_en}`}
+                                        >
+                                            <Copy className="size-3.5" />
+                                            <span>Duplicate</span>
+                                        </Button>
+                                        <Button
+                                            size="sm"
                                             variant="outline"
                                             onClick={() => {
                                                 setEditingId(program.id);
                                                 setAdding(false);
+                                                setCloningProgram(null);
                                             }}
                                             aria-label={`Edit ${program.name_en}`}
                                         >
@@ -623,6 +709,20 @@ export default function ProgramManager({
                     )}
                 </div>
             ) : null}
+
+            {/* Batch Program Creator Modal */}
+            <BatchProgramModal
+                isOpen={isBatchOpen}
+                onClose={() => setIsBatchOpen(false)}
+                universityId={universityId}
+                units={units}
+                defaultTuitionPerYear={defaultTuitionPerYear}
+                onSuccess={newPrograms => {
+                    setItems(current => [...current, ...newPrograms]);
+                    flash(`Successfully added ${newPrograms.length} programs in batch.`);
+                    router.refresh();
+                }}
+            />
         </div>
     );
 }

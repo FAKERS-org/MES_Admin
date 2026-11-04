@@ -12,6 +12,7 @@ import {
     Pencil,
     Plus,
     Search,
+    Sparkles,
     Trash2,
 } from "lucide-react";
 import Link from "next/link";
@@ -26,12 +27,14 @@ import { Alert, EmptyState, Spinner } from "@/components/ui/feedback";
 import { Input } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
 import UnitFields, { unitPayload } from "@/components/units/unit-fields";
+import { BatchProgramModal } from "@/components/programs/batch-program-modal";
 import { ProgramFields } from "@/components/universities/program-manager";
 import { apiRequest } from "@/lib/api";
 import { resolveProgramTuition } from "@/lib/tuition";
 import type {
     Currency,
     DegreeLevel,
+    ProgramCreatePayload,
     ProgramSummary,
     ProgramUpdatePayload,
     StudyShift,
@@ -59,6 +62,10 @@ export default function UnitManager({
     const [items, setItems] = useState<UnitSummary[]>(units ?? []);
     const [localPrograms, setLocalPrograms] = useState<ProgramSummary[]>(programs ?? []);
     const [editingProgram, setEditingProgram] = useState<ProgramSummary | null>(null);
+    const [quickAddUnit, setQuickAddUnit] = useState<UnitSummary | null>(null);
+    const [cloningProgram, setCloningProgram] = useState<ProgramSummary | null>(null);
+    const [batchTargetUnit, setBatchTargetUnit] = useState<UnitSummary | null>(null);
+    const [isBatchOpen, setIsBatchOpen] = useState(false);
 
     const [adding, setAdding] = useState(false);
     const [defaultParentForNew, setDefaultParentForNew] = useState<string | null>(null);
@@ -109,7 +116,9 @@ export default function UnitManager({
 
     function handleCreate(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
-        const payload = unitPayload(new FormData(event.currentTarget));
+        const formElem = event.currentTarget;
+        const isAddAnother = (event.nativeEvent as SubmitEvent)?.submitter?.getAttribute("value") === "another";
+        const payload = unitPayload(new FormData(formElem));
         if (!payload.name_en) {
             setError("Name (English) is required.");
             return;
@@ -122,14 +131,106 @@ export default function UnitManager({
                     { method: "POST", body: payload },
                 );
                 upsert(created);
-                setAdding(false);
-                setDefaultParentForNew(null);
-                flash(`“${created.name_en}” added.`);
+                flash(`“${created.name_en}” added.${isAddAnother ? " You can add another below." : ""}`);
                 router.refresh();
+
+                if (isAddAnother) {
+                    const nameEnInput = formElem.querySelector<HTMLInputElement>("#u-name-en");
+                    const nameKhInput = formElem.querySelector<HTMLInputElement>("#u-name-kh");
+                    if (nameEnInput) {
+                        nameEnInput.value = "";
+                        nameEnInput.focus();
+                    }
+                    if (nameKhInput) nameKhInput.value = "";
+                } else {
+                    setAdding(false);
+                    setDefaultParentForNew(null);
+                }
             } catch (caught) {
                 setError(caught instanceof Error ? caught.message : "Could not add the unit.");
             }
         });
+    }
+
+    function handleCreateProgramSubmit(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+        const formElem = event.currentTarget;
+        const form = new FormData(formElem);
+        const isAddAnother = (event.nativeEvent as SubmitEvent)?.submitter?.getAttribute("value") === "another";
+        const nameEn = String(form.get("name_en") || "").trim();
+        if (!nameEn) {
+            setError("Program name (English) is required.");
+            return;
+        }
+
+        const unitIdRaw = String(form.get("unit_id") || "").trim();
+        const unitId = unitIdRaw ? Number(unitIdRaw) : null;
+        const selectedUnit = items.find(u => String(u.id) === unitIdRaw);
+        let faculty = String(form.get("faculty") || "").trim() || null;
+        if (selectedUnit) {
+            if (selectedUnit.parent_id) {
+                const parent = items.find(u => u.id === selectedUnit.parent_id);
+                faculty = parent ? parent.name_en : selectedUnit.name_en;
+            } else {
+                faculty = selectedUnit.name_en;
+            }
+        }
+
+        const shifts = form.getAll("shifts") as StudyShift[];
+
+        const payload: ProgramCreatePayload = {
+            name_en: nameEn,
+            name_kh: String(form.get("name_kh") || "").trim() || null,
+            faculty,
+            unit_id: unitId,
+            degree_level: form.get("degree_level") as DegreeLevel,
+            duration_years: Number(form.get("duration_years") || 4),
+            tuition_per_year: form.get("tuition_per_year") ? Number(form.get("tuition_per_year")) : null,
+            tuition_female_per_year: form.get("tuition_female_per_year") ? Number(form.get("tuition_female_per_year")) : null,
+            tuition_per_credit: form.get("tuition_per_credit") ? Number(form.get("tuition_per_credit")) : null,
+            fee_currency: form.get("fee_currency") as Currency,
+            shifts: shifts.length > 0 ? shifts : null,
+        };
+
+        startTransition(async () => {
+            try {
+                const created = await apiRequest<ProgramSummary>(`/api/admin/universities/${universityId}/programs`, {
+                    method: "POST",
+                    body: payload,
+                });
+                setLocalPrograms(current => [...current, created]);
+                flash(`“${created.name_en}” added.${isAddAnother ? " You can add another below." : ""}`);
+                router.refresh();
+
+                if (isAddAnother) {
+                    const nameEnInput = formElem.querySelector<HTMLInputElement>("#p-name");
+                    const nameKhInput = formElem.querySelector<HTMLInputElement>("#p-name-kh");
+                    if (nameEnInput) {
+                        nameEnInput.value = "";
+                        nameEnInput.focus();
+                    }
+                    if (nameKhInput) nameKhInput.value = "";
+                } else {
+                    setQuickAddUnit(null);
+                    setCloningProgram(null);
+                }
+            } catch (caught) {
+                setError(caught instanceof Error ? caught.message : "Could not add the program.");
+            }
+        });
+    }
+
+    function handleDeleteProgram(program: ProgramSummary) {
+        return async () => {
+            try {
+                await apiRequest(`/api/admin/programs/${program.id}`, { method: "DELETE" });
+                setLocalPrograms(current => current.filter(item => item.id !== program.id));
+                flash(`“${program.name_en}” deleted.`);
+                router.refresh();
+            } catch (caught) {
+                setError(caught instanceof Error ? caught.message : "Could not delete the program.");
+            }
+        };
     }
 
     function handleUpdate(unit: UnitSummary) {
@@ -417,18 +518,33 @@ export default function UnitManager({
                     )}
 
                     {!adding && (
-                        <Button
-                            size="sm"
-                            className="h-8.5 gap-1.5 text-xs shadow-2xs font-medium"
-                            onClick={() => {
-                                setAdding(true);
-                                setDefaultParentForNew(null);
-                                setEditingId(null);
-                            }}
-                        >
-                            <Plus className="size-3.5" />
-                            Add Faculty
-                        </Button>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8.5 gap-1.5 text-xs font-medium text-primary bg-primary/5 hover:bg-primary/10 border-primary/20 shadow-2xs"
+                                onClick={() => {
+                                    setBatchTargetUnit(null);
+                                    setIsBatchOpen(true);
+                                }}
+                                title="Batch add multiple degree programs"
+                            >
+                                <Sparkles className="size-3.5" />
+                                <span>Batch Programs</span>
+                            </Button>
+                            <Button
+                                size="sm"
+                                className="h-8.5 gap-1.5 text-xs shadow-2xs font-medium"
+                                onClick={() => {
+                                    setAdding(true);
+                                    setDefaultParentForNew(null);
+                                    setEditingId(null);
+                                }}
+                            >
+                                <Plus className="size-3.5" />
+                                Add Faculty
+                            </Button>
+                        </div>
                     )}
                 </div>
             </div>
@@ -489,7 +605,17 @@ export default function UnitManager({
                             >
                                 Cancel
                             </Button>
-                            <Button type="submit" size="sm" disabled={pending}>
+                            <Button
+                                type="submit"
+                                size="sm"
+                                variant="outline"
+                                value="another"
+                                disabled={pending}
+                            >
+                                {pending ? <Spinner className="size-3.5" /> : null}
+                                Save & Add Another
+                            </Button>
+                            <Button type="submit" size="sm" value="save" disabled={pending}>
                                 {pending ? <Spinner className="size-3.5" /> : null}
                                 {pending ? "Adding…" : defaultParentForNew ? "Create Department" : "Create Faculty"}
                             </Button>
@@ -643,6 +769,34 @@ export default function UnitManager({
                                             variant="outline"
                                             className="h-7 px-2.5 text-xs font-medium gap-1 rounded-md"
                                             onClick={() => {
+                                                setQuickAddUnit(unit);
+                                                setCloningProgram(null);
+                                            }}
+                                            title="Add degree program to this faculty"
+                                        >
+                                            <Plus className="size-3.5" />
+                                            <span>Add Program</span>
+                                        </Button>
+
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="h-7 px-2 text-xs font-medium gap-1 rounded-md text-primary hover:text-primary bg-primary/5 hover:bg-primary/10 border-primary/20"
+                                            onClick={() => {
+                                                setBatchTargetUnit(unit);
+                                                setIsBatchOpen(true);
+                                            }}
+                                            title="Batch add multiple programs from a list"
+                                        >
+                                            <Sparkles className="size-3" />
+                                            <span>Batch</span>
+                                        </Button>
+
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="h-7 px-2.5 text-xs font-medium gap-1 rounded-md"
+                                            onClick={() => {
                                                 setDefaultParentForNew(unit.id);
                                                 setAdding(true);
                                             }}
@@ -684,8 +838,10 @@ export default function UnitManager({
                                         <ConfirmButton
                                             onConfirm={handleDelete(unit)}
                                             confirmLabel={`Delete “${unit.name_en}”?`}
+                                            title={`Delete “${unit.name_en}”`}
+                                            className="size-7 p-0 rounded-md"
                                         >
-                                            <Trash2 className="size-3.5 text-muted-foreground hover:text-destructive" />
+                                            <Trash2 className="size-3.5" />
                                         </ConfirmButton>
                                     </div>
                                 </div>
@@ -778,6 +934,32 @@ export default function UnitManager({
                                                                         </div>
 
                                                                         <div className="flex items-center gap-1 shrink-0">
+                                                                            <Button
+                                                                                size="sm"
+                                                                                variant="outline"
+                                                                                className="h-6 px-2 text-2xs font-medium gap-1 rounded-md"
+                                                                                onClick={() => {
+                                                                                    setQuickAddUnit(child);
+                                                                                    setCloningProgram(null);
+                                                                                }}
+                                                                                title="Add degree program under this department"
+                                                                            >
+                                                                                <Plus className="size-3" />
+                                                                                <span>Add Program</span>
+                                                                            </Button>
+                                                                            <Button
+                                                                                size="sm"
+                                                                                variant="outline"
+                                                                                className="h-6 px-1.5 text-2xs font-medium gap-1 rounded-md text-primary hover:text-primary bg-primary/5 hover:bg-primary/10 border-primary/20"
+                                                                                onClick={() => {
+                                                                                    setBatchTargetUnit(child);
+                                                                                    setIsBatchOpen(true);
+                                                                                }}
+                                                                                title="Batch add multiple programs from a list"
+                                                                            >
+                                                                                <Sparkles className="size-3" />
+                                                                                <span>Batch</span>
+                                                                            </Button>
                                                                             <Link
                                                                                 href={`/universities/${universitySlug ?? universityId}/units/${child.slug ?? child.id}`}
                                                                                 className="inline-flex size-6 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
@@ -807,8 +989,10 @@ export default function UnitManager({
                                                                             <ConfirmButton
                                                                                 onConfirm={handleDelete(child)}
                                                                                 confirmLabel={`Delete “${child.name_en}”?`}
+                                                                                title={`Delete “${child.name_en}”`}
+                                                                                className="size-6 p-0 rounded-md"
                                                                             >
-                                                                                <Trash2 className="size-3 text-muted-foreground hover:text-destructive" />
+                                                                                <Trash2 className="size-3" />
                                                                             </ConfirmButton>
                                                                         </div>
                                                                     </div>
@@ -824,13 +1008,44 @@ export default function UnitManager({
                                                                                     defaultTuitionPerYear={defaultTuitionPerYear}
                                                                                     defaultTuitionFemalePerYear={defaultTuitionFemalePerYear}
                                                                                     onEdit={setEditingProgram}
+                                                                                    onClone={p => {
+                                                                                        setCloningProgram(p);
+                                                                                        setQuickAddUnit(child);
+                                                                                    }}
+                                                                                    onDelete={handleDeleteProgram(prog)}
                                                                                 />
                                                                             ))}
                                                                         </div>
                                                                     ) : (
-                                                                        <p className="text-2xs text-muted-foreground italic px-1">
-                                                                            No degree programs under this department yet.
-                                                                        </p>
+                                                                        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 p-2 rounded-lg border border-dashed bg-muted/20 text-2xs text-muted-foreground">
+                                                                            <span>No degree programs under this department yet.</span>
+                                                                            <div className="flex items-center gap-1">
+                                                                                <Button
+                                                                                    size="sm"
+                                                                                    variant="outline"
+                                                                                    className="h-6 text-3xs gap-1"
+                                                                                    onClick={() => {
+                                                                                        setQuickAddUnit(child);
+                                                                                        setCloningProgram(null);
+                                                                                    }}
+                                                                                >
+                                                                                    <Plus className="size-2.5" />
+                                                                                    Add Program
+                                                                                </Button>
+                                                                                <Button
+                                                                                    size="sm"
+                                                                                    variant="outline"
+                                                                                    className="h-6 text-3xs gap-1 text-primary border-primary/20 bg-primary/5 hover:bg-primary/10"
+                                                                                    onClick={() => {
+                                                                                        setBatchTargetUnit(child);
+                                                                                        setIsBatchOpen(true);
+                                                                                    }}
+                                                                                >
+                                                                                    <Sparkles className="size-2.5" />
+                                                                                    Batch
+                                                                                </Button>
+                                                                            </div>
+                                                                        </div>
                                                                     )}
                                                                 </div>
                                                             );
@@ -842,11 +1057,39 @@ export default function UnitManager({
                                             {/* Direct Programs under Faculty (Common in Cambodia) */}
                                             {unitPrograms.length > 0 && (
                                                 <div className="space-y-2.5">
-                                                    <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                                                        <GraduationCap className="size-3.5 text-muted-foreground" />
-                                                        <span>
-                                                             {children.length > 0 ? "Direct Faculty Programs" : "Degree Programs"} ({unitPrograms.length})
-                                                        </span>
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                                            <GraduationCap className="size-3.5 text-muted-foreground" />
+                                                            <span>
+                                                                {children.length > 0 ? "Direct Faculty Programs" : "Degree Programs"} ({unitPrograms.length})
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1.5">
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                className="h-6 px-2 text-2xs font-medium gap-1"
+                                                                onClick={() => {
+                                                                    setQuickAddUnit(unit);
+                                                                    setCloningProgram(null);
+                                                                }}
+                                                            >
+                                                                <Plus className="size-3" />
+                                                                <span>Add Program</span>
+                                                            </Button>
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                className="h-6 px-1.5 text-2xs font-medium gap-1 text-primary hover:text-primary bg-primary/5 hover:bg-primary/10 border-primary/20"
+                                                                onClick={() => {
+                                                                    setBatchTargetUnit(unit);
+                                                                    setIsBatchOpen(true);
+                                                                }}
+                                                            >
+                                                                <Sparkles className="size-3" />
+                                                                <span>Batch</span>
+                                                            </Button>
+                                                        </div>
                                                     </div>
 
                                                     <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -858,6 +1101,11 @@ export default function UnitManager({
                                                                 defaultTuitionPerYear={defaultTuitionPerYear}
                                                                 defaultTuitionFemalePerYear={defaultTuitionFemalePerYear}
                                                                 onEdit={setEditingProgram}
+                                                                onClone={p => {
+                                                                    setCloningProgram(p);
+                                                                    setQuickAddUnit(unit);
+                                                                }}
+                                                                onDelete={handleDeleteProgram(prog)}
                                                             />
                                                         ))}
                                                     </div>
@@ -868,18 +1116,44 @@ export default function UnitManager({
                                             {children.length === 0 && unitPrograms.length === 0 && (
                                                 <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 rounded-xl border border-dashed bg-muted/20 text-xs text-muted-foreground">
                                                     <span>No departments or degree programs assigned to this faculty yet.</span>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        className="h-7 text-xs gap-1"
-                                                        onClick={() => {
-                                                            setDefaultParentForNew(unit.id);
-                                                            setAdding(true);
-                                                        }}
-                                                    >
-                                                        <Plus className="size-3" />
-                                                        Add Department
-                                                    </Button>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            className="h-7 text-xs gap-1"
+                                                            onClick={() => {
+                                                                setQuickAddUnit(unit);
+                                                                setCloningProgram(null);
+                                                            }}
+                                                        >
+                                                            <Plus className="size-3" />
+                                                            Add Program
+                                                        </Button>
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            className="h-7 text-xs gap-1 text-primary border-primary/20 bg-primary/5 hover:bg-primary/10"
+                                                            onClick={() => {
+                                                                setBatchTargetUnit(unit);
+                                                                setIsBatchOpen(true);
+                                                            }}
+                                                        >
+                                                            <Sparkles className="size-3" />
+                                                            Batch
+                                                        </Button>
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            className="h-7 text-xs gap-1"
+                                                            onClick={() => {
+                                                                setDefaultParentForNew(unit.id);
+                                                                setAdding(true);
+                                                            }}
+                                                        >
+                                                            <Plus className="size-3" />
+                                                            Add Dept
+                                                        </Button>
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
@@ -920,11 +1194,83 @@ export default function UnitManager({
                                 defaultTuitionPerYear={defaultTuitionPerYear}
                                 defaultTuitionFemalePerYear={defaultTuitionFemalePerYear}
                                 onEdit={setEditingProgram}
+                                onClone={p => {
+                                    setCloningProgram(p);
+                                    setQuickAddUnit(null);
+                                }}
+                                onDelete={handleDeleteProgram(prog)}
                             />
                         ))}
                     </div>
                 </div>
             )}
+
+            {/* Quick Add or Duplicate Degree Program Modal */}
+            <Modal
+                isOpen={Boolean(quickAddUnit || cloningProgram)}
+                onClose={() => {
+                    setQuickAddUnit(null);
+                    setCloningProgram(null);
+                }}
+                title={
+                    cloningProgram
+                        ? `Duplicate “${cloningProgram.name_en}”`
+                        : `Add Program to “${quickAddUnit?.name_en ?? "Unit"}”`
+                }
+                icon={<Plus className="size-4 text-primary" />}
+                maxWidth="max-w-2xl"
+            >
+                {(quickAddUnit || cloningProgram) && (
+                    <form onSubmit={handleCreateProgramSubmit} className="space-y-4">
+                        <ProgramFields
+                            defaultValue={
+                                cloningProgram
+                                    ? {
+                                          ...cloningProgram,
+                                          name_en: `${cloningProgram.name_en} (Copy)`,
+                                          name_kh: cloningProgram.name_kh ? `${cloningProgram.name_kh} (ចម្លង)` : null,
+                                          unit_id: quickAddUnit?.id ? Number(quickAddUnit.id) : (cloningProgram.unit_id ? Number(cloningProgram.unit_id) : null),
+                                      }
+                                    : {
+                                          unit_id: quickAddUnit?.id ? Number(quickAddUnit.id) : null,
+                                      }
+                            }
+                            units={items}
+                            defaultTuitionPerYear={
+                                quickAddUnit?.default_tuition_per_year ?? defaultTuitionPerYear
+                            }
+                        />
+                        <div className="flex items-center justify-end gap-2 pt-3 border-t">
+                            <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                    setQuickAddUnit(null);
+                                    setCloningProgram(null);
+                                }}
+                                disabled={pending}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                size="sm"
+                                variant="outline"
+                                value="another"
+                                disabled={pending}
+                            >
+                                {pending ? <Spinner className="size-3.5" /> : null}
+                                Save & Add Another
+                            </Button>
+                            <Button type="submit" size="sm" value="save" disabled={pending}>
+                                {pending ? <Spinner className="size-3.5" /> : null}
+                                {pending ? "Adding…" : "Add program"}
+                            </Button>
+                        </div>
+                    </form>
+                )}
+            </Modal>
 
             {/* Edit Degree Program Modal */}
             <Modal
@@ -959,6 +1305,23 @@ export default function UnitManager({
                     </form>
                 )}
             </Modal>
+
+            {/* Batch Program Modal */}
+            <BatchProgramModal
+                isOpen={isBatchOpen}
+                onClose={() => setIsBatchOpen(false)}
+                universityId={universityId}
+                units={items}
+                defaultUnitId={batchTargetUnit?.id}
+                defaultTuitionPerYear={
+                    batchTargetUnit?.default_tuition_per_year ?? defaultTuitionPerYear
+                }
+                onSuccess={newPrograms => {
+                    setLocalPrograms(current => [...current, ...newPrograms]);
+                    flash(`Successfully added ${newPrograms.length} programs in batch.`);
+                    router.refresh();
+                }}
+            />
         </div>
     );
 }
@@ -970,12 +1333,16 @@ function ProgramChip({
     defaultTuitionPerYear,
     defaultTuitionFemalePerYear,
     onEdit,
+    onClone,
+    onDelete,
 }: {
     program: ProgramSummary;
     unit: UnitSummary | null;
     defaultTuitionPerYear?: number | null;
     defaultTuitionFemalePerYear?: number | null;
     onEdit?: (program: ProgramSummary) => void;
+    onClone?: (program: ProgramSummary) => void;
+    onDelete?: () => void;
 }) {
     const resolved = resolveProgramTuition(
         program,
@@ -1000,7 +1367,7 @@ function ProgramChip({
                 </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-1.5 shrink-0">
                 <div className="flex flex-col items-end">
                     <div className="flex items-center gap-1.5">
                         <Badge variant="outline" className="text-3xs uppercase font-medium px-1.5 py-0">
@@ -1017,21 +1384,50 @@ function ProgramChip({
                     )}
                 </div>
 
-                {onEdit && (
-                    <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        className="size-6 p-0 rounded-md text-muted-foreground hover:text-foreground opacity-60 group-hover:opacity-100 transition-opacity"
-                        onClick={e => {
-                            e.stopPropagation();
-                            onEdit(program);
-                        }}
-                        title={`Edit ${program.name_en}`}
-                    >
-                        <Pencil className="size-3" />
-                    </Button>
-                )}
+                <div className="flex items-center gap-0.5">
+                    {onClone && (
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            className="size-6 p-0 rounded-md text-muted-foreground hover:text-foreground opacity-60 group-hover:opacity-100 transition-opacity"
+                            onClick={e => {
+                                e.stopPropagation();
+                                onClone(program);
+                            }}
+                            title={`Duplicate ${program.name_en}`}
+                        >
+                            <Copy className="size-3" />
+                        </Button>
+                    )}
+
+                    {onEdit && (
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            className="size-6 p-0 rounded-md text-muted-foreground hover:text-foreground opacity-60 group-hover:opacity-100 transition-opacity"
+                            onClick={e => {
+                                e.stopPropagation();
+                                onEdit(program);
+                            }}
+                            title={`Edit ${program.name_en}`}
+                        >
+                            <Pencil className="size-3" />
+                        </Button>
+                    )}
+
+                    {onDelete && (
+                        <ConfirmButton
+                            onConfirm={onDelete}
+                            confirmLabel={`Delete “${program.name_en}”?`}
+                            title={`Delete “${program.name_en}”`}
+                            className="size-6 p-0 rounded-md"
+                        >
+                            <Trash2 className="size-3" />
+                        </ConfirmButton>
+                    )}
+                </div>
             </div>
         </div>
     );

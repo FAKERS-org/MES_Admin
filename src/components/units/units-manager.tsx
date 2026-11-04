@@ -533,8 +533,10 @@ export function UnitsManager({
                                                     <ConfirmButton
                                                         onConfirm={handleDelete(unit)}
                                                         confirmLabel={`Delete “${unit.name_en}”?`}
+                                                        title={`Delete “${unit.name_en}”`}
+                                                        className="size-7 p-0 rounded-md"
                                                     >
-                                                        <Trash2 className="size-3.5 text-muted-foreground hover:text-destructive" />
+                                                        <Trash2 className="size-3.5" />
                                                     </ConfirmButton>
                                                 </div>
                                             </TableCell>

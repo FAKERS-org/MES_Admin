@@ -17,6 +17,9 @@ export default function ConfirmButton({
   children,
   className,
   disabled,
+  title,
+  variant = "destructive",
+  size = "sm",
 }: {
   label?: string;
   confirmLabel?: string;
@@ -24,6 +27,9 @@ export default function ConfirmButton({
   children?: ReactNode;
   className?: string;
   disabled?: boolean;
+  title?: string;
+  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+  size?: "default" | "sm" | "lg" | "icon";
 }) {
   const [armed, setArmed] = useState(false);
   const [pending, setPending] = useState(false);
@@ -32,9 +38,10 @@ export default function ConfirmButton({
     return (
       <button
         type="button"
+        title={title}
         disabled={disabled}
         onClick={() => setArmed(true)}
-        className={cn(buttonVariants({ variant: "destructive", size: "sm" }), className)}
+        className={cn(buttonVariants({ variant, size }), className)}
       >
         {children ?? label}
       </button>
@@ -43,7 +50,7 @@ export default function ConfirmButton({
 
   return (
     <span className="inline-flex flex-wrap items-center justify-end gap-2">
-      <span className="text-xs text-muted-foreground">{confirmLabel}</span>
+      <span className="text-xs font-medium text-foreground">{confirmLabel}</span>
       <button
         type="button"
         disabled={pending}
