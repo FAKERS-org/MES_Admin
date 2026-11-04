@@ -36,7 +36,7 @@ export function unitPayload(form: FormData): UnitCreatePayload {
     };
 }
 
-const UNIT_KIND_LABELS: Record<UnitKind, string> = {
+export const UNIT_KIND_LABELS: Record<UnitKind, string> = {
     FACULTY: "Faculty (មហាវិទ្យាល័យ)",
     INSTITUTE: "Institute (វិទ្យាស្ថាន)",
     SCHOOL: "School (សាលា)",
@@ -138,6 +138,16 @@ export default function UnitFields({
 
             <Field label="Category (Khmer)" htmlFor="u-category-kh">
                 <Input id="u-category-kh" name="category_kh" defaultValue={defaultValue?.category_kh ?? ""} />
+            </Field>
+
+            <Field label="Position / Order" htmlFor="u-position">
+                <Input
+                    id="u-position"
+                    name="position"
+                    type="number"
+                    placeholder="0"
+                    defaultValue={defaultValue?.position ?? 0}
+                />
             </Field>
 
             <Field label="Logo URL" htmlFor="u-logo" className="lg:col-span-2">

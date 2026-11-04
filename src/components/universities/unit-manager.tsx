@@ -28,7 +28,7 @@ import { Input } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
 import UnitFields, { unitPayload } from "@/components/units/unit-fields";
 import { BatchProgramModal } from "@/components/programs/batch-program-modal";
-import { ProgramFields } from "@/components/universities/program-manager";
+import ProgramFields, { programPayload } from "@/components/programs/program-fields";
 import { apiRequest } from "@/lib/api";
 import { resolveProgramTuition } from "@/lib/tuition";
 import type {
@@ -155,42 +155,22 @@ export default function UnitManager({
     function handleCreateProgramSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         const formElem = event.currentTarget;
-        const form = new FormData(formElem);
         const isAddAnother = (event.nativeEvent as SubmitEvent)?.submitter?.getAttribute("value") === "another";
-        const nameEn = String(form.get("name_en") || "").trim();
-        if (!nameEn) {
+        const payload = programPayload(new FormData(formElem)) as ProgramCreatePayload;
+        if (!payload.name_en) {
             setError("Program name (English) is required.");
             return;
         }
 
-        const unitIdRaw = String(form.get("unit_id") || "").trim();
-        const unitId = unitIdRaw ? Number(unitIdRaw) : null;
-        const selectedUnit = items.find(u => String(u.id) === unitIdRaw);
-        let faculty = String(form.get("faculty") || "").trim() || null;
+        const selectedUnit = items.find(u => String(u.id) === String(payload.unit_id));
         if (selectedUnit) {
             if (selectedUnit.parent_id) {
                 const parent = items.find(u => u.id === selectedUnit.parent_id);
-                faculty = parent ? parent.name_en : selectedUnit.name_en;
+                payload.faculty = parent ? parent.name_en : selectedUnit.name_en;
             } else {
-                faculty = selectedUnit.name_en;
+                payload.faculty = selectedUnit.name_en;
             }
         }
-
-        const shifts = form.getAll("shifts") as StudyShift[];
-
-        const payload: ProgramCreatePayload = {
-            name_en: nameEn,
-            name_kh: String(form.get("name_kh") || "").trim() || null,
-            faculty,
-            unit_id: unitId,
-            degree_level: form.get("degree_level") as DegreeLevel,
-            duration_years: Number(form.get("duration_years") || 4),
-            tuition_per_year: form.get("tuition_per_year") ? Number(form.get("tuition_per_year")) : null,
-            tuition_female_per_year: form.get("tuition_female_per_year") ? Number(form.get("tuition_female_per_year")) : null,
-            tuition_per_credit: form.get("tuition_per_credit") ? Number(form.get("tuition_per_credit")) : null,
-            fee_currency: form.get("fee_currency") as Currency,
-            shifts: shifts.length > 0 ? shifts : null,
-        };
 
         startTransition(async () => {
             try {
@@ -332,44 +312,21 @@ export default function UnitManager({
     function handleUpdateProgram(program: ProgramSummary) {
         return (event: FormEvent<HTMLFormElement>) => {
             event.preventDefault();
-            const form = new FormData(event.currentTarget);
-            const nameEn = String(form.get("name_en") || "").trim();
-            if (!nameEn) {
+            const payload = programPayload(new FormData(event.currentTarget)) as ProgramUpdatePayload;
+            if (!payload.name_en) {
                 setError("Program name (English) is required.");
                 return;
             }
 
-            const unitIdRaw = String(form.get("unit_id") || "").trim();
-            const unitId = unitIdRaw ? Number(unitIdRaw) : null;
-            const selectedUnit = items.find(u => String(u.id) === unitIdRaw);
-            let faculty = String(form.get("faculty") || "").trim() || null;
+            const selectedUnit = items.find(u => String(u.id) === String(payload.unit_id));
             if (selectedUnit) {
                 if (selectedUnit.parent_id) {
                     const parent = items.find(u => u.id === selectedUnit.parent_id);
-                    faculty = parent ? parent.name_en : selectedUnit.name_en;
+                    payload.faculty = parent ? parent.name_en : selectedUnit.name_en;
                 } else {
-                    faculty = selectedUnit.name_en;
+                    payload.faculty = selectedUnit.name_en;
                 }
             }
-
-            const shifts = form.getAll("shifts") as StudyShift[];
-
-            const payload: ProgramUpdatePayload = {
-                name_en: nameEn,
-                name_kh: String(form.get("name_kh") || "").trim() || null,
-                faculty,
-                unit_id: unitId,
-                degree_level: form.get("degree_level") as DegreeLevel,
-                duration_years: Number(form.get("duration_years") || 1),
-                fee_currency: form.get("fee_currency") as Currency,
-                shifts,
-            };
-            const perYearRaw = String(form.get("tuition_per_year") || "").trim();
-            if (perYearRaw) payload.tuition_per_year = Number(perYearRaw);
-            const perYearFemaleRaw = String(form.get("tuition_female_per_year") || "").trim();
-            if (perYearFemaleRaw) payload.tuition_female_per_year = Number(perYearFemaleRaw);
-            const perCreditRaw = String(form.get("tuition_per_credit") || "").trim();
-            if (perCreditRaw) payload.tuition_per_credit = Number(perCreditRaw);
 
             startTransition(async () => {
                 try {

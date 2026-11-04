@@ -20,9 +20,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import ConfirmButton from "@/components/ui/confirm-button";
 import { Alert, EmptyState, PageHeader, Spinner } from "@/components/ui/feedback";
-import { Checkbox, Field, Input, Select } from "@/components/ui/field";
+import { Field, Input, Select } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import UnitFields, { unitPayload, UNIT_KIND_LABELS } from "@/components/units/unit-fields";
 import { apiRequest } from "@/lib/api";
 import {
     UNIT_KINDS,
@@ -35,20 +36,6 @@ import {
     type UniversitySummary,
 } from "@/lib/types";
 import { cn, formatCurrency } from "@/lib/utils";
-
-const UNIT_KIND_LABELS: Record<UnitKind, string> = {
-    FACULTY: "Faculty (មហាវិទ្យាល័យ)",
-    INSTITUTE: "Institute (វិទ្យាស្ថាន)",
-    SCHOOL: "School (សាលា)",
-    COLLEGE: "College (ខូឡេក / មហាវិទ្យាល័យ)",
-    DEPARTMENT: "Department (ដេប៉ាតឺម៉ង់)",
-    SUB_DEPARTMENT: "Sub-Department / Lab (ដេប៉ាតឺម៉ង់រង / មន្ទីរពិសោធន៍)",
-    CENTER: "Center (មជ្ឈមណ្ឌល)",
-    ACADEMY: "Academy (បណ្ឌិត្យសភា)",
-    DIVISION: "Division (ផ្នែក)",
-    FOUNDATION: "Foundation Year (ថ្នាក់ឆ្នាំសិក្សាមូលដ្ឋាន)",
-    OTHER: "Other (ផ្សេងៗ)",
-};
 
 const UNIT_KIND_BADGES: Record<UnitKind, { label: string; className: string }> = {
     FACULTY: {
@@ -204,26 +191,15 @@ export function UnitsManager({
             return;
         }
 
-        const nameEn = raw(form, "name_en");
-        if (!nameEn) {
+        const basePayload = unitPayload(form);
+        if (!basePayload.name_en) {
             setError("Name (English) is required.");
             return;
         }
 
         const payload: UnitCreateDirectPayload = {
+            ...basePayload,
             university_id: Number(uniId),
-            name_en: nameEn,
-            name_kh: nullable(form, "name_kh"),
-            acronym: nullable(form, "acronym"),
-            is_autonomous: form.get("is_autonomous") === "true" || form.get("is_autonomous") === "on",
-            kind: (form.get("kind") as UnitKind) || "FACULTY",
-            parent_id: nullable(form, "parent_id"),
-            category_en: raw(form, "category_en"),
-            category_kh: nullable(form, "category_kh"),
-            logo: nullable(form, "logo"),
-            position: numberOrNull(form, "position") ?? 0,
-            default_tuition_per_year: numberOrNull(form, "default_tuition_per_year"),
-            default_tuition_female_per_year: numberOrNull(form, "default_tuition_female_per_year"),
         };
 
         startTransition(async () => {
@@ -256,26 +232,11 @@ export function UnitsManager({
         setError(null);
         const form = new FormData(e.currentTarget);
 
-        const nameEn = raw(form, "name_en");
-        if (!nameEn) {
+        const payload: UnitUpdatePayload = unitPayload(form);
+        if (!payload.name_en) {
             setError("Name (English) is required.");
             return;
         }
-
-        const payload: UnitUpdatePayload = {
-            name_en: nameEn,
-            name_kh: nullable(form, "name_kh"),
-            acronym: nullable(form, "acronym"),
-            is_autonomous: form.get("is_autonomous") === "true" || form.get("is_autonomous") === "on",
-            kind: (form.get("kind") as UnitKind) || editingUnit.kind,
-            parent_id: nullable(form, "parent_id"),
-            category_en: raw(form, "category_en"),
-            category_kh: nullable(form, "category_kh"),
-            logo: nullable(form, "logo"),
-            position: numberOrNull(form, "position") ?? 0,
-            default_tuition_per_year: numberOrNull(form, "default_tuition_per_year"),
-            default_tuition_female_per_year: numberOrNull(form, "default_tuition_female_per_year"),
-        };
 
         startTransition(async () => {
             try {
@@ -610,8 +571,8 @@ export function UnitsManager({
                 maxWidth="max-w-2xl"
             >
                 <form onSubmit={handleCreate} className="space-y-4">
-                    <div className="grid gap-4 sm:grid-cols-2">
-                        <Field label="University" htmlFor="nu-uni" required className="sm:col-span-2">
+                    <div className="space-y-4">
+                        <Field label="University" htmlFor="nu-uni" required>
                             <Select
                                 id="nu-uni"
                                 name="university_id"
@@ -628,89 +589,7 @@ export function UnitsManager({
                             </Select>
                         </Field>
 
-                        <Field label="Kind" htmlFor="nu-kind" required>
-                            <Select id="nu-kind" name="kind" defaultValue="FACULTY">
-                                {UNIT_KINDS.map((kind) => (
-                                    <option key={kind} value={kind}>
-                                        {UNIT_KIND_LABELS[kind] ?? kind}
-                                    </option>
-                                ))}
-                            </Select>
-                        </Field>
-
-                        <Field label="Parent Unit (Optional)" htmlFor="nu-parent">
-                            <Select id="nu-parent" name="parent_id" defaultValue="">
-                                <option value="">None (Top-Level Faculty)</option>
-                                {createSiblings.map((s) => (
-                                    <option key={s.id} value={String(s.id)}>
-                                        {s.name_en} ({s.kind})
-                                    </option>
-                                ))}
-                            </Select>
-                            <p className="text-3xs text-muted-foreground">
-                                {loadingUniUnits ? "Loading units…" : "Nest inside another unit (e.g. Department inside Institute), or leave empty for top-level."}
-                            </p>
-                        </Field>
-
-                        <Field label="Name (English)" htmlFor="nu-name-en" required className="sm:col-span-2">
-                            <Input
-                                id="nu-name-en"
-                                name="name_en"
-                                placeholder="Faculty of Engineering"
-                                required
-                            />
-                        </Field>
-
-                        <Field label="Name (Khmer)" htmlFor="nu-name-kh">
-                            <Input id="nu-name-kh" name="name_kh" placeholder="មហាវិទ្យាល័យវិស្វកម្ម" />
-                        </Field>
-
-                        <Field label="Acronym / Short Code" htmlFor="nu-acronym">
-                            <Input id="nu-acronym" name="acronym" placeholder="e.g. IFL, FE, FTS" />
-                        </Field>
-
-                        <div className="sm:col-span-2">
-                            <Checkbox
-                                id="nu-is-autonomous"
-                                name="is_autonomous"
-                                label="Autonomous Unit (ស្ថាប័នស្វ័យភាព)"
-                                description="Unit operates with high autonomy and hero-level branding (e.g. IFL or IISPP at RUPP)."
-                            />
-                        </div>
-
-                        <Field label="Category (English)" htmlFor="nu-cat-en">
-                            <Input id="nu-cat-en" name="category_en" placeholder="Engineering" />
-                        </Field>
-
-                        <Field label="Category (Khmer)" htmlFor="nu-cat-kh">
-                            <Input id="nu-cat-kh" name="category_kh" />
-                        </Field>
-
-                        <Field label="Position" htmlFor="nu-position">
-                            <Input id="nu-position" name="position" type="number" defaultValue="0" />
-                        </Field>
-
-                        <Field label="Logo URL" htmlFor="nu-logo" className="sm:col-span-2">
-                            <Input id="nu-logo" name="logo" placeholder="https://example.edu.kh/unit-logo.png" />
-                        </Field>
-
-                        <Field label="Default Tuition / Year ($)" htmlFor="nu-tuition">
-                            <Input
-                                id="nu-tuition"
-                                name="default_tuition_per_year"
-                                type="number"
-                                placeholder="e.g. 1000"
-                            />
-                        </Field>
-
-                        <Field label="Female STEM Tuition / Year ($)" htmlFor="nu-tuition-female">
-                            <Input
-                                id="nu-tuition-female"
-                                name="default_tuition_female_per_year"
-                                type="number"
-                                placeholder="e.g. 600"
-                            />
-                        </Field>
+                        <UnitFields siblings={createSiblings} />
                     </div>
 
                     <div className="flex items-center justify-end gap-2 pt-3 border-t">
@@ -744,127 +623,14 @@ export function UnitsManager({
             >
                 {editingUnit && (
                     <form onSubmit={handleUpdate} className="space-y-4">
-                        <div className="grid gap-4 sm:grid-cols-2">
-                            <div className="sm:col-span-2 p-2.5 rounded-lg border bg-muted/20 text-xs flex items-center justify-between">
-                                <span className="text-muted-foreground">University:</span>
-                                <span className="font-semibold text-foreground">
-                                    {editingUnit.university_name || `University #${editingUnit.university_id}`}
-                                </span>
-                            </div>
-
-                            <Field label="Kind" htmlFor="eu-kind" required>
-                                <Select id="eu-kind" name="kind" defaultValue={editingUnit.kind}>
-                                    {UNIT_KINDS.map((kind) => (
-                                        <option key={kind} value={kind}>
-                                            {UNIT_KIND_LABELS[kind] ?? kind}
-                                        </option>
-                                    ))}
-                                </Select>
-                            </Field>
-
-                            <Field label="Parent Unit" htmlFor="eu-parent">
-                                <Select id="eu-parent" name="parent_id" defaultValue={editingUnit.parent_id ?? ""}>
-                                    <option value="">None (Top-Level Unit)</option>
-                                    {editSiblings
-                                        .filter((s) => String(s.id) !== String(editingUnit.id))
-                                        .map((s) => (
-                                            <option key={s.id} value={String(s.id)}>
-                                                {s.name_en} ({s.kind})
-                                            </option>
-                                        ))}
-                                </Select>
-                                <p className="text-3xs text-muted-foreground">
-                                    Nest inside another unit (e.g. Department inside Institute), or leave empty for top-level.
-                                </p>
-                            </Field>
-
-                            <Field label="Name (English)" htmlFor="eu-name-en" required className="sm:col-span-2">
-                                <Input
-                                    id="eu-name-en"
-                                    name="name_en"
-                                    defaultValue={editingUnit.name_en}
-                                    required
-                                />
-                            </Field>
-
-                            <Field label="Name (Khmer)" htmlFor="eu-name-kh">
-                                <Input
-                                    id="eu-name-kh"
-                                    name="name_kh"
-                                    defaultValue={editingUnit.name_kh ?? ""}
-                                />
-                            </Field>
-
-                            <Field label="Acronym / Short Code" htmlFor="eu-acronym">
-                                <Input
-                                    id="eu-acronym"
-                                    name="acronym"
-                                    placeholder="e.g. IFL, FE, FTS"
-                                    defaultValue={editingUnit.acronym ?? ""}
-                                />
-                            </Field>
-
-                            <div className="sm:col-span-2">
-                                <Checkbox
-                                    id="eu-is-autonomous"
-                                    name="is_autonomous"
-                                    label="Autonomous Unit (ស្ថាប័នស្វ័យភាព)"
-                                    description="Unit operates with high autonomy and hero-level branding (e.g. IFL or IISPP at RUPP)."
-                                    defaultChecked={editingUnit.is_autonomous ?? false}
-                                />
-                            </div>
-
-                            <Field label="Category (English)" htmlFor="eu-cat-en">
-                                <Input
-                                    id="eu-cat-en"
-                                    name="category_en"
-                                    defaultValue={editingUnit.category_en ?? ""}
-                                />
-                            </Field>
-
-                            <Field label="Category (Khmer)" htmlFor="eu-cat-kh">
-                                <Input
-                                    id="eu-cat-kh"
-                                    name="category_kh"
-                                    defaultValue={editingUnit.category_kh ?? ""}
-                                />
-                            </Field>
-
-                            <Field label="Position" htmlFor="eu-position">
-                                <Input
-                                    id="eu-position"
-                                    name="position"
-                                    type="number"
-                                    defaultValue={editingUnit.position ?? 0}
-                                />
-                            </Field>
-
-                            <Field label="Logo URL" htmlFor="eu-logo" className="sm:col-span-2">
-                                <Input
-                                    id="eu-logo"
-                                    name="logo"
-                                    defaultValue={editingUnit.logo ?? ""}
-                                />
-                            </Field>
-
-                            <Field label="Default Tuition / Year ($)" htmlFor="eu-tuition">
-                                <Input
-                                    id="eu-tuition"
-                                    name="default_tuition_per_year"
-                                    type="number"
-                                    defaultValue={editingUnit.default_tuition_per_year ?? ""}
-                                />
-                            </Field>
-
-                            <Field label="Female STEM Tuition / Year ($)" htmlFor="eu-tuition-female">
-                                <Input
-                                    id="eu-tuition-female"
-                                    name="default_tuition_female_per_year"
-                                    type="number"
-                                    defaultValue={editingUnit.default_tuition_female_per_year ?? ""}
-                                />
-                            </Field>
+                        <div className="p-2.5 rounded-lg border bg-muted/20 text-xs flex items-center justify-between">
+                            <span className="text-muted-foreground">University:</span>
+                            <span className="font-semibold text-foreground">
+                                {editingUnit.university_name || `University #${editingUnit.university_id}`}
+                            </span>
                         </div>
+
+                        <UnitFields defaultValue={editingUnit} siblings={editSiblings} />
 
                         <div className="flex items-center justify-end gap-2 pt-3 border-t">
                             <Button
