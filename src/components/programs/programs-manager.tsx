@@ -180,6 +180,9 @@ export function ProgramsManager({
             tuition_per_credit: numberOrNull(form, "tuition_per_credit"),
             fee_currency: (raw(form, "fee_currency") as Currency) || "USD",
             shifts: shifts.length > 0 ? shifts : null,
+            language_track: nullable(form, "language_track"),
+            cqf_level: nullable(form, "cqf_level"),
+            field_of_study: nullable(form, "field_of_study"),
         };
 
         try {
@@ -242,6 +245,9 @@ export function ProgramsManager({
             tuition_per_credit: numberOrNull(form, "tuition_per_credit"),
             fee_currency: (raw(form, "fee_currency") as Currency) || "USD",
             shifts,
+            language_track: nullable(form, "language_track"),
+            cqf_level: nullable(form, "cqf_level"),
+            field_of_study: nullable(form, "field_of_study"),
         };
 
         try {
@@ -634,6 +640,33 @@ export function ProgramsManager({
                         </Field>
                     </div>
 
+                    <div className="grid gap-4 sm:grid-cols-3">
+                        <Field label="Language Track" htmlFor="create-lang">
+                            <Input
+                                id="create-lang"
+                                name="language_track"
+                                placeholder="e.g. Khmer, English, Bilingual"
+                                defaultValue={cloningProgram?.language_track ?? ""}
+                            />
+                        </Field>
+                        <Field label="CQF Level" htmlFor="create-cqf">
+                            <Input
+                                id="create-cqf"
+                                name="cqf_level"
+                                placeholder="e.g. Level 6 (Bachelor)"
+                                defaultValue={cloningProgram?.cqf_level ?? ""}
+                            />
+                        </Field>
+                        <Field label="Field of Study" htmlFor="create-field">
+                            <Input
+                                id="create-field"
+                                name="field_of_study"
+                                placeholder="e.g. STEM, Business"
+                                defaultValue={cloningProgram?.field_of_study ?? ""}
+                            />
+                        </Field>
+                    </div>
+
                     <div className="grid gap-4 sm:grid-cols-2">
                         <Field label="Tuition / Year (Standard)" htmlFor="create-tuition">
                             <Input
@@ -779,6 +812,33 @@ export function ProgramsManager({
                                         <option key={c} value={c}>{c}</option>
                                     ))}
                                 </Select>
+                            </Field>
+                        </div>
+
+                        <div className="grid gap-4 sm:grid-cols-3">
+                            <Field label="Language Track" htmlFor="edit-lang">
+                                <Input
+                                    id="edit-lang"
+                                    name="language_track"
+                                    placeholder="e.g. Khmer, English, Bilingual"
+                                    defaultValue={editingProgram.language_track ?? ""}
+                                />
+                            </Field>
+                            <Field label="CQF Level" htmlFor="edit-cqf">
+                                <Input
+                                    id="edit-cqf"
+                                    name="cqf_level"
+                                    placeholder="e.g. Level 6 (Bachelor)"
+                                    defaultValue={editingProgram.cqf_level ?? ""}
+                                />
+                            </Field>
+                            <Field label="Field of Study" htmlFor="edit-field">
+                                <Input
+                                    id="edit-field"
+                                    name="field_of_study"
+                                    placeholder="e.g. STEM, Business"
+                                    defaultValue={editingProgram.field_of_study ?? ""}
+                                />
                             </Field>
                         </div>
 

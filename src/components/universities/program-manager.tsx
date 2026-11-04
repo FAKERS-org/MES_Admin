@@ -138,6 +138,33 @@ export function ProgramFields({
                 />
             </Field>
 
+            <Field label="Language Track" htmlFor="p-lang">
+                <Input
+                    id="p-lang"
+                    name="language_track"
+                    placeholder="e.g. Khmer, English, Bilingual, French"
+                    defaultValue={defaultValue?.language_track ?? ""}
+                />
+            </Field>
+
+            <Field label="CQF Level" htmlFor="p-cqf">
+                <Input
+                    id="p-cqf"
+                    name="cqf_level"
+                    placeholder="e.g. Level 6 (Bachelor)"
+                    defaultValue={defaultValue?.cqf_level ?? ""}
+                />
+            </Field>
+
+            <Field label="Field of Study" htmlFor="p-field">
+                <Input
+                    id="p-field"
+                    name="field_of_study"
+                    placeholder="e.g. STEM, Business, Law"
+                    defaultValue={defaultValue?.field_of_study ?? ""}
+                />
+            </Field>
+
             <Field label="Tuition / year (General / Male)" htmlFor="p-tuition-year">
                 <Input
                     id="p-tuition-year"
@@ -303,6 +330,9 @@ export default function ProgramManager({
             tuition_per_credit: numberOrNull(form, "tuition_per_credit"),
             fee_currency: form.get("fee_currency") as Currency,
             shifts: shifts.length > 0 ? shifts : null,
+            language_track: nullable(form, "language_track"),
+            cqf_level: nullable(form, "cqf_level"),
+            field_of_study: nullable(form, "field_of_study"),
         };
 
         startTransition(async () => {
@@ -367,6 +397,9 @@ export default function ProgramManager({
                 duration_years: Number(raw(form, "duration_years") || 1),
                 fee_currency: form.get("fee_currency") as Currency,
                 shifts,
+                language_track: nullable(form, "language_track"),
+                cqf_level: nullable(form, "cqf_level"),
+                field_of_study: nullable(form, "field_of_study"),
             };
             // Only send tuition when the user typed one: an untouched field
             // must not overwrite the stored value.

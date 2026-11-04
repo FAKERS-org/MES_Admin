@@ -13,7 +13,18 @@
 
 export type UniversityType = "PUBLIC" | "PRIVATE";
 export type Status = "DRAFT" | "PUBLISHED";
-export type DegreeLevel = "DIPLOMA" | "ASSOCIATE" | "BACHELOR" | "ENGINEERING" | "MASTER" | "PHD";
+export type DegreeLevel =
+    | "DIPLOMA"
+    | "ASSOCIATE"
+    | "BACHELOR"
+    | "ENGINEERING"
+    | "MASTER"
+    | "PHD"
+    | "CERTIFICATE"
+    | "VOCATIONAL"
+    | "POSTGRADUATE_DIPLOMA"
+    | "RESIDENCY"
+    | "OTHER";
 export type Currency = "USD" | "KHR";
 
 export type Ministry = "MOEYS" | "MLVT" | "MOH" | "MAFF" | "MPTC" | "MCFA" | "MEF" | "OTHER";
@@ -99,11 +110,34 @@ export const STUDY_SHIFT_LABELS: Record<StudyShift, { en: string; kh: string; ti
     },
 };
 
-export type UnitKind = "FACULTY" | "DEPARTMENT" | "SUB_DEPARTMENT" | "FOUNDATION";
+export type UnitKind =
+    | "FACULTY"
+    | "DEPARTMENT"
+    | "SUB_DEPARTMENT"
+    | "FOUNDATION"
+    | "INSTITUTE"
+    | "SCHOOL"
+    | "COLLEGE"
+    | "CENTER"
+    | "ACADEMY"
+    | "DIVISION"
+    | "OTHER";
 
 export const UNIVERSITY_TYPES: UniversityType[] = ["PUBLIC", "PRIVATE"];
 export const STATUSES: Status[] = ["DRAFT", "PUBLISHED"];
-export const DEGREE_LEVELS: DegreeLevel[] = ["DIPLOMA", "ASSOCIATE", "BACHELOR", "ENGINEERING", "MASTER", "PHD"];
+export const DEGREE_LEVELS: DegreeLevel[] = [
+    "DIPLOMA",
+    "ASSOCIATE",
+    "BACHELOR",
+    "ENGINEERING",
+    "MASTER",
+    "PHD",
+    "CERTIFICATE",
+    "VOCATIONAL",
+    "POSTGRADUATE_DIPLOMA",
+    "RESIDENCY",
+    "OTHER",
+];
 export const CURRENCIES: Currency[] = ["USD", "KHR"];
 
 /** Cambodian provinces, for the location dropdown. */
@@ -273,6 +307,12 @@ export interface ProgramSummary {
     fee_currency: Currency;
     shifts?: StudyShift[] | null;
     curriculum_sections?: CurriculumSection[] | null;
+    field_of_study?: string | null;
+    cqf_level?: string | null;
+    language_track?: string | null;
+    accreditations?: string[] | null;
+    estimated_annual_min_usd?: number | null;
+    estimated_annual_max_usd?: number | null;
     metadata_json?: Record<string, unknown> | null;
 }
 
@@ -290,6 +330,8 @@ export interface UnitSummary {
     logo?: string | null;
     default_tuition_per_year?: number | null;
     default_tuition_female_per_year?: number | null;
+    is_autonomous?: boolean;
+    acronym?: string | null;
     position?: number;
     metadata_json?: Record<string, unknown> | null;
 }
@@ -301,12 +343,26 @@ export interface UnitListItem extends UnitSummary {
     programs_count?: number;
 }
 
-export const UNIT_KINDS: UnitKind[] = ["FACULTY", "DEPARTMENT", "SUB_DEPARTMENT", "FOUNDATION"];
+export const UNIT_KINDS: UnitKind[] = [
+    "FACULTY",
+    "INSTITUTE",
+    "SCHOOL",
+    "COLLEGE",
+    "DEPARTMENT",
+    "SUB_DEPARTMENT",
+    "CENTER",
+    "ACADEMY",
+    "DIVISION",
+    "FOUNDATION",
+    "OTHER",
+];
 
 /** `POST /api/v1/admin/universities/{university_id}/units/` body. */
 export interface UnitCreatePayload {
     name_en: string;
     name_kh?: string | null;
+    acronym?: string | null;
+    is_autonomous?: boolean;
     kind: UnitKind;
     parent_id?: string | null;
     category_en?: string;
@@ -406,6 +462,12 @@ export interface ProgramCreatePayload {
     fee_currency: Currency;
     shifts?: StudyShift[] | null;
     curriculum_sections?: CurriculumSection[] | null;
+    field_of_study?: string | null;
+    cqf_level?: string | null;
+    language_track?: string | null;
+    accreditations?: string[] | null;
+    estimated_annual_min_usd?: number | null;
+    estimated_annual_max_usd?: number | null;
     metadata_json?: Record<string, unknown> | null;
 }
 
@@ -426,6 +488,10 @@ export interface ProgramUpdatePayload {
     overview_kh?: string | null;
     admission_req_en?: string | null;
     admission_req_kh?: string | null;
+    field_of_study?: string | null;
+    cqf_level?: string | null;
+    language_track?: string | null;
+    accreditations?: string[] | null;
     metadata_json?: Record<string, unknown> | null;
 }
 

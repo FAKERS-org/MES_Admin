@@ -1,6 +1,6 @@
 "use client";
 
-import { Field, Input, Select } from "@/components/ui/field";
+import { Checkbox, Field, Input, Select } from "@/components/ui/field";
 import { UNIT_KINDS, type UnitCreatePayload, type UnitKind, type UnitSummary } from "@/lib/types";
 
 export function raw(form: FormData, key: string): string {
@@ -23,6 +23,8 @@ export function unitPayload(form: FormData): UnitCreatePayload {
     return {
         name_en: raw(form, "name_en"),
         name_kh: nullable(form, "name_kh"),
+        acronym: nullable(form, "acronym"),
+        is_autonomous: form.get("is_autonomous") === "true" || form.get("is_autonomous") === "on",
         kind: (form.get("kind") as UnitKind | null) ?? "FACULTY",
         parent_id: nullable(form, "parent_id"),
         category_en: raw(form, "category_en"),
@@ -36,9 +38,16 @@ export function unitPayload(form: FormData): UnitCreatePayload {
 
 const UNIT_KIND_LABELS: Record<UnitKind, string> = {
     FACULTY: "Faculty (មហាវិទ្យាល័យ)",
+    INSTITUTE: "Institute (វិទ្យាស្ថាន)",
+    SCHOOL: "School (សាលា)",
+    COLLEGE: "College (ខូឡេក / មហាវិទ្យាល័យ)",
     DEPARTMENT: "Department (ដេប៉ាតឺម៉ង់)",
     SUB_DEPARTMENT: "Sub-Department / Lab (ដេប៉ាតឺម៉ង់រង / មន្ទីរពិសោធន៍)",
+    CENTER: "Center (មជ្ឈមណ្ឌល)",
+    ACADEMY: "Academy (បណ្ឌិត្យសភា)",
+    DIVISION: "Division (ផ្នែក)",
     FOUNDATION: "Foundation Year / Tronc Commun (ថ្នាក់ឆ្នាំសិក្សាមូលដ្ឋាន)",
+    OTHER: "Other (ផ្សេងៗ)",
 };
 
 /**
@@ -75,6 +84,15 @@ export default function UnitFields({
                 <Input id="u-name-kh" name="name_kh" defaultValue={defaultValue?.name_kh ?? ""} />
             </Field>
 
+            <Field label="Acronym / Short Code" htmlFor="u-acronym">
+                <Input
+                    id="u-acronym"
+                    name="acronym"
+                    placeholder="e.g. IFL, FE, FTS"
+                    defaultValue={defaultValue?.acronym ?? ""}
+                />
+            </Field>
+
             <Field label="Kind" htmlFor="u-kind" required>
                 <Select id="u-kind" name="kind" defaultValue={kind}>
                     {UNIT_KINDS.map(option => (
@@ -95,9 +113,19 @@ export default function UnitFields({
                     ))}
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                    Sub-departments belong to a department, departments to a faculty.
+                    Nest inside another unit (e.g. Department inside Institute), or leave empty for top-level.
                 </p>
             </Field>
+
+            <div className="sm:col-span-2 lg:col-span-3">
+                <Checkbox
+                    id="u-is-autonomous"
+                    name="is_autonomous"
+                    label="Autonomous Unit (ស្ថាប័នស្វ័យភាព)"
+                    description="Unit operates with high autonomy and hero-level branding (e.g. IFL or IISPP at RUPP)."
+                    defaultChecked={defaultValue?.is_autonomous ?? false}
+                />
+            </div>
 
             <Field label="Category (English)" htmlFor="u-category-en">
                 <Input
@@ -130,7 +158,7 @@ export default function UnitFields({
                     defaultValue={defaultValue?.default_tuition_per_year ?? ""}
                 />
                 <p className="text-xs text-muted-foreground">
-                    Optional: Uniform rate for all majors under this faculty.
+                    Optional: Uniform rate for all majors under this academic unit.
                 </p>
             </Field>
 
@@ -143,7 +171,7 @@ export default function UnitFields({
                     defaultValue={defaultValue?.default_tuition_female_per_year ?? ""}
                 />
                 <p className="text-xs text-muted-foreground">
-                    Optional: Female STEM incentive rate for this faculty.
+                    Optional: Female STEM incentive rate for this academic unit.
                 </p>
             </Field>
         </div>

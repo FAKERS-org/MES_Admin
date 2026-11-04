@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import ConfirmButton from "@/components/ui/confirm-button";
 import { Alert, EmptyState, PageHeader, Spinner } from "@/components/ui/feedback";
-import { Field, Input, Select } from "@/components/ui/field";
+import { Checkbox, Field, Input, Select } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { apiRequest } from "@/lib/api";
@@ -38,15 +38,34 @@ import { cn, formatCurrency } from "@/lib/utils";
 
 const UNIT_KIND_LABELS: Record<UnitKind, string> = {
     FACULTY: "Faculty (មហាវិទ្យាល័យ)",
+    INSTITUTE: "Institute (វិទ្យាស្ថាន)",
+    SCHOOL: "School (សាលា)",
+    COLLEGE: "College (ខូឡេក / មហាវិទ្យាល័យ)",
     DEPARTMENT: "Department (ដេប៉ាតឺម៉ង់)",
     SUB_DEPARTMENT: "Sub-Department / Lab (ដេប៉ាតឺម៉ង់រង / មន្ទីរពិសោធន៍)",
+    CENTER: "Center (មជ្ឈមណ្ឌល)",
+    ACADEMY: "Academy (បណ្ឌិត្យសភា)",
+    DIVISION: "Division (ផ្នែក)",
     FOUNDATION: "Foundation Year (ថ្នាក់ឆ្នាំសិក្សាមូលដ្ឋាន)",
+    OTHER: "Other (ផ្សេងៗ)",
 };
 
 const UNIT_KIND_BADGES: Record<UnitKind, { label: string; className: string }> = {
     FACULTY: {
         label: "Faculty",
         className: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800",
+    },
+    INSTITUTE: {
+        label: "Institute",
+        className: "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800",
+    },
+    SCHOOL: {
+        label: "School",
+        className: "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800",
+    },
+    COLLEGE: {
+        label: "College",
+        className: "bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-950/40 dark:text-cyan-300 dark:border-cyan-800",
     },
     DEPARTMENT: {
         label: "Department",
@@ -56,9 +75,25 @@ const UNIT_KIND_BADGES: Record<UnitKind, { label: string; className: string }> =
         label: "Sub-Dept / Lab",
         className: "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800",
     },
+    CENTER: {
+        label: "Center",
+        className: "bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950/40 dark:text-teal-300 dark:border-teal-800",
+    },
+    ACADEMY: {
+        label: "Academy",
+        className: "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-800",
+    },
+    DIVISION: {
+        label: "Division",
+        className: "bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-950/40 dark:text-slate-300 dark:border-slate-800",
+    },
     FOUNDATION: {
         label: "Foundation",
         className: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800",
+    },
+    OTHER: {
+        label: "Other",
+        className: "bg-neutral-50 text-neutral-700 border-neutral-200 dark:bg-neutral-950/40 dark:text-neutral-300 dark:border-neutral-800",
     },
 };
 
@@ -179,6 +214,8 @@ export function UnitsManager({
             university_id: Number(uniId),
             name_en: nameEn,
             name_kh: nullable(form, "name_kh"),
+            acronym: nullable(form, "acronym"),
+            is_autonomous: form.get("is_autonomous") === "true" || form.get("is_autonomous") === "on",
             kind: (form.get("kind") as UnitKind) || "FACULTY",
             parent_id: nullable(form, "parent_id"),
             category_en: raw(form, "category_en"),
@@ -228,6 +265,8 @@ export function UnitsManager({
         const payload: UnitUpdatePayload = {
             name_en: nameEn,
             name_kh: nullable(form, "name_kh"),
+            acronym: nullable(form, "acronym"),
+            is_autonomous: form.get("is_autonomous") === "true" || form.get("is_autonomous") === "on",
             kind: (form.get("kind") as UnitKind) || editingUnit.kind,
             parent_id: nullable(form, "parent_id"),
             category_en: raw(form, "category_en"),
@@ -423,8 +462,18 @@ export function UnitsManager({
                                             {/* Unit Name */}
                                             <TableCell>
                                                 <div className="space-y-0.5">
-                                                    <div className="font-semibold text-sm text-foreground flex items-center gap-1.5">
+                                                    <div className="font-semibold text-sm text-foreground flex items-center gap-1.5 flex-wrap">
                                                         <span>{unit.name_en}</span>
+                                                        {unit.acronym && (
+                                                            <span className="text-3xs font-mono font-bold bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+                                                                [{unit.acronym}]
+                                                            </span>
+                                                        )}
+                                                        {unit.is_autonomous && (
+                                                            <span className="text-3xs font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-1.5 py-0.5 rounded">
+                                                                Autonomous
+                                                            </span>
+                                                        )}
                                                         {unit.position !== undefined && unit.position > 0 && (
                                                             <span className="text-3xs text-muted-foreground font-mono bg-muted px-1 rounded">
                                                                 #{unit.position}
@@ -599,7 +648,7 @@ export function UnitsManager({
                                 ))}
                             </Select>
                             <p className="text-3xs text-muted-foreground">
-                                {loadingUniUnits ? "Loading units…" : "Departments belong to a faculty."}
+                                {loadingUniUnits ? "Loading units…" : "Nest inside another unit (e.g. Department inside Institute), or leave empty for top-level."}
                             </p>
                         </Field>
 
@@ -615,6 +664,19 @@ export function UnitsManager({
                         <Field label="Name (Khmer)" htmlFor="nu-name-kh">
                             <Input id="nu-name-kh" name="name_kh" placeholder="មហាវិទ្យាល័យវិស្វកម្ម" />
                         </Field>
+
+                        <Field label="Acronym / Short Code" htmlFor="nu-acronym">
+                            <Input id="nu-acronym" name="acronym" placeholder="e.g. IFL, FE, FTS" />
+                        </Field>
+
+                        <div className="sm:col-span-2">
+                            <Checkbox
+                                id="nu-is-autonomous"
+                                name="is_autonomous"
+                                label="Autonomous Unit (ស្ថាប័នស្វ័យភាព)"
+                                description="Unit operates with high autonomy and hero-level branding (e.g. IFL or IISPP at RUPP)."
+                            />
+                        </div>
 
                         <Field label="Category (English)" htmlFor="nu-cat-en">
                             <Input id="nu-cat-en" name="category_en" placeholder="Engineering" />
@@ -702,7 +764,7 @@ export function UnitsManager({
 
                             <Field label="Parent Unit" htmlFor="eu-parent">
                                 <Select id="eu-parent" name="parent_id" defaultValue={editingUnit.parent_id ?? ""}>
-                                    <option value="">None (Top-Level Faculty)</option>
+                                    <option value="">None (Top-Level Unit)</option>
                                     {editSiblings
                                         .filter((s) => String(s.id) !== String(editingUnit.id))
                                         .map((s) => (
@@ -711,6 +773,9 @@ export function UnitsManager({
                                             </option>
                                         ))}
                                 </Select>
+                                <p className="text-3xs text-muted-foreground">
+                                    Nest inside another unit (e.g. Department inside Institute), or leave empty for top-level.
+                                </p>
                             </Field>
 
                             <Field label="Name (English)" htmlFor="eu-name-en" required className="sm:col-span-2">
@@ -729,6 +794,25 @@ export function UnitsManager({
                                     defaultValue={editingUnit.name_kh ?? ""}
                                 />
                             </Field>
+
+                            <Field label="Acronym / Short Code" htmlFor="eu-acronym">
+                                <Input
+                                    id="eu-acronym"
+                                    name="acronym"
+                                    placeholder="e.g. IFL, FE, FTS"
+                                    defaultValue={editingUnit.acronym ?? ""}
+                                />
+                            </Field>
+
+                            <div className="sm:col-span-2">
+                                <Checkbox
+                                    id="eu-is-autonomous"
+                                    name="is_autonomous"
+                                    label="Autonomous Unit (ស្ថាប័នស្វ័យភាព)"
+                                    description="Unit operates with high autonomy and hero-level branding (e.g. IFL or IISPP at RUPP)."
+                                    defaultChecked={editingUnit.is_autonomous ?? false}
+                                />
+                            </div>
 
                             <Field label="Category (English)" htmlFor="eu-cat-en">
                                 <Input
