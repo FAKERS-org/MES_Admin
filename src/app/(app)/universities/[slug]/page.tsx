@@ -113,12 +113,12 @@ export default async function UniversityDetailPage({ params }: { params: Promise
                 }
             />
 
-            <div className="grid gap-5 lg:grid-cols-3">
+            <div className="grid gap-5 lg:grid-cols-3 lg:items-start">
                 <div className="lg:col-span-2">
                     <UniversityEditForm university={university} />
                 </div>
 
-                <div className="space-y-5">
+                <div className="space-y-5 lg:sticky lg:top-1 lg:self-start">
                     <Card>
                         <CardHeader>
                             <CardTitle>Publishing</CardTitle>
