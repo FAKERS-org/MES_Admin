@@ -4,9 +4,10 @@
   "private": true,
   "description": "Back-office for the MES University Info API - manages universities and programs.",
   "scripts": {
-    "dev": "next dev --port 3001",
+    "dev": "next dev --port 3003",
+    "dev:3003": "next dev --port 3003",
     "build": "next build",
-    "start": "next start --port 3001",
+    "start": "next start --port 3003",
     "typecheck": "tsc --noEmit",
     "generate-api": "openapi-typescript http://localhost:8000/api/v1/openapi.json -o src/lib/api/schema.d.ts"
   },
