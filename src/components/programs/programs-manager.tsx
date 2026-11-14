@@ -98,7 +98,7 @@ export function ProgramsManager({
         if (shiftFilter && !p.shifts?.includes(shiftFilter as StudyShift)) return false;
         if (uniFilter && String(p.university_id) !== uniFilter) return false;
         if (facultyFilter && p.faculty !== facultyFilter) return false;
-        if (tuitionFilter === "DISCOUNT" && !p.tuition_female_per_year) return false;
+        if (tuitionFilter === "DISCOUNT" && !((p.metadata_json ?? {}).tuition_female_per_year)) return false;
         if (tuitionFilter === "FREE" && (p.tuition_per_year ?? 0) > 0) return false;
         if (tuitionFilter === "PAID" && !(p.tuition_per_year && p.tuition_per_year > 0)) return false;
         if (tuitionFilter === "UNDER_1000" && (!p.tuition_per_year || p.tuition_per_year > 1000)) return false;
@@ -379,9 +379,9 @@ export function ProgramsManager({
                                             {program.tuition_per_year ? (
                                                 <div>
                                                     <div>{formatCurrency(program.tuition_per_year, program.fee_currency)}/yr</div>
-                                                    {program.tuition_female_per_year ? (
+                                                    {((program.metadata_json ?? {}).tuition_female_per_year) ? (
                                                         <div className="text-xs text-rose-600 dark:text-rose-400 font-medium">
-                                                            ♀ {formatCurrency(program.tuition_female_per_year, program.fee_currency)}/yr
+                                                            ♀ {formatCurrency((program.metadata_json ?? {}).tuition_female_per_year as number, program.fee_currency)}/yr
                                                         </div>
                                                     ) : null}
                                                 </div>

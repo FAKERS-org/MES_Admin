@@ -8,6 +8,11 @@ export interface ResolvedTuition {
     sourceLabel: string;
 }
 
+/** Read a Bucket B field out of the program's metadata_json bag. */
+function meta(program: ProgramSummary, key: string): unknown {
+    return (program.metadata_json ?? {})[key];
+}
+
 /**
  * Resolves effective tuition following the 3-tier cascade:
  * Program -> Unit -> University.
@@ -36,9 +41,10 @@ export function resolveProgramTuition(
         sourceLabel = "Inherited from University default";
     }
 
+    const progFemale = meta(program, "tuition_female_per_year") as number | null | undefined;
     let effectiveFemale: number | null = null;
-    if (program.tuition_female_per_year !== null && program.tuition_female_per_year !== undefined) {
-        effectiveFemale = program.tuition_female_per_year;
+    if (progFemale !== null && progFemale !== undefined) {
+        effectiveFemale = progFemale;
     } else if (program.tuition_per_year === null || program.tuition_per_year === undefined) {
         if (unit?.default_tuition_female_per_year !== null && unit?.default_tuition_female_per_year !== undefined) {
             effectiveFemale = unit.default_tuition_female_per_year;

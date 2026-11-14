@@ -288,7 +288,12 @@ export interface UniversityUpdatePayload {
     metadata_json?: Record<string, unknown> | null;
 }
 
-/** `ProgramSummary` item, embedded in `UniversityDetail.programs`. */
+/** `ProgramSummary` item, embedded in `UniversityDetail.programs`.
+
+    Bucket B (edge-case / institution-specific) fields are surfaced via
+    `metadata_json` so the frontend's generic MetadataRenderer can render them.
+    Only resolved computed values stay as top-level typed properties.
+    */
 export interface ProgramSummary {
     id: string;
     unit_id?: number | null;
@@ -299,7 +304,6 @@ export interface ProgramSummary {
     degree_level: DegreeLevel;
     duration_years: number | null;
     tuition_per_year: number | null;
-    tuition_female_per_year?: number | null;
     tuition_per_credit: number | null;
     effective_tuition_per_year?: number | null;
     effective_tuition_female_per_year?: number | null;
@@ -307,10 +311,6 @@ export interface ProgramSummary {
     fee_currency: Currency;
     shifts?: StudyShift[] | null;
     curriculum_sections?: CurriculumSection[] | null;
-    field_of_study?: string | null;
-    cqf_level?: string | null;
-    language_track?: string | null;
-    accreditations?: string[] | null;
     estimated_annual_min_usd?: number | null;
     estimated_annual_max_usd?: number | null;
     metadata_json?: Record<string, unknown> | null;
@@ -448,7 +448,11 @@ export interface UnitDetail extends UnitSummary {
     requirements: Array<Record<string, unknown>>;
 }
 
-/** `POST /api/v1/admin/universities/{id}/programs/` body. */
+/** `POST /api/v1/admin/universities/{id}/programs/` body.
+
+    `extra` is a free-form bag for Bucket B fields; the API routes everything
+    not in the strict field set into metadata_json automatically.
+    */
 export interface ProgramCreatePayload {
     name_en: string;
     name_kh?: string | null;
@@ -457,17 +461,11 @@ export interface ProgramCreatePayload {
     degree_level: DegreeLevel;
     duration_years: number;
     tuition_per_year?: number | null;
-    tuition_female_per_year?: number | null;
     tuition_per_credit?: number | null;
     fee_currency: Currency;
     shifts?: StudyShift[] | null;
     curriculum_sections?: CurriculumSection[] | null;
-    field_of_study?: string | null;
-    cqf_level?: string | null;
-    language_track?: string | null;
-    accreditations?: string[] | null;
-    estimated_annual_min_usd?: number | null;
-    estimated_annual_max_usd?: number | null;
+    extra?: Record<string, unknown>;
     metadata_json?: Record<string, unknown> | null;
 }
 
@@ -480,18 +478,10 @@ export interface ProgramUpdatePayload {
     degree_level?: DegreeLevel;
     duration_years?: number;
     tuition_per_year?: number | null;
-    tuition_female_per_year?: number | null;
     tuition_per_credit?: number | null;
     fee_currency?: Currency;
     shifts?: StudyShift[] | null;
-    overview_en?: string | null;
-    overview_kh?: string | null;
-    admission_req_en?: string | null;
-    admission_req_kh?: string | null;
-    field_of_study?: string | null;
-    cqf_level?: string | null;
-    language_track?: string | null;
-    accreditations?: string[] | null;
+    extra?: Record<string, unknown>;
     metadata_json?: Record<string, unknown> | null;
 }
 

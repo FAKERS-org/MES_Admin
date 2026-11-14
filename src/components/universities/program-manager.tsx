@@ -130,7 +130,9 @@ export default function ProgramManager({
             const perYear = numberOrNull(form, "tuition_per_year");
             if (perYear !== null) payload.tuition_per_year = perYear;
             const perYearFemale = numberOrNull(form, "tuition_female_per_year");
-            if (perYearFemale !== null) payload.tuition_female_per_year = perYearFemale;
+            if (perYearFemale !== null) {
+                payload.extra = { ...(payload.extra ?? {}), tuition_female_per_year: perYearFemale };
+            }
             const perCredit = numberOrNull(form, "tuition_per_credit");
             if (perCredit !== null) payload.tuition_per_credit = perCredit;
             if (perCredit !== null) payload.tuition_per_credit = perCredit;

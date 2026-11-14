@@ -30,7 +30,12 @@ export function numberOrNull(form: FormData, key: string): number | null {
     return Number.isFinite(parsed) ? parsed : null;
 }
 
-/** Shared FormData parser for creating/updating a program */
+/** Shared FormData parser for creating/updating a program.
+
+    Bucket B (edge-case / institution-specific) fields are collected into the
+    free-form `extra` bag; the API routes everything not in the strict field
+    set into metadata_json automatically.
+    */
 export function programPayload(form: FormData, units: UnitSummary[] = []): ProgramCreatePayload {
     const unitIdRaw = raw(form, "unit_id");
     const unitId = unitIdRaw ? Number(unitIdRaw) : null;
@@ -47,6 +52,17 @@ export function programPayload(form: FormData, units: UnitSummary[] = []): Progr
 
     const shifts = form.getAll("shifts") as StudyShift[];
 
+    const extra: Record<string, unknown> = {};
+    for (const key of [
+        "language_track",
+        "cqf_level",
+        "field_of_study",
+        "tuition_female_per_year",
+    ]) {
+        const v = nullable(form, key);
+        if (v !== null) extra[key] = v;
+    }
+
     return {
         name_en: raw(form, "name_en"),
         name_kh: nullable(form, "name_kh"),
@@ -55,13 +71,10 @@ export function programPayload(form: FormData, units: UnitSummary[] = []): Progr
         degree_level: (raw(form, "degree_level") as DegreeLevel) || "BACHELOR",
         duration_years: Number(raw(form, "duration_years") || 4),
         tuition_per_year: numberOrNull(form, "tuition_per_year"),
-        tuition_female_per_year: numberOrNull(form, "tuition_female_per_year"),
         tuition_per_credit: numberOrNull(form, "tuition_per_credit"),
         fee_currency: (raw(form, "fee_currency") as Currency) || "USD",
         shifts: shifts.length > 0 ? shifts : null,
-        language_track: nullable(form, "language_track"),
-        cqf_level: nullable(form, "cqf_level"),
-        field_of_study: nullable(form, "field_of_study"),
+        extra,
     };
 }
 
@@ -80,6 +93,7 @@ export default function ProgramFields({
     const [selectedUnit, setSelectedUnit] = useState<string>(
         defaultValue?.unit_id ? String(defaultValue.unit_id) : "",
     );
+    const progMeta = (defaultValue?.metadata_json ?? {}) as Record<string, unknown>;
 
     return (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -168,7 +182,7 @@ export default function ProgramFields({
                     id="p-lang"
                     name="language_track"
                     placeholder="e.g. Khmer, English, Bilingual, French"
-                    defaultValue={defaultValue?.language_track ?? ""}
+                    defaultValue={String(progMeta.language_track ?? "")}
                 />
             </Field>
 
@@ -177,7 +191,7 @@ export default function ProgramFields({
                     id="p-cqf"
                     name="cqf_level"
                     placeholder="e.g. Level 6 (Bachelor)"
-                    defaultValue={defaultValue?.cqf_level ?? ""}
+                    defaultValue={String(progMeta.cqf_level ?? "")}
                 />
             </Field>
 
@@ -186,7 +200,7 @@ export default function ProgramFields({
                     id="p-field"
                     name="field_of_study"
                     placeholder="e.g. STEM, Business, Law"
-                    defaultValue={defaultValue?.field_of_study ?? ""}
+                    defaultValue={(progMeta.field_of_study as string) ?? ""}
                 />
             </Field>
 
@@ -214,7 +228,7 @@ export default function ProgramFields({
                     step="0.01"
                     min="0"
                     placeholder="e.g. 400 (if discounted)"
-                    defaultValue={defaultValue?.tuition_female_per_year ?? ""}
+                    defaultValue={progMeta.tuition_female_per_year as number ?? ""}
                 />
             </Field>
 

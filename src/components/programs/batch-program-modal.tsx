@@ -208,10 +208,10 @@ export function BatchProgramModal({
                     degree_level: degreeLevel,
                     duration_years: durationYears,
                     tuition_per_year: tuitionPerYear ? Number(tuitionPerYear) : null,
-                    tuition_female_per_year: null,
                     tuition_per_credit: null,
                     fee_currency: currency,
                     shifts: selectedShifts.length > 0 ? selectedShifts : null,
+                    extra: {},
                 };
 
                 try {
