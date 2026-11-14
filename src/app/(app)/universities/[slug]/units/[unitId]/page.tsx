@@ -56,22 +56,20 @@ export default async function UnitDetailPage({
 }) {
     const { slug, unitId: unitSlug } = await params;
 
-    let university = await apiRequest<{id:number}>(`admin/universities/${slug}`);
-    const id = String(university.id);
     let unit: UnitDetail;
     let unitId = unitSlug;
     try {
-        const unitsList = await apiList<UnitSummary>(`admin/universities/${id}/units/`);
-    const matched = unitsList.find(u => u.slug === unitSlug);
-    unitId = matched ? String(matched.id) : unitSlug;
-    unit = await apiRequest<UnitDetail>(`admin/universities/${id}/units/${unitId}`);
+        const unitsList = await apiList<UnitSummary>(`admin/universities/${slug}/units/`);
+        const matched = unitsList.find(u => u.slug === unitSlug);
+        unitId = matched ? String(matched.id) : unitSlug;
+        unit = await apiRequest<UnitDetail>(`admin/universities/${slug}/units/${unitId}`);
     } catch (error) {
         if (error instanceof ApiError && error.status === 404) notFound();
         throw error;
     }
 
     // Siblings feed the parent dropdown in the edit form.
-    const siblings = await apiList<UnitSummary>(`admin/universities/${id}/units/`);
+    const siblings = await apiList<UnitSummary>(`admin/universities/${slug}/units/`);
 
     // Each content collection is fetched independently. fetchContent swallows
     // failures and returns an empty array plus an error, so one broken endpoint

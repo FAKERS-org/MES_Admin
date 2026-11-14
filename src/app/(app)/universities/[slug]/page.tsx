@@ -46,7 +46,7 @@ export default async function UniversityDetailPage({ params }: { params: Promise
     // university is still a DRAFT, which would hide every unit.
     let units: UnitSummary[] = [];
     try {
-        units = await apiList<UnitSummary>(`admin/universities/${university.id}/units/`);
+        units = await apiList<UnitSummary>(`admin/universities/${slug}/units/`);
     } catch {
         // API unreachable - units will render as empty state
     }
@@ -57,7 +57,7 @@ export default async function UniversityDetailPage({ params }: { params: Promise
                 <div className="flex items-center gap-2 rounded-lg bg-muted/60 px-4 py-2 text-xs font-medium text-muted-foreground border">
                     <span>Branch campus of</span>
                     <Link
-                        href={`/universities/${parentUniversity.id}`}
+                        href={`/universities/${parentUniversity.name_en.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`}
                         className="font-semibold text-foreground hover:underline inline-flex items-center gap-1"
                     >
                         {parentUniversity.name_en}
@@ -139,7 +139,7 @@ export default async function UniversityDetailPage({ params }: { params: Promise
                                 </div>
                                 <StatusBadge status={status} />
                             </div>
-                            <PublishToggle id={university.id} status={status} />
+                            <PublishToggle id={slug} status={status} />
                         </CardContent>
                     </Card>
 
@@ -208,7 +208,7 @@ export default async function UniversityDetailPage({ params }: { params: Promise
                             <CardDescription>Irreversible actions. Deleting cascades to all programs.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <DeleteUniversity id={university.id} name={university.name_en} />
+                            <DeleteUniversity id={slug} name={university.name_en} />
                         </CardContent>
                     </Card>
                 </div>
@@ -216,7 +216,7 @@ export default async function UniversityDetailPage({ params }: { params: Promise
 
             {/* Academic Offerings & Structure (Adaptive Dual-Mode Manager) */}
             <AcademicManager
-                universityId={String(university.id)}
+                universityId={slug}
                 universitySlug={slug}
                 units={units}
                 programs={university.programs}
