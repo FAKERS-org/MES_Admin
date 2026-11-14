@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Copy, GraduationCap, Pencil, Plus, Search, Sparkles } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import ConfirmButton from "@/components/ui/confirm-button";
 import { Alert, EmptyState, PageHeader } from "@/components/ui/feedback";
@@ -20,32 +20,49 @@ import {
     DEGREE_LEVELS,
     STUDY_SHIFTS,
     STUDY_SHIFT_LABELS,
-    type DegreeLevel,
     type Page,
-    type ProgramCreatePayload,
     type ProgramListItem,
     type ProgramUpdatePayload,
-    type StudyShift,
     type UnitSummary,
     type UniversitySummary,
 } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
 
+export type ProgramSearchParams = {
+    q?: string;
+    degree_level?: string;
+    university_id?: string;
+    faculty?: string;
+    shift?: string;
+    page?: string;
+};
+
+export function buildHref(params: ProgramSearchParams, page: number) {
+    const url = new URLSearchParams();
+    if (params.q) url.set("q", params.q);
+    if (params.degree_level) url.set("degree_level", params.degree_level);
+    if (params.university_id) url.set("university_id", params.university_id);
+    if (params.faculty) url.set("faculty", params.faculty);
+    if (params.shift) url.set("shift", params.shift);
+    if (page > 1) url.set("page", String(page));
+    const query = url.toString();
+    return `/programs${query ? `?${query}` : ""}`;
+}
+
 export function ProgramsManager({
-    initialPrograms,
+    pageData,
+    initialPrograms = [],
     universities,
+    searchParams = {},
 }: {
-    initialPrograms: ProgramListItem[];
+    pageData?: Page<ProgramListItem>;
+    initialPrograms?: ProgramListItem[];
     universities: UniversitySummary[];
+    searchParams?: ProgramSearchParams;
 }) {
     const router = useRouter();
     const [, startTransition] = useTransition();
 
-    const [search, setSearch] = useState("");
-    const [degreeFilter, setDegreeFilter] = useState("");
-    const [shiftFilter, setShiftFilter] = useState("");
-    const [uniFilter, setUniFilter] = useState("");
-    const [facultyFilter, setFacultyFilter] = useState("");
     const [tuitionFilter, setTuitionFilter] = useState("");
 
     const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -55,9 +72,9 @@ export function ProgramsManager({
     const [error, setError] = useState<string | null>(null);
     const [createSuccess, setCreateSuccess] = useState<string | null>(null);
 
-    const [createUniId, setCreateUniId] = useState("");
+    const [createUniId, setCreateUniId] = useState(searchParams.university_id ?? "");
     const [unitsCache, setUnitsCache] = useState<Record<string, UnitSummary[]>>({});
-    const [loadingUnits, setLoadingUnits] = useState(false);
+    const [, setLoadingUnits] = useState(false);
 
     const fetchUnits = async (uniId: string | number) => {
         const key = String(uniId);
@@ -82,35 +99,38 @@ export function ProgramsManager({
         }
     }, [editingProgram]);
 
+    useEffect(() => {
+        if (searchParams.university_id) {
+            fetchUnits(searchParams.university_id);
+        }
+    }, [searchParams.university_id]);
+
     const createUnits = createUniId ? unitsCache[createUniId] ?? [] : [];
     const editUnits = editingProgram?.university_id ? unitsCache[String(editingProgram.university_id)] ?? [] : [];
 
-    const availableFaculties = useMemo(() => {
-        const set = new Set<string>();
-        for (const p of initialPrograms) {
-            if (p.faculty) set.add(p.faculty);
-        }
-        return Array.from(set).sort();
-    }, [initialPrograms]);
+    const programs = pageData ? pageData.items : initialPrograms;
+    const totalPages = pageData ? Math.max(1, pageData.total_pages) : 1;
+    const currentPage = pageData ? pageData.page : 1;
+    const totalItems = pageData ? pageData.total_items : programs.length;
+    const hasFilters = Boolean(
+        searchParams.q ||
+        searchParams.degree_level ||
+        searchParams.university_id ||
+        searchParams.faculty ||
+        searchParams.shift
+    );
 
-    const filtered = initialPrograms.filter((p) => {
-        if (degreeFilter && p.degree_level !== degreeFilter) return false;
-        if (shiftFilter && !p.shifts?.includes(shiftFilter as StudyShift)) return false;
-        if (uniFilter && String(p.university_id) !== uniFilter) return false;
-        if (facultyFilter && p.faculty !== facultyFilter) return false;
-        if (tuitionFilter === "DISCOUNT" && !((p.metadata_json ?? {}).tuition_female_per_year)) return false;
-        if (tuitionFilter === "FREE" && (p.tuition_per_year ?? 0) > 0) return false;
-        if (tuitionFilter === "PAID" && !(p.tuition_per_year && p.tuition_per_year > 0)) return false;
-        if (tuitionFilter === "UNDER_1000" && (!p.tuition_per_year || p.tuition_per_year > 1000)) return false;
-        if (tuitionFilter === "OVER_1000" && (!p.tuition_per_year || p.tuition_per_year <= 1000)) return false;
-
-        if (search) {
-            const term = search.toLowerCase();
-            const text = `${p.name_en} ${p.name_kh ?? ""} ${p.faculty ?? ""} ${p.unit_name ?? ""} ${p.university_name ?? ""}`.toLowerCase();
-            if (!text.includes(term)) return false;
-        }
-        return true;
-    });
+    const displayed = useMemo(() => {
+        if (!tuitionFilter) return programs;
+        return programs.filter((p) => {
+            if (tuitionFilter === "DISCOUNT" && !((p.metadata_json ?? {}).tuition_female_per_year)) return false;
+            if (tuitionFilter === "FREE" && (p.tuition_per_year ?? 0) > 0) return false;
+            if (tuitionFilter === "PAID" && !(p.tuition_per_year && p.tuition_per_year > 0)) return false;
+            if (tuitionFilter === "UNDER_1000" && (!p.tuition_per_year || p.tuition_per_year > 1000)) return false;
+            if (tuitionFilter === "OVER_1000" && (!p.tuition_per_year || p.tuition_per_year <= 1000)) return false;
+            return true;
+        });
+    }, [programs, tuitionFilter]);
 
     const handleCreate = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -151,7 +171,7 @@ export function ProgramsManager({
             } else {
                 setIsCreateOpen(false);
                 setCloningProgram(null);
-                setCreateUniId("");
+                setCreateUniId(searchParams.university_id ?? "");
             }
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : "Failed to create program");
@@ -195,7 +215,7 @@ export function ProgramsManager({
         <div className="space-y-6">
             <PageHeader
                 title={<h1 className="text-2xl font-semibold tracking-tight">Academic Programs</h1>}
-                subtitle={`${filtered.length} of ${initialPrograms.length} programs match the current filters.`}
+                subtitle={`${totalItems} total records match the current filters.`}
                 actions={
                     <div className="flex items-center gap-2">
                         <Button
@@ -210,6 +230,7 @@ export function ProgramsManager({
                             onClick={() => {
                                 setCloningProgram(null);
                                 setCreateSuccess(null);
+                                setCreateUniId(searchParams.university_id ?? "");
                                 setIsCreateOpen(true);
                             }}
                             className="gap-1.5"
@@ -231,15 +252,19 @@ export function ProgramsManager({
             ) : null}
 
             {/* Filter Bar */}
-            <div className="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-4 shadow-sm">
+            <form
+                method="GET"
+                action="/programs"
+                className="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-4 shadow-sm"
+            >
                 <div className="min-w-56 flex-1 space-y-1.5">
                     <label htmlFor="p-search" className="text-xs font-medium text-muted-foreground">Search</label>
                     <div className="relative">
                         <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
                             id="p-search"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
+                            name="q"
+                            defaultValue={searchParams.q ?? ""}
                             placeholder="Program name, faculty, or university…"
                             className="pl-8"
                         />
@@ -248,7 +273,7 @@ export function ProgramsManager({
 
                 <div className="w-48 space-y-1.5">
                     <label htmlFor="p-uni" className="text-xs font-medium text-muted-foreground">University</label>
-                    <Select id="p-uni" value={uniFilter} onChange={(e) => setUniFilter(e.target.value)}>
+                    <Select id="p-uni" name="university_id" defaultValue={searchParams.university_id ?? ""}>
                         <option value="">All universities</option>
                         {universities.map((u) => (
                             <option key={u.id} value={String(u.id)}>{u.name_en}</option>
@@ -258,7 +283,7 @@ export function ProgramsManager({
 
                 <div className="w-40 space-y-1.5">
                     <label htmlFor="p-degree" className="text-xs font-medium text-muted-foreground">Degree Level</label>
-                    <Select id="p-degree" value={degreeFilter} onChange={(e) => setDegreeFilter(e.target.value)}>
+                    <Select id="p-degree" name="degree_level" defaultValue={searchParams.degree_level ?? ""}>
                         <option value="">All degrees</option>
                         {DEGREE_LEVELS.map((level) => (
                             <option key={level} value={level}>{level}</option>
@@ -268,7 +293,7 @@ export function ProgramsManager({
 
                 <div className="w-44 space-y-1.5">
                     <label htmlFor="p-shift" className="text-xs font-medium text-muted-foreground">Study Shift</label>
-                    <Select id="p-shift" value={shiftFilter} onChange={(e) => setShiftFilter(e.target.value)}>
+                    <Select id="p-shift" name="shift" defaultValue={searchParams.shift ?? ""}>
                         <option value="">All shifts</option>
                         {STUDY_SHIFTS.map((shift) => (
                             <option key={shift} value={shift}>
@@ -277,18 +302,6 @@ export function ProgramsManager({
                         ))}
                     </Select>
                 </div>
-
-                {availableFaculties.length > 0 && (
-                    <div className="w-48 space-y-1.5">
-                        <label htmlFor="p-fac" className="text-xs font-medium text-muted-foreground">Faculty</label>
-                        <Select id="p-fac" value={facultyFilter} onChange={(e) => setFacultyFilter(e.target.value)}>
-                            <option value="">All faculties</option>
-                            {availableFaculties.map((fac) => (
-                                <option key={fac} value={fac}>{fac}</option>
-                            ))}
-                        </Select>
-                    </div>
-                )}
 
                 <div className="w-44 space-y-1.5">
                     <label htmlFor="p-fee" className="text-xs font-medium text-muted-foreground">Tuition / Fee</label>
@@ -302,26 +315,54 @@ export function ProgramsManager({
                     </Select>
                 </div>
 
-                {(search || degreeFilter || shiftFilter || uniFilter || facultyFilter || tuitionFilter) ? (
-                    <Button variant="ghost" onClick={() => { setSearch(""); setDegreeFilter(""); setShiftFilter(""); setUniFilter(""); setFacultyFilter(""); setTuitionFilter(""); }}>
-                        Reset
-                    </Button>
-                ) : null}
-            </div>
+                <div className="flex gap-2">
+                    <button type="submit" className={buttonVariants()}>
+                        Apply
+                    </button>
+                    {hasFilters || tuitionFilter ? (
+                        <Link
+                            href="/programs"
+                            onClick={() => setTuitionFilter("")}
+                            className={buttonVariants({ variant: "ghost" })}
+                        >
+                            Reset
+                        </Link>
+                    ) : null}
+                </div>
+            </form>
 
             {/* Table */}
             <Card>
                 <CardContent className="p-0">
-                    {filtered.length === 0 ? (
+                    {displayed.length === 0 ? (
                         <div className="p-6">
                             <EmptyState
-                                title="No programs found"
-                                description="Try adjusting your search filters or create a new program."
+                                title={hasFilters || tuitionFilter ? "No programs match these filters" : "No programs found"}
+                                description={
+                                    hasFilters || tuitionFilter
+                                        ? "Try adjusting your search terms or filters."
+                                        : "Create your first program or batch add to start building the catalogue."
+                                }
                                 action={
-                                    <Button onClick={() => setIsCreateOpen(true)} variant="outline" size="sm">
-                                        <Plus className="size-4" />
-                                        New program
-                                    </Button>
+                                    hasFilters || tuitionFilter ? (
+                                        <Link href="/programs" className={buttonVariants({ variant: "outline", size: "sm" })}>
+                                            Clear filters
+                                        </Link>
+                                    ) : (
+                                        <Button
+                                            onClick={() => {
+                                                setCloningProgram(null);
+                                                setCreateSuccess(null);
+                                                setCreateUniId(searchParams.university_id ?? "");
+                                                setIsCreateOpen(true);
+                                            }}
+                                            variant="outline"
+                                            size="sm"
+                                        >
+                                            <Plus className="size-4" />
+                                            New program
+                                        </Button>
+                                    )
                                 }
                             />
                         </div>
@@ -338,7 +379,7 @@ export function ProgramsManager({
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {filtered.map((program) => (
+                                {displayed.map((program) => (
                                     <TableRow key={program.id}>
                                         <TableCell>
                                             <div className="font-medium">{program.name_en}</div>
@@ -423,6 +464,32 @@ export function ProgramsManager({
                 </CardContent>
             </Card>
 
+            {totalPages > 1 ? (
+                <nav className="flex items-center justify-between text-sm" aria-label="Pagination">
+                    <span className="text-muted-foreground">
+                        Page {currentPage} of {totalPages}
+                    </span>
+                    <div className="flex gap-2">
+                        {currentPage > 1 ? (
+                            <Link
+                                href={buildHref(searchParams, currentPage - 1)}
+                                className={buttonVariants({ variant: "outline", size: "sm" })}
+                            >
+                                Previous
+                            </Link>
+                        ) : null}
+                        {currentPage < totalPages ? (
+                            <Link
+                                href={buildHref(searchParams, currentPage + 1)}
+                                className={buttonVariants({ variant: "outline", size: "sm" })}
+                            >
+                                Next
+                            </Link>
+                        ) : null}
+                    </div>
+                </nav>
+            ) : null}
+
             {/* Create Program Modal */}
             <Modal
                 isOpen={isCreateOpen}
@@ -430,7 +497,7 @@ export function ProgramsManager({
                     setIsCreateOpen(false);
                     setCloningProgram(null);
                     setCreateSuccess(null);
-                    setCreateUniId("");
+                    setCreateUniId(searchParams.university_id ?? "");
                 }}
                 title={cloningProgram ? `Duplicate “${cloningProgram.name_en}”` : "New Academic Program"}
                 icon={<GraduationCap className="size-5 text-primary" />}
@@ -513,9 +580,9 @@ export function ProgramsManager({
                 isOpen={isBatchOpen}
                 onClose={() => setIsBatchOpen(false)}
                 universities={universities}
-                universityId={uniFilter || undefined}
-                units={uniFilter ? unitsCache[uniFilter] : undefined}
-                onSuccess={newPrograms => {
+                universityId={searchParams.university_id || undefined}
+                units={searchParams.university_id ? unitsCache[searchParams.university_id] : undefined}
+                onSuccess={() => {
                     setIsBatchOpen(false);
                     startTransition(() => router.refresh());
                 }}

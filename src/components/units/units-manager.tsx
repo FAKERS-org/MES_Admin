@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
     Building2,
-    ExternalLink,
     FolderTree,
     GraduationCap,
     Layers,
@@ -16,7 +15,7 @@ import {
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import ConfirmButton from "@/components/ui/confirm-button";
 import { Alert, EmptyState, PageHeader, Spinner } from "@/components/ui/feedback";
@@ -88,31 +87,52 @@ function raw(form: FormData, key: string): string {
     return String(form.get(key) ?? "").trim();
 }
 
-function nullable(form: FormData, key: string): string | null {
-    return raw(form, key) || null;
-}
+export type UnitSearchParams = {
+    q?: string;
+    university_id?: string;
+    kind?: string;
+    page?: string;
+};
 
-function numberOrNull(form: FormData, key: string): number | null {
-    const value = raw(form, key);
-    if (!value) return null;
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : null;
+export function buildHref(params: UnitSearchParams, page: number) {
+    const url = new URLSearchParams();
+    if (params.q) url.set("q", params.q);
+    if (params.university_id) url.set("university_id", params.university_id);
+    if (params.kind) url.set("kind", params.kind);
+    if (page > 1) url.set("page", String(page));
+    const query = url.toString();
+    return `/units${query ? `?${query}` : ""}`;
 }
 
 export function UnitsManager({
-    initialUnits,
+    pageData,
+    initialUnits = [],
     universities,
+    searchParams = {},
 }: {
-    initialUnits: UnitListItem[];
+    pageData?: Page<UnitListItem>;
+    initialUnits?: UnitListItem[];
     universities: UniversitySummary[];
+    searchParams?: UnitSearchParams;
 }) {
     const router = useRouter();
     const [pending, startTransition] = useTransition();
 
-    const [units, setUnits] = useState<UnitListItem[]>(initialUnits);
-    const [search, setSearch] = useState("");
-    const [uniFilter, setUniFilter] = useState("");
-    const [kindFilter, setKindFilter] = useState("");
+    const [localUnits, setLocalUnits] = useState<UnitListItem[]>(pageData ? pageData.items : initialUnits);
+
+    useEffect(() => {
+        if (pageData) {
+            setLocalUnits(pageData.items);
+        } else {
+            setLocalUnits(initialUnits);
+        }
+    }, [pageData, initialUnits]);
+
+    const units = localUnits;
+    const totalPages = pageData ? Math.max(1, pageData.total_pages) : 1;
+    const currentPage = pageData ? pageData.page : 1;
+    const totalItems = pageData ? pageData.total_items : units.length;
+    const hasFilters = Boolean(searchParams.q || searchParams.university_id || searchParams.kind);
 
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [editingUnit, setEditingUnit] = useState<UnitListItem | null>(null);
@@ -120,13 +140,9 @@ export function UnitsManager({
     const [saved, setSaved] = useState<string | null>(null);
 
     // Dynamic sibling units cache for parent dropdown
-    const [selectedUniForNew, setSelectedUniForNew] = useState("");
+    const [selectedUniForNew, setSelectedUniForNew] = useState(searchParams.university_id ?? "");
     const [uniUnitsCache, setUniUnitsCache] = useState<Record<string, UnitSummary[]>>({});
-    const [loadingUniUnits, setLoadingUniUnits] = useState(false);
-
-    useEffect(() => {
-        setUnits(initialUnits);
-    }, [initialUnits]);
+    const [, setLoadingUniUnits] = useState(false);
 
     const fetchUniUnits = async (uniId: string | number) => {
         const key = String(uniId);
@@ -152,6 +168,12 @@ export function UnitsManager({
     }, [selectedUniForNew]);
 
     useEffect(() => {
+        if (searchParams.university_id) {
+            fetchUniUnits(searchParams.university_id);
+        }
+    }, [searchParams.university_id]);
+
+    useEffect(() => {
         if (editingUnit && editingUnit.university_id) {
             fetchUniUnits(editingUnit.university_id);
         }
@@ -162,20 +184,7 @@ export function UnitsManager({
         setError(null);
     }
 
-    const filtered = useMemo(() => {
-        return units.filter((u) => {
-            if (uniFilter && String(u.university_id) !== uniFilter) return false;
-            if (kindFilter && u.kind !== kindFilter) return false;
-            if (search) {
-                const term = search.toLowerCase();
-                const text = `${u.name_en} ${u.name_kh ?? ""} ${u.category_en ?? ""} ${u.university_name ?? ""} ${u.university_abbreviation ?? ""} ${u.parent_name ?? ""}`.toLowerCase();
-                if (!text.includes(term)) return false;
-            }
-            return true;
-        });
-    }, [units, uniFilter, kindFilter, search]);
-
-    // Quick metric counters
+    // Quick metric counters for current page
     const facultiesCount = useMemo(() => units.filter((u) => u.kind === "FACULTY").length, [units]);
     const departmentsCount = useMemo(() => units.filter((u) => u.kind === "DEPARTMENT").length, [units]);
     const subDeptCount = useMemo(() => units.filter((u) => u.kind === "SUB_DEPARTMENT").length, [units]);
@@ -215,9 +224,9 @@ export function UnitsManager({
                     university_name: uni?.name_en ?? "",
                     university_abbreviation: uni?.abbreviation ?? "",
                 };
-                setUnits((prev) => [enriched, ...prev]);
+                setLocalUnits((prev) => [enriched, ...prev]);
                 setIsCreateOpen(false);
-                setSelectedUniForNew("");
+                setSelectedUniForNew(searchParams.university_id ?? "");
                 flash(`“${created.name_en}” created successfully.`);
                 router.refresh();
             } catch (err: unknown) {
@@ -244,7 +253,7 @@ export function UnitsManager({
                     method: "PATCH",
                     body: payload,
                 });
-                setUnits((prev) =>
+                setLocalUnits((prev) =>
                     prev.map((item) =>
                         item.id === updated.id
                             ? {
@@ -268,7 +277,7 @@ export function UnitsManager({
         startTransition(async () => {
             try {
                 await apiRequest(`/api/admin/units/${unit.id}`, { method: "DELETE" });
-                setUnits((prev) => prev.filter((item) => item.id !== unit.id));
+                setLocalUnits((prev) => prev.filter((item) => item.id !== unit.id));
                 flash(`“${unit.name_en}” deleted.`);
                 router.refresh();
             } catch (err: unknown) {
@@ -289,9 +298,15 @@ export function UnitsManager({
                         <h1 className="text-2xl font-semibold tracking-tight">Academic Units</h1>
                     </div>
                 }
-                subtitle={`${filtered.length} of ${units.length} units match current filters.`}
+                subtitle={`${totalItems} total units match current filters.`}
                 actions={
-                    <Button onClick={() => setIsCreateOpen(true)} className="gap-1.5 shadow-2xs">
+                    <Button
+                        onClick={() => {
+                            setSelectedUniForNew(searchParams.university_id ?? "");
+                            setIsCreateOpen(true);
+                        }}
+                        className="gap-1.5 shadow-2xs"
+                    >
                         <Plus className="size-4" />
                         New unit
                     </Button>
@@ -301,7 +316,7 @@ export function UnitsManager({
             {/* Quick Summary Pill Bar */}
             <div className="flex flex-wrap items-center gap-2">
                 <div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-1.5 text-xs text-muted-foreground shadow-2xs">
-                    <span className="font-semibold text-foreground">{units.length}</span> Total Units
+                    <span className="font-semibold text-foreground">{totalItems}</span> Total Units
                 </div>
                 <div className="flex items-center gap-2 rounded-lg border bg-blue-50/50 dark:bg-blue-950/20 px-3 py-1.5 text-xs text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900 shadow-2xs">
                     <span className="font-semibold">{facultiesCount}</span> Faculties
@@ -327,15 +342,19 @@ export function UnitsManager({
             {saved && !error && <Alert variant="success">{saved}</Alert>}
 
             {/* Clean Filter Toolbar */}
-            <div className="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-4 shadow-2xs">
+            <form
+                method="GET"
+                action="/units"
+                className="flex flex-wrap items-end gap-3 rounded-xl border bg-card p-4 shadow-2xs"
+            >
                 <div className="min-w-60 flex-1 space-y-1.5">
                     <label htmlFor="u-search" className="text-xs font-medium text-muted-foreground">Search</label>
                     <div className="relative">
                         <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
                             id="u-search"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
+                            name="q"
+                            defaultValue={searchParams.q ?? ""}
                             placeholder="Unit name, category, or university…"
                             className="pl-8 text-xs bg-background"
                         />
@@ -344,7 +363,7 @@ export function UnitsManager({
 
                 <div className="w-52 space-y-1.5">
                     <label htmlFor="u-uni" className="text-xs font-medium text-muted-foreground">University</label>
-                    <Select id="u-uni" value={uniFilter} onChange={(e) => setUniFilter(e.target.value)} className="text-xs bg-background">
+                    <Select id="u-uni" name="university_id" defaultValue={searchParams.university_id ?? ""} className="text-xs bg-background">
                         <option value="">All universities</option>
                         {universities.map((u) => (
                             <option key={u.id} value={String(u.id)}>
@@ -356,7 +375,7 @@ export function UnitsManager({
 
                 <div className="w-44 space-y-1.5">
                     <label htmlFor="u-kind-filter" className="text-xs font-medium text-muted-foreground">Unit Kind</label>
-                    <Select id="u-kind-filter" value={kindFilter} onChange={(e) => setKindFilter(e.target.value)} className="text-xs bg-background">
+                    <Select id="u-kind-filter" name="kind" defaultValue={searchParams.kind ?? ""} className="text-xs bg-background">
                         <option value="">All unit kinds</option>
                         {UNIT_KINDS.map((kind) => (
                             <option key={kind} value={kind}>
@@ -366,35 +385,52 @@ export function UnitsManager({
                     </Select>
                 </div>
 
-                {(search || uniFilter || kindFilter) && (
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                            setSearch("");
-                            setUniFilter("");
-                            setKindFilter("");
-                        }}
-                        className="h-9 px-3 text-xs text-muted-foreground hover:text-foreground self-end"
-                    >
-                        Reset filters
-                    </Button>
-                )}
-            </div>
+                <div className="flex gap-2">
+                    <button type="submit" className={buttonVariants({ size: "sm" })}>
+                        Apply
+                    </button>
+                    {hasFilters && (
+                        <Link
+                            href="/units"
+                            className={buttonVariants({ variant: "ghost", size: "sm" })}
+                        >
+                            Reset
+                        </Link>
+                    )}
+                </div>
+            </form>
 
             {/* Units Data Table */}
             <Card className="overflow-hidden border shadow-2xs">
                 <CardContent className="p-0">
-                    {filtered.length === 0 ? (
+                    {units.length === 0 ? (
                         <div className="py-12">
                             <EmptyState
-                                title="No units found"
-                                description="No academic units match your search filters, or none have been added yet."
+                                title={hasFilters ? "No units match these filters" : "No units found"}
+                                description={
+                                    hasFilters
+                                        ? "Try adjusting your search terms or filters."
+                                        : "No academic units have been added yet."
+                                }
                                 action={
-                                    <Button onClick={() => setIsCreateOpen(true)} variant="outline" size="sm" className="gap-1.5">
-                                        <Plus className="size-4" />
-                                        Add unit
-                                    </Button>
+                                    hasFilters ? (
+                                        <Link href="/units" className={buttonVariants({ variant: "outline", size: "sm" })}>
+                                            Clear filters
+                                        </Link>
+                                    ) : (
+                                        <Button
+                                            onClick={() => {
+                                                setSelectedUniForNew(searchParams.university_id ?? "");
+                                                setIsCreateOpen(true);
+                                            }}
+                                            variant="outline"
+                                            size="sm"
+                                            className="gap-1.5"
+                                        >
+                                            <Plus className="size-4" />
+                                            Add unit
+                                        </Button>
+                                    )
                                 }
                             />
                         </div>
@@ -412,7 +448,7 @@ export function UnitsManager({
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {filtered.map((unit) => {
+                                {units.map((unit) => {
                                     const kindBadge = UNIT_KIND_BADGES[unit.kind] ?? {
                                         label: unit.kind,
                                         className: "bg-muted text-muted-foreground",
@@ -559,12 +595,38 @@ export function UnitsManager({
                 </CardContent>
             </Card>
 
+            {totalPages > 1 ? (
+                <nav className="flex items-center justify-between text-sm" aria-label="Pagination">
+                    <span className="text-muted-foreground">
+                        Page {currentPage} of {totalPages}
+                    </span>
+                    <div className="flex gap-2">
+                        {currentPage > 1 ? (
+                            <Link
+                                href={buildHref(searchParams, currentPage - 1)}
+                                className={buttonVariants({ variant: "outline", size: "sm" })}
+                            >
+                                Previous
+                            </Link>
+                        ) : null}
+                        {currentPage < totalPages ? (
+                            <Link
+                                href={buildHref(searchParams, currentPage + 1)}
+                                className={buttonVariants({ variant: "outline", size: "sm" })}
+                            >
+                                Next
+                            </Link>
+                        ) : null}
+                    </div>
+                </nav>
+            ) : null}
+
             {/* Create Unit Modal */}
             <Modal
                 isOpen={isCreateOpen}
                 onClose={() => {
                     setIsCreateOpen(false);
-                    setSelectedUniForNew("");
+                    setSelectedUniForNew(searchParams.university_id ?? "");
                 }}
                 title="Create Academic Unit"
                 icon={<Plus className="size-4 text-foreground" />}
@@ -599,7 +661,7 @@ export function UnitsManager({
                             size="sm"
                             onClick={() => {
                                 setIsCreateOpen(false);
-                                setSelectedUniForNew("");
+                                setSelectedUniForNew(searchParams.university_id ?? "");
                             }}
                             disabled={pending}
                         >
@@ -653,4 +715,3 @@ export function UnitsManager({
         </div>
     );
 }
-
