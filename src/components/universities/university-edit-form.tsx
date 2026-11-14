@@ -38,16 +38,8 @@ import {
     type UniversityType,
     type UniversityUpdatePayload,
 } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, nullable, raw } from "@/lib/utils";
 import { ImageUploader } from "../admin/image-uploader";
-
-function raw(form: FormData, key: string): string {
-    return String(form.get(key) ?? "").trim();
-}
-
-function nullable(form: FormData, key: string): string | null {
-    return raw(form, key) || null;
-}
 
 export default function UniversityEditForm({ university }: { university: UniversityDetail }) {
     const router = useRouter();

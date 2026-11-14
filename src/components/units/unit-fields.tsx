@@ -3,20 +3,8 @@
 import { Checkbox, Field, Input, Select } from "@/components/ui/field";
 import { UNIT_KINDS, type UnitCreatePayload, type UnitKind, type UnitSummary } from "@/lib/types";
 
-export function raw(form: FormData, key: string): string {
-    return String(form.get(key) ?? "").trim();
-}
-
-function nullable(form: FormData, key: string): string | null {
-    return raw(form, key) || null;
-}
-
-function numberOrNull(form: FormData, key: string): number | null {
-    const value = raw(form, key);
-    if (!value) return null;
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : null;
-}
+import { raw, nullable, numberOrNull } from "@/lib/utils";
+export { raw, nullable, numberOrNull };
 
 /** FormData -> unit payload, shared by the create/edit forms. */
 export function unitPayload(form: FormData): UnitCreatePayload {

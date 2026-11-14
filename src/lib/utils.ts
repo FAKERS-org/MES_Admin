@@ -37,3 +37,18 @@ export function formatDate(value?: string | null): string {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? "—" : date.toLocaleDateString("en-GB");
 }
+
+export function raw(form: FormData, key: string): string {
+  return String(form.get(key) ?? "").trim();
+}
+
+export function nullable(form: FormData, key: string): string | null {
+  return raw(form, key) || null;
+}
+
+export function numberOrNull(form: FormData, key: string): number | null {
+  const value = raw(form, key);
+  if (!value) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}

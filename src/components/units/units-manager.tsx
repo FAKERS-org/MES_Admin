@@ -34,7 +34,7 @@ import {
     type UnitUpdatePayload,
     type UniversitySummary,
 } from "@/lib/types";
-import { cn, formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency, raw } from "@/lib/utils";
 
 const UNIT_KIND_BADGES: Record<UnitKind, { label: string; className: string }> = {
     FACULTY: {
@@ -82,10 +82,6 @@ const UNIT_KIND_BADGES: Record<UnitKind, { label: string; className: string }> =
         className: "bg-neutral-50 text-neutral-700 border-neutral-200 dark:bg-neutral-950/40 dark:text-neutral-300 dark:border-neutral-800",
     },
 };
-
-function raw(form: FormData, key: string): string {
-    return String(form.get(key) ?? "").trim();
-}
 
 export type UnitSearchParams = {
     q?: string;

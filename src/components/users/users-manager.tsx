@@ -15,9 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { apiRequest } from "@/lib/api";
 import type { RoleSummary, UserCreatePayload, UserSummary, UserUpdatePayload } from "@/lib/types";
 
-function raw(form: FormData, key: string): string {
-    return String(form.get(key) ?? "").trim();
-}
+import { raw } from "@/lib/utils";
 
 export function UsersManager({
     initialUsers,

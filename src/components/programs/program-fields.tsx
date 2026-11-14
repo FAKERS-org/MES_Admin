@@ -15,20 +15,8 @@ import {
     type UnitSummary,
 } from "@/lib/types";
 
-export function raw(form: FormData, key: string): string {
-    return String(form.get(key) ?? "").trim();
-}
-
-export function nullable(form: FormData, key: string): string | null {
-    return raw(form, key) || null;
-}
-
-export function numberOrNull(form: FormData, key: string): number | null {
-    const value = raw(form, key);
-    if (!value) return null;
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : null;
-}
+import { raw, nullable, numberOrNull } from "@/lib/utils";
+export { raw, nullable, numberOrNull };
 
 /** Shared FormData parser for creating/updating a program.
 

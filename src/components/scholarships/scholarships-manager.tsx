@@ -15,13 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { apiRequest } from "@/lib/api";
 import type { ScholarshipCreateDirectPayload, ScholarshipListItem, UniversitySummary } from "@/lib/types";
 
-function raw(form: FormData, key: string): string {
-    return String(form.get(key) ?? "").trim();
-}
-
-function nullable(form: FormData, key: string): string | null {
-    return raw(form, key) || null;
-}
+import { nullable, raw } from "@/lib/utils";
 
 export function ScholarshipsManager({
     initialScholarships,

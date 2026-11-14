@@ -2,12 +2,23 @@ import { proxyToApi } from "@/lib/proxy";
 
 type Context = { params: Promise<{ path: string[] }> };
 
+const COLLECTION_SEGMENTS = new Set([
+  "universities",
+  "units",
+  "programs",
+  "scholarships",
+  "users",
+  "facilities",
+  "curriculum-sections",
+  "campuses",
+]);
+
 async function forward(req: Request, path: string[]) {
-  const pathStr = path.join("/");
-  // If path starts with "auth", proxy to "auth/...", otherwise "admin/..."
-  const upstream = path[0] === "auth"
-    ? pathStr
-    : `admin/${pathStr}${path.length === 1 ? "/" : ""}`;
+  const last = path[path.length - 1];
+  const trailingSlash = COLLECTION_SEGMENTS.has(last) ? "/" : "";
+  const pathStr = `${path.join("/")}${trailingSlash}`;
+
+  const upstream = path[0] === "auth" ? pathStr : `admin/${pathStr}`;
   return proxyToApi(req, upstream);
 }
 

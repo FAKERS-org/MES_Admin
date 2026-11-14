@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/feedback";
+import { MetadataRenderer } from "@/components/ui/metadata-renderer";
 import AcademicManager from "@/components/universities/academic-manager";
 import { AccreditedBadge, MinistryBadge, StatusBadge, TypeBadge } from "@/components/universities/badges";
 import CampusManager from "@/components/universities/campus-manager";
@@ -188,6 +189,18 @@ export default async function UniversityDetailPage({ params }: { params: Promise
                             </div>
                         </CardContent>
                     </Card>
+
+                    {university.metadata_json && Object.keys(university.metadata_json).length > 0 ? (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Institution Metadata</CardTitle>
+                                <CardDescription>Additional custom attributes from ingestion.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <MetadataRenderer data={university.metadata_json} />
+                            </CardContent>
+                        </Card>
+                    ) : null}
 
                     <Card className="border-destructive/40">
                         <CardHeader>
